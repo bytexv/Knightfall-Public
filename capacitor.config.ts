@@ -14,7 +14,7 @@ const config: CapacitorConfig = {
     // Android 15 enforces edge-to-edge windows; keep controls clear of system bars.
     adjustMarginsForEdgeToEdge: "auto",
     backgroundColor: "#171b19",
-    webContentsDebuggingEnabled: process.env.KNIGHTFALL_NATIVE_DEBUG === "1",
+    webContentsDebuggingEnabled: false,
   },
   ios: {
     contentInset: "automatic",

@@ -752,7 +752,7 @@ async function runAcceptance({ window, app, outputDir }) {
         await peerWait((state) => state.status === "finished");
         check(
           snapshot.result.winner === "w" &&
-            snapshot.result.reason === "Left game",
+            snapshot.result.reason === "Opponent left the room",
           "Native leave did not finish authoritative rematch",
         );
         const archive = await evaluate(
