@@ -10,7 +10,7 @@ Knightfall has its own branding and interface. It is not affiliated with Chess.c
 
 1. Open **Play chess**. Choose one of six local bots, or **Pass & play** for two people sharing a screen. Pick a side and time control, then start.
 2. Click or drag a piece to a legal destination. Choose a queen, rook, bishop or knight when a pawn promotes.
-3. Open **Analysis** to replay a game, inspect engine suggestions, run a move-by-move review, or import a PGN/FEN. **Set up** opens the board editor. Use **Save game** to keep an imported or edited study, or **Play position** to practice the current board against a bot or another person.
+3. Open **Analysis** for a guided game review, move classifications, an evaluation graph and per-side summaries. Switch to **Live analysis** for current engine suggestions. Explore a suggested line or retry a move without changing the original game. **Set up** opens the board editor; **Save game** keeps an imported or edited study, and **Play position** starts practice from the current board.
 4. Explore **Puzzles**, **Tactics Sprint**, **Opening lab**, and **Endgame school** for guided practice.
 5. Use **Settings → Download a backup** and PGN exports to keep copies of your games.
 
@@ -23,8 +23,8 @@ For installation details, see [Install Knightfall](docs/INSTALL.md). For a full 
 | Format | What it contains | Delivery/build output |
 | --- | --- | --- |
 | Web / installable PWA | Responsive app, local engine, learning content, offline cache | `dist/` after `npm run build` |
-| Windows x64 | Portable Electron 45 app with a built-in Wi-Fi host | `artifacts/windows/Knightfall-1.1.0-Windows-x64.exe` |
-| Android | Capacitor 7 app with bundled assets and direct LAN joining | `artifacts/Knightfall-1.1.0-android-debug.apk` |
+| Windows x64 | Portable Electron 45 app with a built-in Wi-Fi host | `artifacts/windows/Knightfall-1.2.0-Windows-x64.exe` |
+| Android | Capacitor 7 app with bundled assets and direct LAN joining | `artifacts/Knightfall-1.2.0-android-debug.apk` |
 | iPhone / iPad | Native Capacitor project; the web app can also be added to the Home Screen | `ios/`; no signed IPA is included |
 
 The Windows executable is unsigned. The Android APK is a development build signed with a debug key. They are not app-store releases. Native iOS builds require macOS, Xcode and Apple signing. See [Packaging](docs/PACKAGING.md) and [Mobile](docs/MOBILE.md).
@@ -52,10 +52,11 @@ More details: [Same-Wi-Fi play](docs/LAN.md).
 ## What runs locally
 
 - **Play:** six adjustable bot personalities, a shared-screen mode, clocks with increment, legal-move enforcement, promotion choice, takebacks in local play, hints, replay and results.
-- **Analysis:** Stockfish 17.1 Lite in a worker, up to three principal variations, configurable depth limits, an evaluation bar, cancelable game review and selected-move feedback. A clearly labeled lightweight JavaScript engine is available if Stockfish cannot load.
+- **Analysis:** Stockfish 17.1 Lite in a worker, up to three principal variations, configurable depth limits, an evaluation bar and cancelable guided review. Review includes ten move classifications, per-side summaries, an interactive evaluation graph, suggested-line previews and move retries. A clearly labeled lightweight JavaScript engine is available if Stockfish cannot load.
+- **Local Elo:** a persistent practice rating, result history and trend graph for eligible completed games against local bots. It starts at 800 and stays provisional for the first 20 rated games. Games using hints, takebacks or live analysis while in progress are unrated, as are custom starting positions and fallback-engine play. Reviewing an already completed game does not change its recorded result. This device-local estimate is separate from online or official ratings and from a single game's review performance estimate.
 - **Learning:** 60 curated tactics from the Lichess CC0 puzzle database; Tactics Sprint with 3-minute, 5-minute and untimed Survival modes; 27 opening primers; nine short lessons; and 15 endgame drills, including four draw-defense exercises.
 - **Study tools:** a position editor, custom-position bot/shared-screen play, PGN/FEN import, PGN export with plain-text position notes, a searchable local game archive with resume controls, and JSON backup/restore.
-- **Personalization:** Sage, Walnut and Ocean boards; sound, coordinates and legal-move hints; a local display name; keyboard and touch controls.
+- **Personalization:** Sage, Walnut and Ocean boards; sound, coordinates and legal-move hints; a local display name; keyboard and touch controls. Piece movement, captures, castling and promotions animate while leaving move input responsive; reduced-motion preferences disable automatic piece travel and fades.
 
 Bot difficulty descriptions are training estimates, not calibrated online ratings. Sprout and Scout combine local engine suggestions with beginner-oriented move policies; higher levels use the engine's chosen move. Opening creator references are educational, not official celebrity bots. The Botez Gambit and Bongcloud are explicitly identified as memes; the Cow Opening is a system rather than a gambit.
 
@@ -67,11 +68,13 @@ Endgame starting positions were checked against exact tablebases during content 
 
 Positions and analysis requests stay on the device. The application does not include analytics, advertising, cloud game uploads, or cross-device account sync. Fonts, pieces and engine assets are served with the app. Opening an optional source/reference link visits that external website in the normal way.
 
+When a public release repository is configured, the desktop app checks GitHub for a newer stable version at startup and offers a manual check in Settings. Download actions open the validated release link only after you choose; they do not run or install a new app. An unconfigured or private repository does not provide automatic public release checks. See [GitHub releases and updates](docs/GITHUB.md).
+
 The web version needs an initial online load. Keep it open long enough for the full app and engine cache to finish. PWA installation requires HTTPS or a supported localhost origin; a plain HTTP LAN address is for local multiplayer and does not provide the same install/offline guarantees. Native Windows and Android packages already contain the runtime assets. A Wi-Fi game still needs a live network and host even when internet access is unavailable.
 
 Saved games and preferences belong to the current browser origin or native app profile. Clearing site/app data, private browsing, uninstalling, storage eviction, or changing to another host address can remove or hide that data. The archive keeps up to 200 recently saved games. Reloaded casual games pause until **Resume saved game** is selected. Bot and shared-screen games also pause when you browse another section inside the app; unfinished games can be resumed from **My games**. LAN clocks remain controlled by the host and do not pause when you browse; leaving an active room requires confirmation and ends that game as a loss.
 
-The JSON backup currently includes saved games, board/profile settings and unassisted puzzle progress. Opening bookmarks, lesson-completion markers, endgame practice markers and Tactics Sprint personal bests are separate local records and are not included in that backup. Export individual games as PGN for a portable chess record. Save a study note before switching to another position; notes and annotation symbols travel as plain-text PGN comments.
+The JSON backup includes saved games, the Local Elo ledger, board/profile settings and unassisted puzzle progress. Opening bookmarks, lesson-completion markers, endgame practice markers and Tactics Sprint personal bests are separate local records and are not included in that backup. Export individual games as PGN for a portable chess record. Save a study note before switching to another position; notes and annotation symbols travel as plain-text PGN comments.
 
 ## Run from source
 
@@ -155,7 +158,7 @@ npx cap open ios
 
 Select an Apple development team in Xcode and run or archive the app. The bundle ID is `studio.knightfall.chess`. The checked-in project is not a signed installer. See [Mobile](docs/MOBILE.md) for signing, local-network behavior and installation instructions.
 
-The included [GitHub Actions workflow](.github/workflows/build-release.yml) builds Windows and Android artifacts on demand or for version tags. It does not publish to stores or deploy the website.
+The included [release workflow](.github/workflows/build-release.yml) can build and publish GitHub release artifacts on demand or for version tags. Its Android release job requires a configured stable signing identity; local Android builds still use a debug key. The separate [CI workflow](.github/workflows/ci.yml) runs repository checks. Neither workflow publishes to app stores or deploys the website. See [GitHub releases and updates](docs/GITHUB.md) for configuration.
 
 ## Development map
 
@@ -165,7 +168,8 @@ The included [GitHub Actions workflow](.github/workflows/build-release.yml) buil
 | Board, analysis, editor and learning views | `src/components/` |
 | Chess history, PGN, clocks and persistence | `src/lib/game.ts`, `src/lib/clock.ts`, `src/lib/storage.ts` |
 | Local UCI client, fallback and bot policies | `src/lib/engine.ts`, `src/lib/engine-fallback.ts`, `src/lib/bot-policy.ts` |
-| Review scoring and formatting | `src/lib/review.ts` |
+| Review scoring, variations and local ratings | `src/lib/review.ts`, `src/lib/exploration.ts`, `src/lib/ratings.ts` |
+| Board motion and drag transitions | `src/lib/board-motion.ts`, `src/lib/board-animator.ts` |
 | Openings, lessons, puzzles and verified endgames | `src/data/` |
 | Authoritative HTTP/WebSocket room server | `server/index.mjs` |
 | Desktop main process, preload and packaging config | `desktop/` |
@@ -183,11 +187,11 @@ For native changes, also run the relevant packaging verification and test the pr
 
 ## Scope and current limitations
 
-Knightfall is a local chess product, not a replacement for an online chess network. It does not include public matchmaking, accounts, a rated ladder, tournaments, cloud synchronization, fair-play monitoring, streaming, subscriptions or app-store publication.
+Knightfall is a local chess product, not a replacement for an online chess network. It does not include public matchmaking, accounts, a public rated ladder, tournaments, cloud synchronization, fair-play monitoring, streaming, subscriptions or app-store publication.
 
-Analysis quality depends on device speed and search time. The Lite engine is single-threaded; game-review quality percentages are estimates, not an official accuracy score. A depth setting is a limit, not a promise that every search reaches it. The fallback is substantially weaker than Stockfish.
+Analysis quality depends on device speed and search time. The Lite engine is single-threaded; move classifications and game-review quality percentages are local training heuristics, not an official accuracy score. Estimated performance requires enough eligible decisions against a known local bot and is separate from the result-based Local Elo ledger. A depth setting is a limit, not a promise that every search reaches it. The fallback is substantially weaker than Stockfish. See [Local move review](docs/REVIEW.md) for the rules and evidence limits.
 
-PGN support is for a single main-line game with plain-text comments. Playing from an earlier analysis position replaces the current continuation; it is not a persistent branching variation tree. FEN validation rejects common impossible states but does not prove complete historical reachability. Draw rules are applied automatically for this casual format rather than using tournament claim procedures. Keep timed mobile games in the foreground because operating systems may suspend background web views.
+PGN support is for a single main-line game with plain-text comments. Analysis exploration keeps the original game intact, but its temporary lines are not a saved branching variation tree or part of the original game's PGN export. FEN validation rejects common impossible states but does not prove complete historical reachability. Draw rules are applied automatically for this casual format rather than using tournament claim procedures. Keep timed mobile games in the foreground because operating systems may suspend background web views.
 
 ## License and credits
 

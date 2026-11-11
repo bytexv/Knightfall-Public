@@ -1,49 +1,252 @@
-name: Build desktop and mobile
+name: Build and publish release
+
 on:
-  workflow_dispatch:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing stable version tag, for example v1.2.0
+        required: true
+        type: string
+
 permissions:
   contents: read
+
+concurrency:
+  group: knightfall-release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
-  windows:
-    runs-on: windows-latest
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      commit: ${{ steps.version.outputs.commit }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
+      - name: Verify stable tag and native version
+        id: version
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
+          if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) throw new Error('A stable x.y.z package version is required.');
+          if (process.env.RELEASE_TAG !== `v${version}`) throw new Error('Tag must equal v + package.json version.');
+          const gradle = readFileSync('android/app/build.gradle', 'utf8');
+          if (gradle.match(/versionName\s+"([^"]+)"/)?.[1] !== version) throw new Error('Android versionName differs from package.json.');
+          const code = Number(gradle.match(/versionCode\s+(\d+)/)?.[1]);
+          if (!Number.isSafeInteger(code) || code < 1) throw new Error('Android versionCode must be a positive integer.');
+          const commit = execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim();
+          if (!/^[a-f0-9]{40}$/.test(commit)) throw new Error('Source commit could not be resolved.');
+          appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\ntag=v${version}\ncommit=${commit}\n`);
+          JS
       - run: npm ci
       - run: node scripts/prepare-engine.mjs
+      - run: npm test
       - run: npm run build
+      - run: git diff --exit-code -- public/engine
+      - name: Archive source and web app
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, shutil, subprocess, zipfile
+          version = os.environ['VERSION']
+          destination = pathlib.Path('artifacts/github')
+          destination.mkdir(parents=True, exist_ok=True)
+          subprocess.run(['git', 'archive', '--format=zip', '--prefix=Knightfall/', '-o', str(destination / f'Knightfall-{version}-source.zip'), 'HEAD'], check=True)
+          with zipfile.ZipFile(destination / f'Knightfall-{version}-web.zip', 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+              for item in sorted(pathlib.Path('dist').rglob('*')):
+                  if item.is_file(): archive.write(item, item.relative_to('dist'))
+              archive.writestr('README-WEB.txt', f'Knightfall {version}\nServe these files over HTTP. HTTPS is required for an installable offline PWA. Do not open index.html as a file URL. See the source archive for local-network hosting and build instructions.\n')
+          shutil.copyfile('docs/RELEASE_NOTES.md', destination / f'Knightfall-{version}-Readme.md')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Knightfall-web-source
+          path: artifacts/github/*
+          if-no-files-found: error
+          retention-days: 7
+
+  windows:
+    needs: source
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: dist
       - run: node scripts/package-windows.mjs
+      - run: node scripts/package-verify.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: Knightfall-Windows-x64
-          path: |
-            artifacts/windows/*.exe
-            artifacts/windows/SHA256SUMS.txt
+          path: artifacts/windows/Knightfall-${{ needs.source.outputs.version }}-Windows-x64.exe
+          if-no-files-found: error
+          retention-days: 7
+
   android:
+    needs: source
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.commit }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - run: npm ci
-      - run: node scripts/prepare-engine.mjs
-      - run: npm run build
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: dist
       - run: npx cap sync android
-      - run: chmod +x android/gradlew
-      - run: cd android && ./gradlew assembleDebug --no-daemon
+      - name: Test native helpers and build unsigned release
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --max-workers=2 testDebugUnitTest assembleRelease
+      - name: Sign with the configured stable Android identity
+        env:
+          VERSION: ${{ needs.source.outputs.version }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_CERT_SHA256: ${{ secrets.ANDROID_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          for variable in ANDROID_KEYSTORE_BASE64 ANDROID_KEY_ALIAS ANDROID_STORE_PASSWORD ANDROID_KEY_PASSWORD ANDROID_CERT_SHA256; do
+            if [ -z "${!variable:-}" ]; then
+              echo "Missing required signing secret: $variable. No release APK will be published."
+              exit 1
+            fi
+          done
+          python3 - <<'PY'
+          import base64, os, pathlib
+          secret = ''.join(os.environ['ANDROID_KEYSTORE_BASE64'].split())
+          pathlib.Path(os.environ['RUNNER_TEMP'], 'knightfall-signing.keystore').write_bytes(base64.b64decode(secret, validate=True))
+          PY
+          build_tools="$ANDROID_HOME/build-tools/35.0.0"
+          aligned="$RUNNER_TEMP/knightfall-aligned.apk"
+          apk="artifacts/Knightfall-$VERSION-Android.apk"
+          mkdir -p artifacts
+          "$build_tools/zipalign" -f -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk "$aligned"
+          "$build_tools/apksigner" sign --ks "$RUNNER_TEMP/knightfall-signing.keystore" --ks-key-alias "$ANDROID_KEY_ALIAS" --ks-pass env:ANDROID_STORE_PASSWORD --key-pass env:ANDROID_KEY_PASSWORD --v4-signing-enabled false --out "$apk" "$aligned"
+          "$build_tools/apksigner" verify --verbose --print-certs "$apk" > "$RUNNER_TEMP/knightfall-signature.txt"
+          python3 - <<'PY'
+          import json, os, pathlib, re, zipfile
+          certificate = pathlib.Path(os.environ['RUNNER_TEMP'], 'knightfall-signature.txt').read_text()
+          actual = re.findall(r'Signer #\d+ certificate SHA-256 digest: ([a-fA-F0-9]{64})', certificate)
+          expected = re.sub(r'[:\s]', '', os.environ['ANDROID_CERT_SHA256']).lower()
+          if not re.fullmatch(r'[a-f0-9]{64}', expected) or [value.lower() for value in actual] != [expected]:
+              raise SystemExit('Android signing certificate differs from the configured stable fingerprint.')
+          apk = pathlib.Path('artifacts', f"Knightfall-{os.environ['VERSION']}-Android.apk")
+          with zipfile.ZipFile(apk) as archive:
+              config = json.loads(archive.read('assets/capacitor.config.json'))
+              if config.get('android', {}).get('webContentsDebuggingEnabled') is not False:
+                  raise SystemExit('WebView debugging must be disabled in the release APK.')
+              for asset in pathlib.Path('dist').rglob('*'):
+                  if asset.is_file() and archive.read('assets/public/' + asset.relative_to('dist').as_posix()) != asset.read_bytes():
+                      raise SystemExit(f'APK web asset mismatch: {asset}')
+          print('Android signature, stable certificate, WebView configuration and bundled web assets verified.')
+          PY
+      - name: Remove temporary signing material
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, pathlib
+          for name in ('knightfall-signing.keystore', 'knightfall-signature.txt', 'knightfall-aligned.apk'):
+              pathlib.Path(os.environ['RUNNER_TEMP'], name).unlink(missing_ok=True)
+          PY
       - uses: actions/upload-artifact@v4
         with:
-          name: Knightfall-Android-debug
-          path: android/app/build/outputs/apk/debug/*.apk
+          name: Knightfall-Android
+          path: artifacts/Knightfall-${{ needs.source.outputs.version }}-Android.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: [source, windows, android]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.source.outputs.version }}
+      RELEASE_TAG: ${{ needs.source.outputs.tag }}
+      SOURCE_COMMIT: ${{ needs.source.outputs.commit }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Knightfall-*
+          path: release-assets
+          merge-multiple: true
+      - name: Verify release inventory and write checksums
+        run: |
+          python3 - <<'PY'
+          import hashlib, os, pathlib
+          root = pathlib.Path('release-assets')
+          version = os.environ['VERSION']
+          expected = {f'Knightfall-{version}-{suffix}' for suffix in ('Windows-x64.exe', 'Android.apk', 'source.zip', 'web.zip', 'Readme.md')}
+          actual = {path.name for path in root.iterdir() if path.is_file()}
+          if actual != expected: raise SystemExit('Release artifact inventory is incomplete or contains unexpected files.')
+          lines = []
+          for name in sorted(expected):
+              with (root / name).open('rb') as stream:
+                  lines.append(f"{hashlib.file_digest(stream, 'sha256').hexdigest()}  {name}\n")
+          (root / 'SHA256SUMS.txt').write_text(''.join(lines))
+          pathlib.Path('release-notes.md').write_text(f'Knightfall {version}\n\nDownload the full Windows portable EXE or the Android APK below. The Windows app is unsigned. Android uses the configured stable signing certificate; a different certificate cannot update an existing installation in place.\n\nSource, web assets, licenses and build instructions are included. Verify downloaded files against SHA256SUMS.txt. The desktop app can check this stable GitHub release and open its download after you choose; it does not execute or install an update automatically.\n')
+          PY
+      - name: Publish the stable release
+        run: |
+          set -euo pipefail
+          read -r object_type object_sha < <(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '[.object.type, .object.sha] | @tsv')
+          if [ "$object_type" = tag ]; then
+            read -r object_type object_sha < <(gh api "repos/$GITHUB_REPOSITORY/git/tags/$object_sha" --jq '[.object.type, .object.sha] | @tsv')
+          fi
+          if [ "$object_type" != commit ] || [ "$object_sha" != "$SOURCE_COMMIT" ]; then
+            echo 'Release tag no longer identifies the tested source commit.'
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "Knightfall $VERSION" --notes-file release-notes.md release-assets/*

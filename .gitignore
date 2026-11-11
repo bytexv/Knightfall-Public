@@ -17,3 +17,8 @@ ios/App/App/public/
 ios/App/App/capacitor.config.json
 ios/capacitor-cordova-ios-plugins/
 *.tsbuildinfo
+*.keystore
+*.jks
+*.p12
+*.pfx
+android/keystore.properties

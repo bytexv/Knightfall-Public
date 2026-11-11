@@ -7,6 +7,9 @@ import {
   BookOpen,
   Check,
   ChevronRight,
+  ChevronLeft,
+  Pause,
+  TrendingUp,
   CircleHelp,
   Clock3,
   Copy,
@@ -49,6 +52,24 @@ import GameNotes from "./components/GameNotes";
 import LearnHub from "./components/LearnHub";
 import NetworkPanel from "./components/NetworkPanel";
 import PuzzleRush from "./components/PuzzleRush";
+import RatingCard from "./components/RatingCard";
+import UpdateCard from "./components/UpdateCard";
+import {
+  explorePosition,
+  explorationFen,
+  playExplorationMove,
+  type Exploration,
+} from "./lib/exploration";
+import {
+  beginRatedGame,
+  markRatingAssisted,
+  markRatingEngine,
+  mergeRatingLedgers,
+  recordRatedResult,
+  sanitizeRatingLedger,
+  type RatingLedger,
+} from "./lib/ratings";
+import { type MoveReview } from "./lib/review";
 import { type EndgameDrill } from "./data/endgames";
 import { type Gambit } from "./data/gambits";
 import { puzzles } from "./data/puzzles";
@@ -176,6 +197,7 @@ export default function App() {
         typeof action === "function" ? action(gameRef.current) : action;
       gameRef.current = next;
       setGameState(next);
+      recordGameRating(next);
     },
     [],
   );
@@ -212,6 +234,17 @@ export default function App() {
   const [hintBusy, setHintBusy] = useState(false);
   const [arrows, setArrows] = useState<{ from: string; to: string }[]>([]);
   const [evaluation, setEvaluation] = useState(0);
+  const [ratings, setRatings] = useState<RatingLedger>(() =>
+    sanitizeRatingLedger(readStore("ratings", null)),
+  );
+  const ratingsRef = useRef(ratings);
+  const [exploration, setExploration] = useState<Exploration | null>(null);
+  const [activeReview, setActiveReview] = useState<MoveReview | null>(null);
+  const explorationRef = useRef(exploration);
+  explorationRef.current = exploration;
+  const pageRef = useRef(page);
+  pageRef.current = page;
+  const mainRef = useRef<HTMLElement | null>(null);
   const [archive, setArchive] = useState<GameSession[]>(savedGames);
   const [gameSearch, setGameSearch] = useState("");
   const [selectedGambit, setSelectedGambit] = useState<Gambit | null>(null);
@@ -244,13 +277,105 @@ export default function App() {
   const puzzle = puzzles[puzzleIndex];
   const boardPage = ["play", "analysis", "puzzles"].includes(page);
   const isLan = game.mode === "lan" && !!lanSnapshot;
-  const position =
+  const mainPosition =
     historyIndex < 0
       ? game.startFen
       : game.moves[historyIndex]?.fen || game.fen;
+  const preview =
+    exploration?.sourceId === game.id && page === "analysis"
+      ? exploration
+      : null;
+  const position = preview ? explorationFen(preview) : mainPosition;
   const chess = new Chess(position);
   const atLatest = historyIndex === game.moves.length - 1;
   const currentBot = bots.find((b) => b.id === game.botId) || bots[1];
+  const ratingEntry = ratings.history.find((entry) => entry.gameId === game.id);
+  const ratingEligible =
+    !!game.rating &&
+    game.rating.assistance.length === 0 &&
+    game.rating.engine !== "fallback";
+  function commitRatings(next: RatingLedger) {
+    ratingsRef.current = next;
+    setRatings(next);
+    if (!writeStore("ratings", next))
+      notify(
+        "Your rating changed, but device storage is full. Export a backup before closing.",
+      );
+  }
+  function selectReviewMove(index: number) {
+    setExploration(null);
+    setArrows([]);
+    setHistoryIndex(index);
+  }
+  function previewLine(anchor: number, moves: string[]) {
+    setArrows([]);
+    setExploration(explorePosition(gameRef.current, anchor, moves, "line"));
+  }
+  function retryReviewMove(index: number) {
+    const expected =
+      activeReview?.index === index ? activeReview.best : undefined;
+    setArrows([]);
+    setExploration(
+      explorePosition(gameRef.current, index - 1, [], "retry", expected),
+    );
+  }
+  function recordGameRating(completed: GameSession) {
+    if (!completed.result || completed.mode !== "bot" || !completed.rating)
+      return;
+    const result = recordRatedResult(ratingsRef.current, completed);
+    if (result.entry) {
+      commitRatings(result.ledger);
+      notify(
+        `Local Elo ${result.entry.after} (${result.entry.delta >= 0 ? "+" : ""}${result.entry.delta}). Game recorded.`,
+      );
+    }
+  }
+  useEffect(() => {
+    recordGameRating(game);
+  }, [game.id, game.result, game.rating]);
+  useEffect(() => {
+    if (!preview?.playing) return;
+    const timer = setTimeout(
+      () =>
+        setExploration((current) => {
+          if (!current || !current.playing || current.sourceId !== game.id)
+            return current;
+          const index = Math.min(
+            current.line.moves.length - 1,
+            current.index + 1,
+          );
+          return {
+            ...current,
+            index,
+            playing: index < current.line.moves.length - 1,
+          };
+        }),
+      680,
+    );
+    return () => clearTimeout(timer);
+  }, [preview?.index, preview?.playing, preview?.line, game.id]);
+  useEffect(() => {
+    setExploration(null);
+    setActiveReview(null);
+    window.scrollTo({ top: 0, behavior: "auto" });
+    const label = pageTitles[page].title;
+    document.title = `${label} · Knightfall`;
+    const reduced = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const animation =
+      !reduced &&
+      mainRef.current?.animate?.(
+        [
+          { opacity: 0.55, transform: "translateY(7px)" },
+          { opacity: 1, transform: "translateY(0)" },
+        ],
+        { duration: 210, easing: "cubic-bezier(.2,.7,.2,1)" },
+      );
+    return () => {
+      if (animation) animation.cancel();
+    };
+  }, [page]);
   useEffect(() => {
     const bot = new LocalEngine({
       onStatus: (_status, name) => setEngineName(name),
@@ -287,7 +412,7 @@ export default function App() {
     }
     if (game.mode !== "lan" && game.mode !== "puzzle")
       writeStore("current", game);
-  }, [game.moves, game.result, game.started, game.id, game.mode]);
+  }, [game.moves, game.result, game.started, game.id, game.mode, game.rating]);
   useEffect(() => {
     const save = () => {
       if (!["lan", "puzzle"].includes(gameRef.current.mode)) {
@@ -310,7 +435,8 @@ export default function App() {
     hintToken.current++;
     hintEngine.current?.cancel();
     setHintBusy(false);
-    setArrows([]);
+    if (!(preview && preview.line.moves.length === 0 && preview.index === -1))
+      setArrows([]);
   }, [position]);
   useEffect(() => {
     if (
@@ -356,7 +482,12 @@ export default function App() {
             return;
           }
           const next = applyMove(
-            settleClock(),
+            markRatingEngine(
+              settleClock(),
+              /stockfish/i.test(r.engine) && !/fallback/i.test(r.engine)
+                ? "stockfish"
+                : "fallback",
+            ),
             choice.slice(0, 2),
             choice.slice(2, 4),
             choice[4],
@@ -414,16 +545,40 @@ export default function App() {
         !(e.target as HTMLElement).closest(".chessboard")
       ) {
         e.preventDefault();
-        setHistoryIndex((i) => Math.max(-1, i - 1));
+        if (explorationRef.current && pageRef.current === "analysis")
+          setExploration((current) =>
+            current
+              ? {
+                  ...current,
+                  index: Math.max(-1, current.index - 1),
+                  playing: false,
+                }
+              : null,
+          );
+        else setHistoryIndex((i) => Math.max(-1, i - 1));
       }
       if (
         e.key === "ArrowRight" &&
         !(e.target as HTMLElement).closest(".chessboard")
       ) {
         e.preventDefault();
-        setHistoryIndex((i) =>
-          Math.min(gameRef.current.moves.length - 1, i + 1),
-        );
+        if (explorationRef.current && pageRef.current === "analysis")
+          setExploration((current) =>
+            current
+              ? {
+                  ...current,
+                  index: Math.min(
+                    current.line.moves.length - 1,
+                    current.index + 1,
+                  ),
+                  playing: false,
+                }
+              : null,
+          );
+        else
+          setHistoryIndex((i) =>
+            Math.min(gameRef.current.moves.length - 1, i + 1),
+          );
       }
       if (e.key === "Escape") setMobileNav(false);
       if (e.key.toLowerCase() === "f")
@@ -475,6 +630,8 @@ export default function App() {
     setGame(next);
     setHistoryIndex(index);
     setOrientation(next.playerColor);
+    setExploration(null);
+    setActiveReview(null);
     setArrows([]);
     setSelectedGambit(null);
     setSelectedDrill(null);
@@ -540,32 +697,36 @@ export default function App() {
           ? "w"
           : "b"
         : options.color;
-    replaceGame(
-      newSession({
-        mode: options.mode,
-        startFen: options.startFen,
-        playerColor,
-        botId: options.botId,
-        whiteName:
-          options.mode === "bot"
-            ? playerColor === "w"
-              ? settings.name
-              : bots.find((b) => b.id === options.botId)?.name
-            : "White",
-        blackName:
-          options.mode === "bot"
-            ? playerColor === "b"
-              ? settings.name
-              : bots.find((b) => b.id === options.botId)?.name
-            : "Black",
-        time: options.time,
-        started: true,
-        title:
-          options.mode === "bot"
-            ? `You vs ${bots.find((b) => b.id === options.botId)?.name}`
-            : "Pass & play",
-      }),
-    );
+    const fresh = newSession({
+      mode: options.mode,
+      startFen: options.startFen,
+      playerColor,
+      botId: options.botId,
+      whiteName:
+        options.mode === "bot"
+          ? playerColor === "w"
+            ? settings.name
+            : bots.find((b) => b.id === options.botId)?.name
+          : "White",
+      blackName:
+        options.mode === "bot"
+          ? playerColor === "b"
+            ? settings.name
+            : bots.find((b) => b.id === options.botId)?.name
+          : "Black",
+      time: options.time,
+      started: true,
+      title:
+        options.mode === "bot"
+          ? `You vs ${bots.find((b) => b.id === options.botId)?.name}`
+          : "Pass & play",
+    });
+    const enrolled =
+      options.mode === "bot" && !options.startFen
+        ? beginRatedGame(fresh, ratingsRef.current)
+        : { game: fresh, ledger: ratingsRef.current };
+    if (enrolled.game.rating) commitRatings(enrolled.ledger);
+    replaceGame(enrolled.game);
     setShowSetup(false);
     setPage("play");
     setModal(null);
@@ -589,7 +750,8 @@ export default function App() {
       game.started &&
       !game.result
     ) {
-      const paused = { ...settleClock(), started: false };
+      const settled = settleClock();
+      const paused = settled.result ? settled : { ...settled, started: false };
       gameRef.current = paused;
       setGame(paused);
       saveGame(paused);
@@ -608,6 +770,7 @@ export default function App() {
     }
     if (next === "games") setArchive(savedGames());
     if (next === "analysis") {
+      setGame(markRatingAssisted(gameRef.current, "analysis"));
       setShowSetup(false);
       if (!["analysis", "gambit", "lan"].includes(gameRef.current.mode)) {
         const source = gameRef.current;
@@ -676,6 +839,17 @@ export default function App() {
         lanRef.current?.move(from, to, promotion);
       return;
     }
+    if (page === "analysis" && !gambitPractice) {
+      const base = preview || explorePosition(gameRef.current, historyIndex);
+      const next = playExplorationMove(base, from, to, promotion);
+      if (next) {
+        setExploration(next);
+        setArrows([]);
+        if (settings.sound)
+          playSound(next.line.moves[next.index]?.captured ? "capture" : "move");
+      }
+      return;
+    }
     const current = settleClock();
     if (page !== "analysis" && (current.result || !current.started)) return;
     if (!atLatest && page !== "analysis") return;
@@ -732,32 +906,20 @@ export default function App() {
     }
     if (gambitPractice && selectedGambit) {
       const expected = new Chess(current.fen);
-      const move = expected.move(selectedGambit.moves[practiceIndex]);
+      const move = expected.move(selectedGambit.moves[current.moves.length]);
       if (move.from !== from || move.to !== to) {
         notify(
           `Try the opening idea again. Hint: ${selectedGambit.moves[practiceIndex]}`,
         );
         return;
       }
-      setPracticeIndex((n) => n + 1);
-      if (practiceIndex + 1 === selectedGambit.moves.length) {
+      setPracticeIndex(current.moves.length + 1);
+      if (current.moves.length + 1 === selectedGambit.moves.length) {
         setGambitPractice(false);
         notify("Opening line complete. Well played!");
       }
     }
-    let base = current;
-    if (page === "analysis" && !gambitPractice) {
-      base = {
-        ...current,
-        mode: "analysis",
-        moves: current.moves.slice(0, historyIndex + 1),
-        fen: position,
-        result: null,
-        started: true,
-        time: { base: 0, increment: 0 },
-      };
-    }
-    const next = applyMove(base, from, to, promotion);
+    const next = applyMove(current, from, to, promotion);
     if (next) {
       setGame(next);
       setHistoryIndex(next.moves.length - 1);
@@ -784,6 +946,7 @@ export default function App() {
       }
       return;
     }
+    setGame(markRatingAssisted(gameRef.current, "hint"));
     const token = ++hintToken.current;
     setHintBusy(true);
     try {
@@ -806,6 +969,22 @@ export default function App() {
     }
   }
   function undo() {
+    if (preview) {
+      setExploration((current) =>
+        current
+          ? {
+              ...current,
+              index: Math.max(-1, current.index - 1),
+              playing: false,
+            }
+          : null,
+      );
+      return;
+    }
+    if (page === "analysis" && !gambitPractice) {
+      selectReviewMove(Math.max(-1, historyIndex - 1));
+      return;
+    }
     if (isLan) {
       notify("Takebacks are disabled for Wi-Fi games.");
       return;
@@ -815,7 +994,11 @@ export default function App() {
       game.mode === "bot" && new Chess(game.fen).turn() === game.playerColor
         ? 2
         : 1;
-    const next = undoMoves(settleClock(), count);
+    const next = undoMoves(
+      markRatingAssisted(settleClock(), "takeback"),
+      count,
+    );
+    if (gambitPractice) setPracticeIndex(next.moves.length);
     setGame(next);
     setHistoryIndex(next.moves.length - 1);
     notify("Move taken back. Clock time is not restored.");
@@ -963,6 +1146,11 @@ export default function App() {
     if (!confirmed && confirmLeave(() => imported(next, true))) return;
     leaveLan();
     saveGame(gameRef.current);
+    next = markRatingAssisted(next, "analysis");
+    if (next.rating && !next.result) {
+      const saved = savedGames().find((item) => item.id === next.id);
+      if (saved) saveGame({ ...saved, rating: next.rating });
+    }
     replaceGame(next);
     setShowSetup(false);
     setPage("analysis");
@@ -977,7 +1165,10 @@ export default function App() {
       return color === game.playerColor ? settings.name : currentBot.name;
     if (game.mode === "puzzle")
       return color === game.playerColor ? "Your turn" : "Find the continuation";
-    return color === "w" ? "White" : "Black";
+    return (
+      (color === "w" ? game.whiteName : game.blackName) ||
+      (color === "w" ? "White" : "Black")
+    );
   }
   function playerBar(color: Color, bottom = false) {
     const bot = game.mode === "bot" && color !== game.playerColor;
@@ -1010,7 +1201,7 @@ export default function App() {
             {bot
               ? thinking
                 ? "Thinking…"
-                : currentBot.rating + " · local bot"
+                : `≈ ${currentBot.elo} Elo · ${currentBot.rating}`
               : game.mode === "puzzle"
                 ? `${puzzle.rating} · ${puzzle.theme}`
                 : isLan
@@ -1018,7 +1209,7 @@ export default function App() {
                     ? "Same Wi-Fi"
                     : "Reconnecting…"
                   : color === game.playerColor && game.mode === "bot"
-                    ? "Playing as " + (color === "w" ? "White" : "Black")
+                    ? `${ratings.rating} Local Elo${ratings.provisional ? " · provisional" : ""}`
                     : game.mode === "analysis"
                       ? "Analysis position"
                       : "Local player"}
@@ -1117,7 +1308,8 @@ export default function App() {
               >
                 <span>{recent.title}</span>
                 <small>
-                  {Math.ceil(recent.moves.length / 2)} moves ·{" "}
+                  {Math.ceil(recent.moves.length / 2)}{" "}
+                  {recent.moves.length <= 2 ? "move" : "moves"} ·{" "}
                   {!recent.result && ["bot", "local"].includes(recent.mode)
                     ? "Continue"
                     : "Review game"}
@@ -1157,7 +1349,7 @@ export default function App() {
             <span>How to play</span>
           </button>
           <div className="sidebar-footer">
-            <span>Knightfall v1.1</span>
+            <span>Knightfall v1.2</span>
             <Heart size={12} />
           </div>
         </div>
@@ -1200,6 +1392,15 @@ export default function App() {
               <ArrowDownToLine size={18} />
             </button>
             <button
+              className="header-rating"
+              onClick={() => navigate("settings")}
+              aria-label={`Your local Elo: ${ratings.rating}${ratings.provisional ? ", provisional" : ""}`}
+            >
+              <TrendingUp size={15} />
+              <strong>{ratings.rating}</strong>
+              <span>Local Elo</span>
+            </button>
+            <button
               className="profile-avatar"
               onClick={() => navigate("settings")}
               aria-label="Your profile"
@@ -1210,10 +1411,10 @@ export default function App() {
             </button>
           </div>
         </header>
-        <main>
+        <main ref={mainRef} aria-labelledby="page-title">
           <div className="page-heading">
             <div>
-              <h1>
+              <h1 id="page-title">
                 {page === "play" && settings.name !== "You"
                   ? `${settings.name}’s board`
                   : pageTitles[page].title}
@@ -1328,7 +1529,11 @@ export default function App() {
                         ? "Untimed"
                         : `${Math.round(game.time.base / 60)}${game.time.increment ? ` + ${game.time.increment}` : " min"}`}
                     <span>·</span>
-                    {page === "puzzles" ? "Practice" : "Casual"}
+                    {page === "puzzles"
+                      ? "Practice"
+                      : ratingEligible
+                        ? "Local rated"
+                        : "Practice"}
                   </span>
                 </div>
                 {playerBar(topColor)}
@@ -1352,15 +1557,212 @@ export default function App() {
                     onMove={makeMove}
                     disabled={!boardEnabled}
                     lastMove={
-                      historyIndex >= 0 ? game.moves[historyIndex] : null
+                      preview
+                        ? preview.line.moves[preview.index] || null
+                        : historyIndex >= 0
+                          ? game.moves[historyIndex]
+                          : null
                     }
                     arrows={arrows}
                     showCoordinates={settings.coordinates}
                     showLegalMoves={settings.legalMoves}
                     theme={settings.boardTheme}
                   />
+                  {page === "analysis" &&
+                    !preview &&
+                    activeReview &&
+                    activeReview.index === historyIndex &&
+                    game.moves[historyIndex] && (
+                      <span
+                        className={`board-review-badge review-${activeReview.label.toLowerCase()}`}
+                        role="img"
+                        aria-label={`${game.moves[historyIndex].san}: ${activeReview.label}`}
+                        style={{
+                          left: `${((orientation === "w" ? game.moves[historyIndex].to.charCodeAt(0) - 97 : 104 - game.moves[historyIndex].to.charCodeAt(0)) + 1) * 12.5}%`,
+                          top: `${(orientation === "w" ? 8 - Number(game.moves[historyIndex].to[1]) : Number(game.moves[historyIndex].to[1]) - 1) * 12.5}%`,
+                        }}
+                      >
+                        {
+                          {
+                            Brilliant: "!!",
+                            Great: "!",
+                            Best: "★",
+                            Excellent: "✓",
+                            Good: "✓",
+                            Book: "B",
+                            Inaccuracy: "?!",
+                            Mistake: "?",
+                            Miss: "−",
+                            Blunder: "??",
+                          }[activeReview.label]
+                        }
+                      </span>
+                    )}
                 </div>
                 {playerBar(bottomColor, true)}
+                {page === "analysis" && activeReview && !preview && (
+                  <div
+                    className={`mobile-review-toolbar quality-${activeReview.label.toLowerCase()}`}
+                  >
+                    <button
+                      className="mobile-review-feedback"
+                      onClick={() =>
+                        document
+                          .querySelector(".analysis-studio")
+                          ?.scrollIntoView({
+                            behavior: window.matchMedia?.(
+                              "(prefers-reduced-motion: reduce)",
+                            ).matches
+                              ? "auto"
+                              : "smooth",
+                            block: "start",
+                          })
+                      }
+                    >
+                      <span>
+                        {activeReview.playedSAN}{" "}
+                        <strong>{activeReview.label}</strong>
+                      </span>
+                      <small>
+                        View feedback <ChevronRight size={12} />
+                      </small>
+                    </button>
+                    <button
+                      aria-label="Previous reviewed move"
+                      disabled={historyIndex < 0}
+                      onClick={() => selectReviewMove(historyIndex - 1)}
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <button
+                      aria-label="Next reviewed move"
+                      disabled={historyIndex >= game.moves.length - 1}
+                      onClick={() => selectReviewMove(historyIndex + 1)}
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                )}
+                {preview && (
+                  <section
+                    className="variation-bar"
+                    aria-label="Analysis variation"
+                  >
+                    <div className="variation-heading">
+                      <strong>
+                        {preview.mode === "retry"
+                          ? "Find a better move"
+                          : "Exploring a line"}
+                      </strong>
+                      <button
+                        onClick={() => {
+                          setExploration(null);
+                          setArrows([]);
+                        }}
+                      >
+                        <X size={14} /> Back to game
+                      </button>
+                    </div>
+                    <p role="status">
+                      {preview.feedback ||
+                        (preview.mode === "retry"
+                          ? "Try your idea on the board. Your original game stays saved."
+                          : "Step through this line, or move a piece to try your own idea.")}
+                    </p>
+                    <div className="variation-controls">
+                      <button
+                        aria-label="Previous variation move"
+                        disabled={preview.index < 0}
+                        onClick={() =>
+                          setExploration((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  index: current.index - 1,
+                                  playing: false,
+                                }
+                              : null,
+                          )
+                        }
+                      >
+                        <ChevronLeft size={17} />
+                      </button>
+                      <button
+                        aria-label={
+                          preview.playing ? "Pause variation" : "Play variation"
+                        }
+                        disabled={!preview.line.moves.length}
+                        onClick={() =>
+                          setExploration((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  index:
+                                    current.index >=
+                                    current.line.moves.length - 1
+                                      ? -1
+                                      : current.index,
+                                  playing: !current.playing,
+                                }
+                              : null,
+                          )
+                        }
+                      >
+                        {preview.playing ? (
+                          <Pause size={16} />
+                        ) : (
+                          <Play size={16} />
+                        )}
+                      </button>
+                      <button
+                        aria-label="Next variation move"
+                        disabled={
+                          preview.index >= preview.line.moves.length - 1
+                        }
+                        onClick={() =>
+                          setExploration((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  index: current.index + 1,
+                                  playing: false,
+                                }
+                              : null,
+                          )
+                        }
+                      >
+                        <ChevronRight size={17} />
+                      </button>
+                      <span>
+                        {preview.index < 0
+                          ? "Starting position"
+                          : preview.line.moves[preview.index]?.san}{" "}
+                        · {preview.index + 1}/{preview.line.moves.length}
+                      </span>
+                    </div>
+                    {!!preview.line.moves.length && (
+                      <div className="variation-moves">
+                        {preview.line.moves.map((move, index) => (
+                          <button
+                            key={index}
+                            className={
+                              preview.index === index ? "selected" : ""
+                            }
+                            onClick={() =>
+                              setExploration((current) =>
+                                current
+                                  ? { ...current, index, playing: false }
+                                  : null,
+                              )
+                            }
+                          >
+                            {move.san}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                )}
                 <div className="board-tools">
                   <div>
                     <button
@@ -1387,7 +1789,9 @@ export default function App() {
                       aria-label="Take back move"
                       onClick={undo}
                       disabled={
-                        !game.moves.length || isLan || game.mode === "puzzle"
+                        (preview ? preview.index < 0 : !game.moves.length) ||
+                        isLan ||
+                        game.mode === "puzzle"
                       }
                     >
                       <Undo2 size={18} />
@@ -1464,7 +1868,7 @@ export default function App() {
                     </button>
                   </div>
                 </div>
-                {!atLatest && (
+                {!atLatest && !preview && (
                   <div className="history-notice">
                     <Clock3 size={15} />
                     <span>
@@ -1480,37 +1884,51 @@ export default function App() {
                     </button>
                   </div>
                 )}
-                {game.result && game.mode !== "puzzle" && (
-                  <div className="game-result" role="status">
-                    <Trophy size={28} />
-                    <div>
-                      <h3>{resultTitle}</h3>
-                      <p>{game.result.reason}</p>
+                {game.result &&
+                  game.mode !== "puzzle" &&
+                  page !== "analysis" && (
+                    <div className="game-result" role="status">
+                      <Trophy size={28} />
+                      <div>
+                        <h2>{resultTitle}</h2>
+                        <p>
+                          {game.result.reason}
+                          {ratingEntry && (
+                            <span
+                              className={`result-rating ${ratingEntry.delta >= 0 ? "rating-up" : "rating-down"}`}
+                            >
+                              {" "}
+                              · Local Elo {ratingEntry.after} (
+                              {ratingEntry.delta >= 0 ? "+" : ""}
+                              {ratingEntry.delta})
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      {isLan ? (
+                        <button
+                          className="button primary"
+                          onClick={() => lanRef.current?.rematch()}
+                        >
+                          {lanSnapshot.rematchVotes.includes(
+                            lanSnapshot.yourColor!,
+                          )
+                            ? "Rematch requested"
+                            : "Rematch"}
+                        </button>
+                      ) : (
+                        <button
+                          className="button primary"
+                          onClick={() => {
+                            setPage("analysis");
+                            setShowSetup(false);
+                          }}
+                        >
+                          Review game <ArrowRight size={15} />
+                        </button>
+                      )}
                     </div>
-                    {isLan ? (
-                      <button
-                        className="button primary"
-                        onClick={() => lanRef.current?.rematch()}
-                      >
-                        {lanSnapshot.rematchVotes.includes(
-                          lanSnapshot.yourColor!,
-                        )
-                          ? "Rematch requested"
-                          : "Rematch"}
-                      </button>
-                    ) : (
-                      <button
-                        className="button primary"
-                        onClick={() => {
-                          setPage("analysis");
-                          setShowSetup(false);
-                        }}
-                      >
-                        Review game <ArrowRight size={15} />
-                      </button>
-                    )}
-                  </div>
-                )}
+                  )}
                 {page === "play" && !isLan && (
                   <div className="underboard-tip">
                     <Lightbulb size={17} />
@@ -1524,11 +1942,14 @@ export default function App() {
                   </div>
                 )}
                 {page === "analysis" && (
-                  <>
+                  <details className="analysis-notebook">
+                    <summary>
+                      <h2>Scoresheet & notes</h2>
+                    </summary>
                     <MoveList
                       game={game}
                       index={historyIndex}
-                      onSelect={setHistoryIndex}
+                      onSelect={selectReviewMove}
                     />
                     {!isLan && (
                       <GameNotes
@@ -1551,7 +1972,7 @@ export default function App() {
                         }}
                       />
                     )}
-                  </>
+                  </details>
                 )}
               </div>
               <aside className="game-panel" aria-label="Game tools">
@@ -1607,9 +2028,7 @@ export default function App() {
                       <section className="card game-status-card">
                         <div className="panel-heading">
                           <h3>
-                            {isLan
-                              ? "Your Wi-Fi room"
-                              : "A good game in progress"}
+                            {isLan ? "Your Wi-Fi room" : "Game in progress"}
                           </h3>
                           <span className="soft-badge">
                             {isLan
@@ -1684,7 +2103,9 @@ export default function App() {
                               {isLan
                                 ? "A friendly game, connected locally."
                                 : game.mode === "bot"
-                                  ? "Take your time, try an idea, and enjoy the game."
+                                  ? ratingEligible
+                                    ? "Finish this game to update your Local Elo. Hints and takebacks switch it to practice."
+                                    : "Practice game. Try a hint or take back a move whenever you need."
                                   : "Share the board. The next move is yours."}
                             </p>
                           </>
@@ -1843,10 +2264,14 @@ export default function App() {
                     <AnalysisPanel
                       fen={position}
                       game={game}
+                      activeIndex={historyIndex}
+                      onActiveReview={setActiveReview}
+                      onPreviewLine={previewLine}
+                      onRetryMove={retryReviewMove}
                       onEvaluation={setEvaluation}
                       onArrow={(from, to) => setArrows([{ from, to }])}
                       onImport={() => setModal("import")}
-                      onReviewSelect={setHistoryIndex}
+                      onReviewSelect={selectReviewMove}
                     />
                   </>
                 )}
@@ -2308,6 +2733,8 @@ export default function App() {
                 ))}
               </section>
               <div className="settings-aside">
+                <RatingCard ledger={ratings} />
+                <UpdateCard />
                 <section className="card about-card">
                   <img src="./icon.svg" alt="" />
                   <h2>About Knightfall</h2>
@@ -2343,7 +2770,7 @@ export default function App() {
                     <Download size={16} /> Install Knightfall
                   </button>
                   <p className="fine-print">
-                    Knightfall v1.1 · GPL-3.0-or-later. Chess rules by chess.js.
+                    Knightfall v1.2 · GPL-3.0-or-later. Chess rules by chess.js.
                     Pieces by Colin M. L. Burnett, CC BY-SA 3.0. Stockfish is
                     GPLv3. Creator mentions are educational; no endorsement or
                     affiliation is implied.
@@ -2352,7 +2779,8 @@ export default function App() {
                 <section className="card backup-card">
                   <h3>Back up your games</h3>
                   <p>
-                    Back up your saved games, settings, and puzzle progress.
+                    Back up your saved games, Local Elo, settings, and puzzle
+                    progress.
                   </p>
                   <button
                     className="button secondary full"
@@ -2360,7 +2788,13 @@ export default function App() {
                       void downloadFile(
                         "knightfall-backup.json",
                         JSON.stringify(
-                          { version: 1, games: archive, settings, solved },
+                          {
+                            version: 1,
+                            games: archive,
+                            settings,
+                            solved,
+                            ratings,
+                          },
                           null,
                           2,
                         ),
@@ -2422,6 +2856,13 @@ export default function App() {
                             setSolved(progress);
                             writeStore("solved", progress);
                           }
+                          if (data.ratings)
+                            commitRatings(
+                              mergeRatingLedgers(
+                                ratingsRef.current,
+                                data.ratings,
+                              ),
+                            );
                           notify(`Restored ${valid.length} games.`);
                         } catch (e) {
                           notify(

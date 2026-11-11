@@ -120,6 +120,18 @@ async function runAcceptance({ window, app, outputDir }) {
       await click(`[aria-label="Promote to ${names[promotion]}"]`);
     }
   };
+  const checkRenderedPosition = async (fen, description) => {
+    const rendered = await evaluate(
+      `Object.fromEntries([...document.querySelectorAll('.chessboard [data-square]')].map(square=>[square.getAttribute('data-square'),square.querySelector('img.chess-piece')?.getAttribute('src').split('/').pop().replace('.svg','')||null]))`,
+    );
+    const chess = new Chess(fen);
+    check(Object.keys(rendered).length === 64, `${description}: missing board squares`);
+    for (const [square, piece] of Object.entries(rendered)) {
+      const expected = chess.get(square);
+      check(piece === (expected ? expected.color + expected.type.toUpperCase() : null),
+        `${description}: wrong piece on ${square}`);
+    }
+  };
   const inspectLayout = async () => {
     const geometry = await evaluate(
       `(() => {const viewport={width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth};const cells=[...document.querySelectorAll('.chessboard .square')].map(cell=>cell.getBoundingClientRect());return {...viewport,boardCells:cells.length,nonSquareCells:cells.filter(cell=>Math.abs(cell.width-cell.height)>1.1).length,brokenImages:[...document.images].filter(image=>image.complete&&image.naturalWidth===0).map(image=>image.getAttribute('src'))};})()`,
@@ -169,7 +181,7 @@ async function runAcceptance({ window, app, outputDir }) {
       });
       if (name === "analysis" && width === 390) {
         await evaluate(
-          "document.querySelector('.analysis-card')?.scrollIntoView({block:'start'})",
+          "document.querySelector('.analysis-workbench')?.scrollIntoView({block:'start'})",
         );
         await wait(120);
         const detail = path.join(outputDir, "analysis-detail-390.png");
@@ -281,6 +293,41 @@ async function runAcceptance({ window, app, outputDir }) {
       await evaluate("!!document.querySelector('[aria-label=\"Mute sounds\"]')")
     )
       await click('[aria-label="Mute sounds"]');
+
+    await step("page-motion-respects-reduced-motion", async () => {
+      window.webContents.debugger.attach("1.3");
+      try {
+        await evaluate(`(() => {
+          window.__nativePageMotion=[];
+          window.__nativeOriginalAnimate=Element.prototype.animate;
+          Element.prototype.animate=function(...args){
+            const animation=window.__nativeOriginalAnimate.apply(this,args);
+            if(this.tagName==='MAIN')window.__nativePageMotion.push({duration:animation.effect.getTiming().duration,keyframes:animation.effect.getKeyframes(),state:animation.playState});
+            return animation;
+          };
+        })()`);
+        await window.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", {
+          features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
+        });
+        await navigate("Settings");
+        const normal = await evaluate("window.__nativePageMotion");
+        check(normal.length > 0 && normal.some(animation => animation.duration > 0 &&
+          animation.state === "running" && animation.keyframes.some(frame => frame.transform)),
+        "Page navigation did not create a real browser animation");
+        await window.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", {
+          features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+        });
+        const count = normal.length;
+        await navigate("Play chess");
+        check(await evaluate(`matchMedia('(prefers-reduced-motion: reduce)').matches&&window.__nativePageMotion.length===${count}&&document.querySelector('main').getAnimations().every(animation=>animation.playState!=='running')`),
+          "Reduced-motion navigation still animated the page");
+        return { realBrowserAnimation: true, reducedMotionSkippedAnimation: true };
+      } finally {
+        await evaluate("void (Element.prototype.animate=window.__nativeOriginalAnimate)");
+        await window.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [] });
+        window.webContents.debugger.detach();
+      }
+    });
 
     await step("personalized-heading-and-recent-game-resume", async () => {
       await click('[aria-label="Your profile"]');
@@ -408,7 +455,9 @@ async function runAcceptance({ window, app, outputDir }) {
 
     await step("real-local-analysis-and-review", async () => {
       await navigate("Analysis");
+      await click(".analysis-notebook > summary");
       await click('.move-list button[data-ply="0"]');
+      await click("#analysis-tab-live");
       await poll(
         "document.querySelectorAll('.engine-line').length>0&&document.querySelector('.evaluation-summary strong')?.textContent!=='—'",
         "Stockfish principal variations",
@@ -421,6 +470,7 @@ async function runAcceptance({ window, app, outputDir }) {
         /Stockfish/i.test(indicator),
         `The rendered engine is not Stockfish: ${indicator}`,
       );
+      await click("#analysis-tab-review");
       await clickText("Review this game");
       await poll(
         "document.querySelectorAll('.eval-chart button').length===7&&!document.querySelector('[aria-label=\"Game review progress\"]')",
@@ -448,15 +498,51 @@ async function runAcceptance({ window, app, outputDir }) {
       return {
         engine: indicator,
         reviewMoves: 7,
-        quality: await evaluate(
-          "document.querySelector('.review-card .soft-badge')?.textContent",
-        ),
+        qualityBySide: await evaluate("document.querySelector('.review-side-summary')?.innerText"),
         workerBestmoves: messages.filter((entry) =>
           entry.message.startsWith("bestmove "),
         ).length,
         exportedPgn: download.path,
         comments: download.chess.getComments(),
       };
+    });
+
+    await step("guided-review-graph-variation-and-retry", async () => {
+      const original = await game();
+      const unchanged = async () => check(JSON.stringify(await game()) === JSON.stringify(original),
+        "Exploring a review line changed the recorded game");
+      await evaluate("document.querySelectorAll('.eval-chart button')[5].click()");
+      await poll("document.querySelector('.review-nav > span')?.textContent==='Move 6 of 7'&&document.querySelector('.board-review-badge')?.getAttribute('aria-label').startsWith('Nf6:')",
+        "graph selection updates the board, review focus and move badge");
+      await checkRenderedPosition(original.moves[5].fen, "Selected reviewed move");
+      const bestSAN = await evaluate("document.querySelector('.review-alternative > div > strong').textContent");
+      const before = new Chess(original.moves[5].before);
+      const expected = before.move(bestSAN);
+      check(!!expected, "The suggested review move is not legal in the reviewed position");
+      await clickText("Explore line", ".review-line-actions button");
+      await poll("!!document.querySelector('.variation-bar')", "independent review variation");
+      if (await evaluate("!!document.querySelector('[aria-label=\"Pause variation\"]')"))
+        await click('[aria-label="Pause variation"]');
+      await checkRenderedPosition(original.moves[5].before, "Variation starts before the reviewed move");
+      await click('[aria-label="Next variation move"]');
+      await checkRenderedPosition(before.fen(), "First engine variation move");
+      await unchanged();
+      await clickText("Back to game", ".variation-bar button");
+      await checkRenderedPosition(original.moves[5].fen, "Returning to the recorded game");
+      await clickText("Retry move", ".review-line-actions button");
+      await poll("document.querySelector('.variation-heading strong')?.textContent==='Find a better move'",
+        "review retry board");
+      await checkRenderedPosition(original.moves[5].before, "Retry starting position");
+      await boardMove(expected.from, expected.to, expected.promotion);
+      await poll("document.querySelector('.variation-bar [role=\"status\"]')?.textContent.includes('preferred move')",
+        "retry recognizes the engine choice");
+      await checkRenderedPosition(before.fen(), "Retry move on the board");
+      await unchanged();
+      await captureResponsive("review-retry");
+      await clickText("Back to game", ".variation-bar button");
+      await unchanged();
+      return { selectedPly: 6, bestMove: expected.san, variationAndRetryLegal: true,
+        originalGamePreserved: true, preservedMoves: original.moves.length };
     });
 
     await step("pgn-import-and-native-export", async () => {
@@ -748,6 +834,65 @@ async function runAcceptance({ window, app, outputDir }) {
       };
     });
 
+    await step("local-elo-enrollment-result-dedup-and-hint-exclusion", async () => {
+      const ledger = () => evaluate("JSON.parse(localStorage.getItem('knightfall:ratings')||'null')");
+      const initial = await ledger();
+      const initialCount = initial?.totalRatedGames || 0;
+      const startBot = async () => {
+        await navigate("Play chess");
+        await clickText("New game", ".page-heading button");
+        await evaluate("(() => {const option=[...document.querySelectorAll('[role=\"dialog\"] .time-picker button')].find(button=>button.textContent.includes('∞'));if(!option)throw new Error('Untimed control unavailable');option.click();})()");
+        await clickText("Play with Scout", '[role="dialog"] button');
+        const started = await game();
+        const enrolled = await ledger();
+        check(started.rating?.engine === "pending" && started.rating.assistance.length === 0 &&
+          enrolled.pending.some(entry => entry.gameId === started.id && entry.ticket === started.rating.ticket),
+        "A normal bot game was not enrolled in the local rating ledger");
+        await boardMove("e2", "e4");
+        await poll("JSON.parse(localStorage.getItem('knightfall:current')||'null')?.moves.length===2&&JSON.parse(localStorage.getItem('knightfall:current')||'null')?.rating?.engine==='stockfish'",
+          "rated game receives a real local Stockfish reply", 25000);
+        return await game();
+      };
+      const rated = await startBot();
+      await navigate("Settings");
+      await reloadLocalApp();
+      check((await game()).rating?.ticket === rated.rating.ticket &&
+        (await ledger()).pending.some(entry => entry.gameId === rated.id),
+      "Rating enrollment did not survive an offline reload");
+      await click(".sidebar-recent .recent-game");
+      await clickText("Resign", ".game-actions button");
+      await clickText("Resign", '[role="dialog"] button');
+      await poll(`JSON.parse(localStorage.getItem('knightfall:ratings')||'null')?.totalRatedGames===${initialCount + 1}`,
+        "completed bot game records one local Elo result");
+      const recorded = await ledger();
+      const entry = recorded.history.find(item => item.gameId === rated.id);
+      check(entry?.score === 0 && entry.delta < 0 && recorded.losses === (initial?.losses || 0) + 1,
+        "Human resignation did not record the expected local rating loss");
+      check(await evaluate(`document.querySelector('.header-rating strong')?.textContent===${JSON.stringify(String(recorded.rating))}&&document.querySelector('.result-rating')?.textContent.includes('Local Elo')`),
+        "The updated rating is missing from the game result or header");
+      await reloadLocalApp();
+      await navigate("Analysis");
+      check(JSON.stringify((await ledger()).history) === JSON.stringify(recorded.history),
+        "Reloading or reviewing a completed game counted its rating twice");
+      const assisted = await startBot();
+      await click(".hint-button");
+      await poll("JSON.parse(localStorage.getItem('knightfall:current')||'null')?.rating?.assistance.includes('hint')",
+        "hint marks the current game as assisted");
+      await clickText("Resign", ".game-actions button");
+      await clickText("Resign", '[role="dialog"] button');
+      await poll("JSON.parse(localStorage.getItem('knightfall:current')||'null')?.result?.reason==='Resignation'",
+        "assisted game finishes normally");
+      check(JSON.stringify((await ledger()).history) === JSON.stringify(recorded.history),
+        "A game with a hint changed the local Elo ledger");
+      await navigate("Settings");
+      check(await evaluate(`document.querySelector('.rating-value > strong')?.textContent===${JSON.stringify(String(recorded.rating))}`),
+        "The persistent rating card differs from the recorded local Elo");
+      await captureResponsive("local-elo");
+      return { enrolledGameId: rated.id, initialCount, finalCount: recorded.totalRatedGames,
+        before: entry.before, after: entry.after, delta: entry.delta, deduplicatedAfterReload: true,
+        hintGameId: assisted.id, hintGameUnrated: true, engine: "Stockfish WASM worker" };
+    });
+
     await step("production-lan-moves-rematch-and-leave", async () => {
       const host = await evaluate("window.knightfall.hostLan()");
       const hostOrigin = `http://127.0.0.1:${host.port}`;
@@ -910,6 +1055,7 @@ async function runAcceptance({ window, app, outputDir }) {
       );
       check(archiveAfter >= archiveBefore, "Saved games were lost on reload");
       await navigate("Analysis");
+      await click("#analysis-tab-live");
       await poll(
         "document.querySelectorAll('.engine-line').length>0&&document.querySelector('.engine-indicator')?.textContent.includes('Stockfish')",
         "real engine after offline reload",

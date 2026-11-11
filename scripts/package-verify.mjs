@@ -17,9 +17,9 @@ const unpacked = path.join(windowsDir,'win-unpacked');
 const archive = path.join(unpacked,'resources','app.asar');
 const entries = new Set(asar.listPackage(archive));
 assert.equal(JSON.parse(asar.extractFile(archive,'package.json')).version,packageJson.version,'Packaged app version is stale');
-const essentials = ['/LICENSE','/docs/THIRD-PARTY.md','/dist/licenses/SOFTWARE-NOTICES.txt','/dist/licenses/KNIGHTFALL-GPL-3.0.txt','/desktop/main.cjs','/desktop/preload.cjs','/desktop/smoke.cjs','/server/index.mjs','/dist/index.html','/dist/sw.js','/dist/sw-manifest.js','/dist/manifest.webmanifest','/dist/engine/stockfish-source.tgz','/dist/engine/COPYING.txt','/dist/engine/SOURCE.txt','/node_modules/ws/package.json','/node_modules/chess.js/package.json'];
+const essentials = ['/LICENSE','/docs/THIRD-PARTY.md','/dist/licenses/SOFTWARE-NOTICES.txt','/dist/licenses/KNIGHTFALL-GPL-3.0.txt','/desktop/main.cjs','/desktop/preload.cjs','/desktop/update.cjs','/desktop/smoke.cjs','/server/index.mjs','/dist/index.html','/dist/sw.js','/dist/sw-manifest.js','/dist/manifest.webmanifest','/dist/update-config.json','/dist/engine/stockfish-source.tgz','/dist/engine/COPYING.txt','/dist/engine/SOURCE.txt','/node_modules/ws/package.json','/node_modules/chess.js/package.json'];
 for (const entry of essentials) assert.ok(entries.has(entry), `Missing packaged file ${entry}`);
-for (const relative of ['desktop/main.cjs','desktop/preload.cjs','desktop/smoke.cjs','server/index.mjs']) {
+for (const relative of ['desktop/main.cjs','desktop/preload.cjs','desktop/update.cjs','desktop/smoke.cjs','server/index.mjs']) {
   assert.ok(asar.extractFile(archive,relative).equals(await readFile(path.join(root,relative))),`Stale packaged runtime ${relative}`);
 }
 for (const entry of entries) assert.ok(!/(^|\/)\.env($|\.)|local\.properties$|\.keystore$|\.jks$/.test(entry), `Unexpected private build file ${entry}`);

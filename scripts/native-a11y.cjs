@@ -43,8 +43,8 @@ async function runAccessibility({ window, app, outputDir }) {
     layout: [],
     missingFeatures: [],
   };
-  const poll = async (condition, description) => {
-    const end = Date.now() + 20000;
+  const poll = async (condition, description, timeout = 20000) => {
+    const end = Date.now() + timeout;
     while (Date.now() < end) {
       const result = await evaluate(`!!(${condition})`);
       if (result) return result;
@@ -225,8 +225,12 @@ async function runAccessibility({ window, app, outputDir }) {
       await resize(1440);
 
       await navigate("Analysis");
-      await poll("document.querySelector('.analysis-card')", "analysis");
-      await scan("analysis-desktop");
+      await poll("document.querySelector('.analysis-workbench')", "analysis");
+      await scan("analysis-review-empty-desktop");
+      await checkTabsKeyboard("analysis-tabs", ".analysis-tabs");
+      await click("#analysis-tab-live");
+      await poll("document.querySelector('.engine-line')", "live local analysis");
+      await scan("analysis-live-desktop");
       await clickText("Import game");
       await scan("import-dialog");
       await checkDialogKeyboard("import-dialog");
@@ -238,6 +242,31 @@ async function runAccessibility({ window, app, outputDir }) {
       );
       await scan("import-error");
       await closeDialog();
+      await clickText("Import game");
+      await fill("#import-text", '[Event "Accessibility review"]\n\n1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7# 1-0');
+      await clickText("Analyze game");
+      await poll("!document.querySelector('[role=\"dialog\"]')&&JSON.parse(localStorage.getItem('knightfall:current')||'null')?.moves.length===7", "imported review game");
+      await click("#analysis-tab-review");
+      await clickText("Review this game");
+      await poll("document.querySelectorAll('.eval-chart button').length===7&&!document.querySelector('[aria-label=\"Game review progress\"]')", "completed guided review", 45000);
+      await evaluate("document.querySelectorAll('.eval-chart button')[5].click()");
+      await scan("analysis-review-results-desktop");
+      await resize(390, 844);
+      await scan("analysis-review-results-mobile");
+      await clickText("Explore line", ".review-line-actions button");
+      if (await evaluate("!!document.querySelector('[aria-label=\"Pause variation\"]')"))
+        await click('[aria-label="Pause variation"]');
+      await scan("analysis-variation-mobile");
+      await resize(1440);
+      await scan("analysis-variation-desktop");
+      await clickText("Back to game", ".variation-bar button");
+      await clickText("Retry move", ".review-line-actions button");
+      await resize(390, 844);
+      await scan("analysis-retry-mobile");
+      await clickText("Back to game", ".variation-bar button");
+      await resize(1440);
+      await click(".analysis-notebook > summary");
+      await scan("analysis-scoresheet-and-notes");
       await click('[aria-label="Set up position"]');
       await scan("position-editor");
       await checkDialogKeyboard("position-editor");

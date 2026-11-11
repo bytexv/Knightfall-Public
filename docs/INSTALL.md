@@ -4,13 +4,15 @@ Knightfall is an original chess studio for web, Windows, and Android. The game r
 
 ## Windows portable app
 
-1. Download `Knightfall-1.1.0-Windows-x64.exe` from the release artifacts.
+1. Download `Knightfall-1.2.0-Windows-x64.exe` from the release artifacts.
 2. Run it on a 64-bit Windows 10/11 computer. The portable app does not need administrator rights.
 3. Games and preferences are kept in the current Windows user's app-data directory. Export important games as PGN before moving to a different computer.
 
 The build is unsigned. Windows may show an unknown-publisher or SmartScreen prompt. The SHA256SUMS file lets you compare a downloaded artifact to the produced build. Code signing requires the publisher's certificate and is not included in this development build.
 
 The desktop renderer is sandboxed with Node integration disabled. A loopback HTTP server serves the bundled app, and a LAN listener starts only when you choose to host a Wi-Fi game.
+
+When a public GitHub release repository is configured, the app checks for a newer stable version at startup and from Settings. Choose its download action to open the release in your browser, then install the downloaded app yourself. Updates never run automatically. Unconfigured builds show that update checks are unavailable; private repositories require the manual signed-in GitHub release page. See [GitHub releases and updates](./GITHUB.md).
 
 ## Android
 
@@ -56,7 +58,7 @@ npm run build
 node scripts/package-windows.mjs
 ```
 
-Android packaging is documented in [MOBILE.md](./MOBILE.md). `.github/workflows/build-release.yml` provides Windows and Android CI builds. Native iOS distribution requires macOS, Xcode, and an Apple signing identity.
+Android packaging is documented in [MOBILE.md](./MOBILE.md). `.github/workflows/build-release.yml` prepares GitHub releases with Windows and Android artifacts; publishing Android requires a configured stable signing certificate. Local Android builds remain debug-signed. Native iOS distribution requires macOS, Xcode, and an Apple signing identity.
 
 ## Licensing and distribution
 

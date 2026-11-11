@@ -1,6 +1,7 @@
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { puzzles } from "../data/puzzles";
 import { validatedPosition } from "./engine-position";
+import { sanitizeGameRating } from "./ratings";
 import {
   bots,
   resultFor,
@@ -154,7 +155,7 @@ export function validateSavedGame(value: unknown): GameSession | null {
             reason: safeText(value.result.reason, "Recorded result", 120),
           }
         : null;
-    return {
+    const game: GameSession = {
       id: value.id.trim(),
       mode: modes.has(value.mode as string)
         ? (value.mode as GameSession["mode"])
@@ -186,6 +187,9 @@ export function validateSavedGame(value: unknown): GameSession | null {
         ? { blackName: sanitizePlayerName(value.blackName) }
         : {}),
     };
+    const rating = sanitizeGameRating(value.rating, game);
+    if (rating) game.rating = rating;
+    return game;
   } catch {
     return null;
   }

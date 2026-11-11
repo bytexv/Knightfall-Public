@@ -1,6 +1,7 @@
 import { Chess, type Color, type Square } from "chess.js";
 import { X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { BoardAnimator } from "../lib/board-animator";
 import "./ChessBoard.css";
 export interface ChessBoardProps {
   fen: string;
@@ -51,19 +52,42 @@ export default function ChessBoard({
   const annotationFrom = useRef<string | null>(null);
   const justAnnotated = useRef(false);
   const board = useRef<HTMLDivElement>(null);
-  const dragFrom = useRef<string | null>(null);
+  const pieceLayer = useRef<HTMLDivElement>(null);
+  const animator = useRef<BoardAnimator | null>(null);
+  const dragFrom = useRef<{
+    square: string;
+    x: number;
+    y: number;
+    pointerId: number;
+    active: boolean;
+  } | null>(null);
   const suppressClick = useRef(false);
   const [focus, setFocus] = useState("e2");
+  useLayoutEffect(() => {
+    if (!board.current || !pieceLayer.current) return;
+    const controller = new BoardAnimator(board.current, pieceLayer.current);
+    animator.current = controller;
+    return () => {
+      controller.destroy();
+      animator.current = null;
+    };
+  }, []);
+  useLayoutEffect(() => {
+    animator.current?.sync(game.fen(), orientation);
+    dragFrom.current = null;
+  }, [game, orientation]);
   useEffect(() => {
     setSelected(null);
     setPromotion(null);
     setMarks([]);
     setAnnotations([]);
-  }, [fen]);
+  }, [fen, orientation]);
   useEffect(() => {
     if (disabled) {
       setSelected(null);
       setPromotion(null);
+      if (dragFrom.current) animator.current?.cancelDrag();
+      dragFrom.current = null;
     }
   }, [disabled]);
   useEffect(() => {
@@ -202,9 +226,41 @@ export default function ChessBoard({
                   justAnnotated.current = false;
                   return;
                 }
-                if (e.button !== 0 || disabled) return;
+                if (e.button !== 0 || disabled || !onMove) return;
                 const p = game.get(square as Square);
-                if (p?.color === game.turn()) dragFrom.current = square;
+                if (p?.color === game.turn()) {
+                  animator.current?.cancelDrag();
+                  dragFrom.current = {
+                    square,
+                    x: e.clientX,
+                    y: e.clientY,
+                    pointerId: e.pointerId,
+                    active: false,
+                  };
+                  e.currentTarget.setPointerCapture?.(e.pointerId);
+                }
+              }}
+              onPointerMove={(e) => {
+                const drag = dragFrom.current;
+                if (!drag || drag.pointerId !== e.pointerId || disabled) return;
+                if (
+                  !drag.active &&
+                  Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6
+                )
+                  return;
+                if (!drag.active) {
+                  drag.active = true;
+                  setSelected(drag.square);
+                }
+                const piece = game.get(drag.square as Square);
+                if (!piece) return;
+                e.preventDefault();
+                animator.current?.moveDrag(
+                  drag.square,
+                  piece,
+                  e.clientX,
+                  e.clientY,
+                );
               }}
               onPointerUp={(e) => {
                 if (e.button === 2 && annotationFrom.current) {
@@ -228,27 +284,69 @@ export default function ChessBoard({
                   }
                   return;
                 }
-                if (!dragFrom.current || disabled) return;
+                if (
+                  !dragFrom.current ||
+                  dragFrom.current.pointerId !== e.pointerId ||
+                  disabled
+                )
+                  return;
                 const element = document
                   .elementFromPoint(e.clientX, e.clientY)
                   ?.closest<HTMLElement>("[data-square]");
-                const to = element?.dataset.square;
-                const from = dragFrom.current;
+                const to =
+                  element && board.current?.contains(element)
+                    ? element.dataset.square
+                    : undefined;
+                const drag = dragFrom.current;
+                const from = drag.square;
                 dragFrom.current = null;
+                if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+                  e.currentTarget.releasePointerCapture(e.pointerId);
+                }
+                const move =
+                  to && from !== to
+                    ? game
+                        .moves({ square: from as Square, verbose: true })
+                        .find((candidate) => candidate.to === to)
+                    : undefined;
+                animator.current?.releaseDrag(
+                  to || null,
+                  Boolean(move && onMove),
+                  Boolean(move?.promotion),
+                );
                 if (to && from !== to && tryMove(from, to)) {
+                  suppressClick.current = true;
+                  setTimeout(() => {
+                    suppressClick.current = false;
+                  }, 50);
+                } else if (drag.active) {
                   suppressClick.current = true;
                   setTimeout(() => {
                     suppressClick.current = false;
                   }, 50);
                 }
               }}
+              onPointerCancel={() => {
+                dragFrom.current = null;
+                animator.current?.cancelDrag();
+              }}
+              onLostPointerCapture={() => {
+                if (dragFrom.current) {
+                  dragFrom.current = null;
+                  animator.current?.cancelDrag();
+                }
+              }}
               onDragStart={(e) => e.preventDefault()}
             >
               {showCoordinates && index % 8 === 0 && (
-                <span className="coordinate rank" aria-hidden="true">{square[1]}</span>
+                <span className="coordinate rank" aria-hidden="true">
+                  {square[1]}
+                </span>
               )}
               {showCoordinates && index >= 56 && (
-                <span className="coordinate file" aria-hidden="true">{square[0]}</span>
+                <span className="coordinate file" aria-hidden="true">
+                  {square[0]}
+                </span>
               )}
               {piece && (
                 <img
@@ -264,6 +362,11 @@ export default function ChessBoard({
             </button>
           );
         })}
+        <div
+          className="board-piece-layer"
+          ref={pieceLayer}
+          aria-hidden="true"
+        />
         <svg className="board-arrows" viewBox="0 0 100 100" aria-hidden="true">
           <defs>
             <marker

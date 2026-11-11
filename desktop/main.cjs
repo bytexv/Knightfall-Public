@@ -1,9 +1,10 @@
-/* Knightfall desktop — the renderer stays sandboxed; only LAN hosting crosses IPC. */
-const { app, BrowserWindow, ipcMain, dialog, shell, session } = require('electron');
+/* Knightfall desktop — sandboxed renderer with narrow LAN and release-check IPC. */
+const { app, BrowserWindow, ipcMain, dialog, shell, session, net } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const fs = require('node:fs/promises');
 const os = require('node:os');
+const { createUpdateManager } = require('./update.cjs');
 const acceptanceTest = process.argv.includes('--acceptance-test');
 const accessibilityTest = process.argv.includes('--a11y-test');
 const smokeTest = process.argv.includes('--smoke-test') || acceptanceTest || accessibilityTest;
@@ -31,13 +32,26 @@ app.on('second-instance', () => {
 
 function trustedSender(event) {
   try {
-    return event.sender === mainWindow?.webContents && new URL(event.senderFrame.url).origin === localOrigin;
+    return event.sender === mainWindow?.webContents && event.senderFrame === mainWindow.webContents.mainFrame
+      && new URL(event.senderFrame.url).origin === localOrigin;
   } catch { return false; }
 }
 
 async function start() {
   const { startLanServer } = await import(pathToFileURL(path.join(__dirname, '..', 'server', 'index.mjs')).href);
   const staticDir = path.join(__dirname, '..', 'dist');
+  let updateConfig = null;
+  try {
+    const configText = await fs.readFile(path.join(staticDir, 'update-config.json'), 'utf8');
+    if (Buffer.byteLength(configText) <= 4096) updateConfig = JSON.parse(configText);
+  } catch { /* Unconfigured builds keep local play available without network checks. */ }
+  const updates = createUpdateManager({
+    config: updateConfig, currentVersion: app.getVersion(), platform: process.platform,
+    fetchImpl: (url, options) => net.fetch(url, options),
+    onStatus: status => {
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('knightfall:update-status-changed', status);
+    },
+  });
   // Keep a stable origin so local games and preferences survive relaunches.
   const portFile = path.join(app.getPath('userData'), 'local-port.json');
   let preferredPort = 8786;
@@ -81,6 +95,21 @@ async function start() {
     if (!trustedSender(event)) throw new Error('Untrusted application origin');
     return app.getVersion();
   });
+  ipcMain.handle('knightfall:update-status', event => {
+    if (!trustedSender(event)) throw new Error('Untrusted application origin');
+    return updates.getStatus();
+  });
+  ipcMain.handle('knightfall:check-updates', event => {
+    if (!trustedSender(event)) throw new Error('Untrusted application origin');
+    return updates.check();
+  });
+  ipcMain.handle('knightfall:open-update', async event => {
+    if (!trustedSender(event)) throw new Error('Untrusted application origin');
+    const url = updates.getOpenUrl();
+    if (!url) return false;
+    await shell.openExternal(url);
+    return true;
+  });
 
   mainWindow = new BrowserWindow({
     width: smokeViewport?.width || 1440, height: smokeViewport?.height || 980, minWidth: Math.min(smokeViewport?.width || 880,880), minHeight: Math.min(smokeViewport?.height || 660,660),
@@ -116,6 +145,7 @@ async function start() {
   });
   mainWindow.once('ready-to-show', () => { if (!smokeTest) mainWindow.show(); });
   await mainWindow.loadURL(localOrigin);
+  if (!smokeTest) void updates.check();
   if (smokeTest) {
     const report = await require('./smoke.cjs').runSmoke(mainWindow);
     console.log('KNIGHTFALL_DESKTOP_SMOKE ' + JSON.stringify(report));

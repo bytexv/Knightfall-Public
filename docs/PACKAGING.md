@@ -10,7 +10,7 @@
 
 The Vite plugin in `scripts/pgn-compat.ts` explicitly defaults two optional chess.js parser offsets before integer conversion. This handles an observed Chromium 83 Android x86 emulator defect where `undefined | 0` produces `2147483647`, which otherwise stalls PGN parsing. The guard is limited to the bundled chess.js parser, is covered by production-bundle tests, and fails the build if the upstream expressions change.
 
-`package.json` contains the application version. Increase it before shipping an update. Keep the native Android versionCode monotonic when publishing to an app store.
+`package.json` contains the application version. Increase it before shipping an update and keep the lockfile's root version in sync. Version 1.2.0 uses Android `versionName` 1.2.0 / `versionCode` 3 and iOS marketing version 1.2.0 / build 3. Keep native build numbers monotonic for updates.
 
 ## Web and offline PWA
 
@@ -30,7 +30,9 @@ Run `node --test tests/pwa.test.mjs` for offline fetch, cache lifecycle, multipl
 node scripts/package-windows.mjs
 ```
 
-The script requires an existing web build. Output is under `artifacts/windows/`; the distributable is `Knightfall-1.1.0-Windows-x64.exe`. It packages the app into ASAR and wraps the 64-bit runtime as a portable executable. No Node.js install is required on the recipient's computer.
+The script requires an existing web build. Output is under `artifacts/windows/`; the distributable is `Knightfall-1.2.0-Windows-x64.exe`. It packages the app into ASAR and wraps the 64-bit runtime as a portable executable. No Node.js install is required on the recipient's computer.
+
+The Windows package uses maximum compression and includes the English Chromium locale packs. Runtime DLLs, the app, engine, corresponding source and license notices remain bundled.
 
 The build is unsigned, and Windows resource editing is disabled to permit cross-compilation from Linux without Wine. It therefore does not claim verified publisher identity. Publishing a signed release should run on Windows with your signing configuration.
 
@@ -49,7 +51,7 @@ The Android development artifact is signed with a debug key. A production APK/AA
 `package-windows.mjs` writes `artifacts/windows/SHA256SUMS.txt`. To verify a Windows download in PowerShell:
 
 ```powershell
-Get-FileHash .\Knightfall-1.1.0-Windows-x64.exe -Algorithm SHA256
+Get-FileHash .\Knightfall-1.2.0-Windows-x64.exe -Algorithm SHA256
 ```
 
 Compare the hexadecimal value with the checksum file distributed with the build. The checksum detects changed bytes; it does not replace code signing or authenticate a publisher by itself.
@@ -60,7 +62,11 @@ Distribute the source tree (including lockfiles, native projects, engine notices
 
 The native binaries may include toolchain timestamps and signing metadata, so the instructions reproduce the release contents rather than promise identical binary bytes across machines.
 
-A GitHub Actions workflow in `.github/workflows/build-release.yml` builds Windows and Android artifacts on demand or for a version tag. It does not publish to an app store, require signing secrets, or deploy the web app.
+The GitHub Actions workflow in `.github/workflows/build-release.yml` builds release artifacts on demand or for a version tag, checks their inventory and checksums, and publishes a GitHub release after its required jobs pass. Android release publication requires a configured keystore, key alias, passwords and expected certificate fingerprint; it does not silently generate a new signing identity. Local `package-mobile.mjs` builds still use a debug key. The separate `.github/workflows/ci.yml` runs repository checks. Neither workflow publishes to an app store or deploys the web app. Configuration and release requirements are documented in [GITHUB.md](./GITHUB.md).
+
+## Desktop update checks
+
+`public/update-config.json` selects the GitHub repository used for stable-release checks. A configured public repository is checked at desktop startup and on a manual Settings request. An empty configuration makes no startup request; a private repository uses manual signed-in release-page guidance. No access token is embedded in the app. The update bridge validates the repository, version and download URLs before opening a release link. It does not execute or install an update. See [GITHUB.md](./GITHUB.md) for setup.
 
 ## Native desktop smoke check
 
@@ -79,7 +85,7 @@ After producing the Windows artifact, run:
 node scripts/package-verify.mjs
 ```
 
-This inspects the PE architecture, extracts the shipped ASAR into an isolated temporary directory, checks that every offline asset matches the current web build, and runs the shipped server with only its packaged dependencies. It verifies the UI entrypoint and correct WebAssembly response MIME type, then removes the extraction.
+This inspects the PE architecture and release fuses, extracts the shipped ASAR into an isolated temporary directory, checks the app version and every dist file against the current web build, and runs the shipped server with only its packaged dependencies. It verifies the UI entrypoint and correct WebAssembly response MIME type, then removes the extraction.
 
 For a full local-bot smoke check and screenshot:
 

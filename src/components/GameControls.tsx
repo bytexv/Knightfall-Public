@@ -73,14 +73,14 @@ export function NewGamePanel({
                 key={b.id}
                 className={`bot-choice ${botId === b.id ? "selected" : ""}`}
                 onClick={() => setBotId(b.id)}
-                aria-label={`${b.name}, ${b.rating}`}
+                aria-label={`${b.name}, approximately ${b.elo} Elo, ${b.rating}`}
                 aria-pressed={botId === b.id}
               >
                 <span className="bot-avatar" aria-hidden="true" data-bot={b.id}>
                   {b.name.slice(0, 2).toUpperCase()}
                 </span>
                 <strong>{b.name}</strong>
-                <small>{b.rating}</small>
+                <small>≈ {b.elo}</small>
                 {botId === b.id && (
                   <span className="bot-check">
                     <Check size={10} />
@@ -95,11 +95,18 @@ export function NewGamePanel({
             </div>
             <div>
               <strong>
-                {bot.name} <span>· {bot.rating}</span>
+                {bot.name}{" "}
+                <span>
+                  · ≈ {bot.elo} Elo · {bot.rating}
+                </span>
               </strong>
               <p>{bot.description}</p>
             </div>
           </div>
+          <p className="elo-explainer">
+            <strong>Estimated bot strength.</strong> Finish a normal game
+            without hints or takebacks to update your Local Elo.
+          </p>
         </>
       ) : (
         <div className="local-description">

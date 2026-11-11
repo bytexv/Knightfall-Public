@@ -22,6 +22,15 @@ async function runSmoke(window) {
   const hosted=await evaluate('window.knightfall.hostLan()');
   if(!hosted.port || !Array.isArray(hosted.urls)) throw new Error('Desktop LAN IPC check failed');
   report.lanPort=hosted.port;
+  const updateStatus=await evaluate(`(async () => {
+    if(typeof window.knightfall.checkForUpdates!=='function' || typeof window.knightfall.openUpdate!=='function' || typeof window.knightfall.onUpdateStatus!=='function')throw new Error('Update bridge methods missing');
+    const unsubscribe=window.knightfall.onUpdateStatus(()=>{});
+    if(typeof unsubscribe!=='function')throw new Error('Update subscription cleanup missing');
+    unsubscribe();
+    return window.knightfall.getUpdateStatus();
+  })()`);
+  if(!['idle','unconfigured'].includes(updateStatus.status) || typeof updateStatus.currentVersion!=='string') throw new Error('Desktop update status IPC check failed');
+  report.updateStatus=updateStatus.status;
 
   if(process.argv.includes('--smoke-game')) {
     // Observe the actual Stockfish worker while the normal app plays a game.

@@ -76,6 +76,42 @@
   z-index: 1;
   filter: drop-shadow(0 2px 1px #14221922);
 }
+.board-piece-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.board-motion-piece {
+  position: absolute;
+  width: 12.5%;
+  height: 12.5%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.board-motion-piece > .chess-piece {
+  position: absolute;
+  inset: 6.5%;
+  width: 87%;
+  height: 87%;
+}
+.board-motion-piece.is-travelling {
+  z-index: 2;
+}
+.board-motion-piece.is-capture {
+  z-index: 1;
+}
+.board-motion-piece.is-dragging {
+  z-index: 3;
+}
+.board-motion-piece.is-dragging > .chess-piece {
+  filter: drop-shadow(0 5px 3px #14221938);
+}
+@media (prefers-reduced-motion: reduce) {
+  .board-motion-piece {
+    will-change: auto;
+  }
+}
 .coordinate {
   position: absolute;
   font-size: clamp(9px, 1.1vw, 12px);

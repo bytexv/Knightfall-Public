@@ -22,6 +22,7 @@ files:
   - dist/**/*
   - desktop/main.cjs
   - desktop/preload.cjs
+  - desktop/update.cjs
   - desktop/smoke.cjs
   - server/**/*
   - public/icons/icon-512.png

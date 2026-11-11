@@ -1216,7 +1216,7 @@ select {
   border-radius: 9px;
   color: #655e56;
 }
-.game-result h3 {
+.game-result h2 {
   font-size: 18px;
   color: #655e56;
   margin-bottom: 3px;
@@ -3149,7 +3149,7 @@ select {
     bottom: 8px;
     width: 12px;
   }
-  .game-result h3 {
+  .game-result h2 {
     font-size: 17px;
   }
   .game-result > svg {

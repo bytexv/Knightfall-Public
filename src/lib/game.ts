@@ -1,5 +1,6 @@
 import { Chess, type Color, type Square } from "chess.js";
 import { validatedPosition } from "./engine-position";
+import type { GameRatingMetadata } from "./ratings";
 export const START_FEN = new Chess().fen();
 export const MAX_COMMENT_LENGTH = 2000;
 export const MAX_PGN_LENGTH = 3_000_000;
@@ -67,6 +68,7 @@ export interface GameSession {
   initialComment?: string;
   whiteName?: string;
   blackName?: string;
+  rating?: GameRatingMetadata;
 }
 export const bots = [
   {

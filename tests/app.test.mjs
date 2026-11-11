@@ -7,6 +7,11 @@ import { createRoot } from "react-dom/client";
 import { Chess } from "chess.js";
 import { LocalEngine } from "../src/lib/engine.ts";
 import { newSession, applyMove } from "../src/lib/game.ts";
+import {
+  beginRatedGame,
+  emptyRatingLedger,
+  markRatingEngine,
+} from "../src/lib/ratings.ts";
 registerHooks({
   load(url, context, next) {
     if (url.endsWith(".css"))
@@ -29,6 +34,7 @@ beforeEach(() => {
   dom = new JSDOM('<!doctype html><div id="root"></div>', {
     url: "http://localhost/",
   });
+  dom.window.scrollTo = () => {};
   Object.assign(globalThis, {
     window: dom.window,
     document: dom.window.document,
@@ -176,7 +182,7 @@ test("bot makes legal response and stale result from replaced game cannot move n
   );
 });
 
-test("finished games can branch from earlier positions during analysis without waking bot", async () => {
+test("finished-game exploration preserves the original mainline and analysis takeback only navigates", async () => {
   let game = newSession({ mode: "bot", started: true });
   for (const [a, b] of [
     ["f2", "f3"],
@@ -186,18 +192,50 @@ test("finished games can branch from earlier positions during analysis without w
   ])
     game = applyMove(game, a, b);
   assert.equal(game.result.reason, "Checkmate");
+  const recordedMoves = JSON.parse(JSON.stringify(game.moves));
   localStorage.setItem("knightfall:current", JSON.stringify(game));
   await render();
+  const board = host.querySelector(".chessboard");
   await clickText("Analysis");
+  assert.equal(
+    host.querySelector(".chessboard"),
+    board,
+    "Page transition preserves the mounted board",
+  );
   await clickLabel("First position");
   await move("e2", "e4");
   assert.ok(piece("e4")?.endsWith("wP.svg"));
-  const gameStore = JSON.parse(localStorage.getItem("knightfall:current"));
-  assert.equal(gameStore.mode, "analysis");
-  assert.equal(gameStore.result, null);
-  assert.equal(gameStore.moves.length, 1);
+  assert.ok(host.querySelector(".variation-bar"));
+  const assertOriginal = () => {
+    const stored = JSON.parse(localStorage.getItem("knightfall:current"));
+    assert.equal(stored.mode, "analysis");
+    assert.equal(stored.fen, game.fen);
+    assert.deepEqual(stored.result, game.result);
+    assert.deepEqual(stored.moves, recordedMoves);
+  };
+  assertOriginal();
+  await clickText("Back to game");
+  assert.equal(host.querySelector(".variation-bar"), null);
+  assert.ok(piece("e2")?.endsWith("wP.svg"));
+  await clickLabel("Latest position");
+  assert.ok(piece("h4")?.endsWith("bQ.svg"));
+  await clickLabel("Take back move");
+  assert.ok(piece("d8")?.endsWith("bQ.svg"));
+  assert.equal(piece("h4"), undefined);
+  assertOriginal();
+  await act(async () => window.dispatchEvent(new dom.window.Event("pagehide")));
+  const archived = JSON.parse(localStorage.getItem("knightfall:games")).find(
+    (saved) => saved.id === game.id,
+  );
+  assert.deepEqual(archived.moves, recordedMoves);
+  assert.deepEqual(archived.result, game.result);
   await wait(340);
   assert.equal(host.textContent.includes("Scout is thinking"), false);
+  assert.equal(
+    engineJobs.length,
+    0,
+    "Exploration cannot wake the game-playing bot",
+  );
 });
 
 test("switching from puzzles to play starts a separate game and cannot corrupt puzzle state", async () => {
@@ -349,4 +387,144 @@ test("entering analysis settles both clocks and archives the paused game", async
     archived.moves.map((move) => move.san),
     ["e4"],
   );
+});
+
+function ratedPosition(moves, options = {}) {
+  const enrolled = beginRatedGame(
+    newSession({
+      mode: "bot",
+      botId: "scout",
+      started: true,
+      time: { base: 0, increment: 0 },
+      ...options,
+    }),
+    emptyRatingLedger(),
+  );
+  let game = markRatingEngine(enrolled.game, "stockfish");
+  for (const uci of moves)
+    game = applyMove(game, uci.slice(0, 2), uci.slice(2, 4), uci[4]);
+  return { game, ledger: enrolled.ledger };
+}
+function loadRatedFixture({ game, ledger }) {
+  localStorage.setItem("knightfall:current", JSON.stringify(game));
+  localStorage.setItem("knightfall:ratings", JSON.stringify(ledger));
+}
+const ratingLedger = () =>
+  JSON.parse(localStorage.getItem("knightfall:ratings"));
+async function remount() {
+  await act(async () => root.unmount());
+  root = createRoot(host);
+}
+const beforeMate = ["e2e4", "e7e5", "f1c4", "b8c6", "d1h5", "g8f6"];
+
+test("a timeout discovered by navigation records the terminal bot result before pausing or opening analysis", async (t) => {
+  let now = 1000;
+  t.mock.method(performance, "now", () => now);
+  for (const destination of ["Opening lab", "Analysis"]) {
+    if (destination === "Analysis") {
+      await remount();
+      localStorage.clear();
+      now = 2000;
+    }
+    const fixture = ratedPosition(["e2e4", "e7e5"], {
+      time: { base: 60, increment: 0 },
+    });
+    fixture.game = { ...fixture.game, clocks: { w: 1, b: 60000 } };
+    loadRatedFixture(fixture);
+    await render();
+    await clickText("Resume saved game");
+    // Expiry occurs inside navigate's settleClock, before a timer can render it.
+    now += 10;
+    await clickText(destination);
+    const stored = JSON.parse(localStorage.getItem("knightfall:current"));
+    assert.deepEqual(
+      stored.result,
+      { winner: "b", reason: "Time expired" },
+      destination,
+    );
+    assert.equal(stored.mode, destination === "Analysis" ? "analysis" : "bot");
+    assert.equal(
+      ratingLedger().totalRatedGames,
+      1,
+      `${destination} must retain the completed rated result`,
+    );
+    assert.equal(ratingLedger().losses, 1);
+    assert.equal(ratingLedger().history[0].gameId, fixture.game.id);
+    assert.equal(ratingLedger().history[0].reason, "Time expired");
+  }
+});
+
+test("a normal Stockfish-backed game records one rating result and reload cannot count it again", async () => {
+  const fixture = ratedPosition(beforeMate);
+  loadRatedFixture(fixture);
+  await render();
+  await clickText("Resume saved game");
+  await move("h5", "f7");
+  const completedGame = JSON.parse(localStorage.getItem("knightfall:current"));
+  assert.equal(
+    JSON.parse(localStorage.getItem("knightfall:current")).result.reason,
+    "Checkmate",
+  );
+  const completed = ratingLedger();
+  assert.equal(completed.totalRatedGames, 1);
+  assert.equal(completed.wins, 1);
+  assert.equal(completed.history[0].gameId, fixture.game.id);
+  assert.ok(completed.rating > completed.history[0].before);
+  assert.match(host.querySelector(".game-result").textContent, /Local Elo/);
+  await remount();
+  await render();
+  assert.deepEqual(ratingLedger(), completed);
+  await clickText("Analysis");
+  assert.deepEqual(
+    ratingLedger(),
+    completed,
+    "Reviewing a completed game cannot add or retract its rating",
+  );
+  // A recoverable persisted result may outlive the last ledger write. Loading
+  // pauses local games, but that must not disqualify an already completed game.
+  await remount();
+  loadRatedFixture({ game: completedGame, ledger: fixture.ledger });
+  await render();
+  assert.equal(ratingLedger().totalRatedGames, 1);
+  assert.equal(ratingLedger().history[0].gameId, completedGame.id);
+});
+
+test("hint and analysis assistance survive saving and resuming, so the eventual mate remains unrated", async () => {
+  for (const assistance of ["hint", "analysis"]) {
+    if (assistance === "analysis") {
+      await remount();
+      localStorage.clear();
+    }
+    const fixture = ratedPosition(beforeMate);
+    loadRatedFixture(fixture);
+    await render();
+    await clickText("Resume saved game");
+    if (assistance === "hint") {
+      await clickText("Hint");
+      assert.ok(engineJobs.some((job) => job.options.movetime === 700));
+    } else {
+      await clickText("Analysis");
+      const archived = JSON.parse(
+        localStorage.getItem("knightfall:games"),
+      ).find((game) => game.id === fixture.game.id);
+      assert.deepEqual(archived.rating.assistance, ["analysis"]);
+      assert.equal(archived.mode, "bot");
+      await clickText("My games");
+      await clickLabel(`Resume ${fixture.game.title}`);
+    }
+    assert.deepEqual(
+      JSON.parse(localStorage.getItem("knightfall:current")).rating.assistance,
+      [assistance],
+    );
+    await move("h5", "f7");
+    assert.equal(
+      JSON.parse(localStorage.getItem("knightfall:current")).result.reason,
+      "Checkmate",
+    );
+    assert.equal(
+      ratingLedger().totalRatedGames,
+      0,
+      `${assistance} must exclude the result after resuming`,
+    );
+  }
 });

@@ -144,7 +144,7 @@ test('a dropped connection locks the board and automatically restores the same s
 test('draw offers can be declined and accepted through the real room protocol',async()=>{
  const peer=await joinPeer(await createRoom());await makeTwoMoves(peer);
  await peerAction(peer,{type:'offer_draw'},message=>message.type==='snapshot'&&message.snapshot.drawOffer==='b');await waitFor(()=>host.querySelector('.draw-offer'));await clickText('Decline');await waitFor(()=>peer.snapshot.drawOffer===null&&!host.querySelector('.draw-offer'));
- await clickText('Draw');await waitFor(()=>peer.snapshot.drawOffer==='w');assert.equal(host.querySelector('.draw-offer'),null,'Own offer must not show an Accept control');await peerAction(peer,{type:'accept_draw'},message=>message.type==='snapshot'&&message.snapshot.status==='finished');await waitFor(()=>host.querySelector('.game-result h3')?.textContent==='Draw');assert.equal(archive()[0].result.winner,null);assert.equal(archive()[0].result.reason,'Draw by agreement');assert.equal(exactButton('Draw'),undefined);
+ await clickText('Draw');await waitFor(()=>peer.snapshot.drawOffer==='w');assert.equal(host.querySelector('.draw-offer'),null,'Own offer must not show an Accept control');await peerAction(peer,{type:'accept_draw'},message=>message.type==='snapshot'&&message.snapshot.status==='finished');await waitFor(()=>host.querySelector('.game-result h2')?.textContent==='Draw');assert.equal(archive()[0].result.winner,null);assert.equal(archive()[0].result.reason,'Draw by agreement');assert.equal(exactButton('Draw'),undefined);
 });
 
 test('a Black host waits for White and the waiting-room clock does not run',async()=>{

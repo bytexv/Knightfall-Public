@@ -1,13 +1,16 @@
-# Knightfall 1.1
+# Knightfall 1.2
 
 An independent chess studio for web, Windows and Android. Local play, analysis and learning run on your device.
 
-## New in 1.1
+## New in 1.2
 
-- A chess-club design with warm paper, walnut boards, charcoal navigation and copper accents.
-- More compact desktop and mobile layouts, with clearer clocks and control labels.
-- A board heading that uses your profile name and a recent-games sidebar for continuing or reviewing saved games.
-- Updated Windows and Android shell colors to match the board room.
+- Guided game review with move badges, an interactive evaluation graph, per-side summaries and filters for important decisions. The ten classifications run from Brilliant and Great through Book, Mistake, Miss and Blunder; their rules are documented in `docs/REVIEW.md`.
+- Suggested-line previews and move retries that leave the original game intact. Switch to **Live analysis** for current engine lines.
+- A persistent Local Elo counter, rating history and trend graph for eligible completed bot games. Games using hints, takebacks or live analysis while in progress do not count; custom positions and fallback-engine games are also unrated. Ratings are included in JSON backup/restore.
+- Animated moves, captures, castling and promotions, with responsive dragging and support for reduced-motion preferences.
+- A desktop update panel for configured GitHub releases. Public repositories can be checked at startup or manually; downloads open only after you choose, and installation remains manual. Unconfigured and private repositories show the appropriate availability guidance.
+
+The warm paper, walnut and charcoal club design, personalized board heading and recent-games sidebar introduced in 1.1 remain part of the app.
 
 ## Included
 
@@ -21,9 +24,9 @@ Tactics Sprint offers 3-minute, 5-minute and untimed Survival modes with three l
 
 ## Install
 
-**Windows:** Run `Knightfall-1.1.0-Windows-x64.exe` on 64-bit Windows 10/11. It is a portable, unsigned development build; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
+**Windows:** Run `Knightfall-1.2.0-Windows-x64.exe` on 64-bit Windows 10/11. It is a portable, unsigned development build; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
 
-**Android:** Open `Knightfall-1.1.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
+**Android:** Open `Knightfall-1.2.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
 
 **Web:** Use the private web link supplied with the release. The hosting provider may require sign-in. Chrome/Edge can install the app from their menu; on iPhone, use Safari **Share → Add to Home Screen**. Keep the first online load open while offline assets finish caching.
 
@@ -50,13 +53,13 @@ npm run lan
 
 ## Data and scope
 
-Games and settings stay in the current browser/app profile. Use PGN export and **Settings → Download a backup** before clearing app data. The JSON backup includes games, settings and unassisted puzzle progress; separate learning markers and Sprint bests are not included. Native packages bundle the engine; offline web use depends on successful caching and retained browser storage.
+Games, Local Elo and settings stay in the current browser/app profile. Use PGN export and **Settings → Download a backup** before clearing app data. The JSON backup includes games, the rating ledger, settings and unassisted puzzle progress; separate learning markers and Sprint bests are not included. Native packages bundle the engine; offline web use depends on successful caching and retained browser storage.
 
-There is no public matchmaking, cloud account system, rated ladder, cloud synchronization or app-store publication. Bot levels and review quality are training estimates, not calibrated ratings or official accuracy scores. The hosted web deployment is private by default; the packaged apps and local-network games need no Knightfall account.
+There is no public matchmaking, cloud account system, public rated ladder, cloud synchronization or app-store publication. Bot levels, Local Elo and review quality are local training estimates, not calibrated online ratings or official accuracy scores. A review's estimated-performance range needs enough eligible decisions against a known local bot; it is separate from the result-based Local Elo ledger. The hosted web deployment is private by default; the packaged apps and local-network games need no Knightfall account.
 
 ## Verification boundaries
 
-The application was exercised in Linux Electron with the real renderer, legal board moves, a local Stockfish WASM reply and the desktop LAN bridge. Android was built and exercised in an emulator. Automated checks cover chess rules, engine behavior, content, clocks, storage, UI interactions and actual local HTTP/WebSocket rooms.
+The source includes native Linux Electron acceptance checks for the real renderer, legal board moves, local Stockfish WASM and the desktop LAN bridge. Automated checks cover chess rules, review scoring, rating persistence, animations, content, clocks, storage, UI interactions and actual local HTTP/WebSocket rooms. The release's accompanying QA reports identify which checks ran against its exact build; historical Android emulator checks do not establish acceptance of every new interaction.
 
 The Windows package was cross-built; running Electron on Linux does not establish Windows-device compatibility. Emulator checks do not certify every physical Android device or phone-to-PC Wi-Fi setup. No signed iOS build or iPhone native-device test is claimed. Windows code signing, Android release signing and target-device acceptance testing remain release-distribution steps.
 
