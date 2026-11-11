@@ -23,8 +23,8 @@ self.addEventListener('message', (event) => {
   if (event.data?.type === 'OFFLINE_STATUS') {
     event.waitUntil((async () => {
       const cache = await caches.open(CACHE);
-      const keys = await cache.keys();
-      event.source?.postMessage({type: 'OFFLINE_STATUS', ready: keys.length >= PRECACHE.length, assets: keys.length, build: self.__KNIGHTFALL_BUILD__});
+      const present = await Promise.all(PRECACHE.map(path => cache.match(new URL(path, scope).href)));
+      event.source?.postMessage({type: 'OFFLINE_STATUS', ready: present.every(Boolean), assets: present.filter(Boolean).length, build: self.__KNIGHTFALL_BUILD__});
     })());
   }
 });
@@ -46,9 +46,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   const known = PRECACHE.some(path => new URL(path, scope).pathname === url.pathname);
-  if (!known) return;
+  const fullEngine = relative.startsWith('engine/full/') && /\.(?:js|wasm)$/.test(relative);
+  if (!known && !fullEngine) return;
   event.respondWith((async () => {
     const cached = await caches.match(event.request, {ignoreSearch: true});
-    return cached || fetch(event.request);
+    // A cached Response carries the URL of its first request. Returning that
+    // URL for a worker can overwrite its #...,worker fragment, making a
+    // Stockfish pthread recursively boot as a main engine. Preserve the
+    // caller's script URL by returning a response with no redirected URL.
+    const forWorker = response => event.request.destination === 'worker'
+      ? new Response(response.body, {status:response.status,statusText:response.statusText,headers:response.headers})
+      : response;
+    if (cached) return forWorker(cached);
+    const response = await fetch(event.request);
+    if (fullEngine && response.ok && response.type !== 'opaque') {
+      const cache = await caches.open(CACHE);
+      try { await cache.put(event.request, response.clone()); } catch { /* Storage is optional; analysis still works online. */ }
+    }
+    return forWorker(response);
   })());
 });

@@ -5,6 +5,7 @@ import { BoardAnimator } from "../lib/board-animator";
 import "./ChessBoard.css";
 export interface ChessBoardProps {
   fen: string;
+  alienTheme?: boolean;
   orientation?: Color;
   onMove?: (from: string, to: string, promotion?: string) => void;
   disabled?: boolean;
@@ -24,6 +25,7 @@ const names: Record<string, string> = {
 };
 export default function ChessBoard({
   fen,
+  alienTheme = false,
   orientation = "w",
   onMove,
   disabled = false,
@@ -65,17 +67,21 @@ export default function ChessBoard({
   const [focus, setFocus] = useState("e2");
   useLayoutEffect(() => {
     if (!board.current || !pieceLayer.current) return;
-    const controller = new BoardAnimator(board.current, pieceLayer.current);
+    const controller = new BoardAnimator(
+      board.current,
+      pieceLayer.current,
+      alienTheme ? "pieces/alien" : "pieces",
+    );
     animator.current = controller;
     return () => {
       controller.destroy();
       animator.current = null;
     };
-  }, []);
+  }, [alienTheme]);
   useLayoutEffect(() => {
     animator.current?.sync(game.fen(), orientation);
     dragFrom.current = null;
-  }, [game, orientation]);
+  }, [game, orientation, alienTheme]);
   useEffect(() => {
     setSelected(null);
     setPromotion(null);
@@ -352,7 +358,7 @@ export default function ChessBoard({
                 <img
                   draggable={false}
                   className="chess-piece"
-                  src={`./pieces/${piece.color}${piece.type.toUpperCase()}.svg`}
+                  src={`./${alienTheme ? "pieces/alien" : "pieces"}/${piece.color}${piece.type.toUpperCase()}.svg`}
                   alt=""
                 />
               )}
@@ -427,7 +433,7 @@ export default function ChessBoard({
                     }}
                   >
                     <img
-                      src={`./pieces/${game.turn()}${p.toUpperCase()}.svg`}
+                      src={`./${alienTheme ? "pieces/alien" : "pieces"}/${game.turn()}${p.toUpperCase()}.svg`}
                       alt={names[p]}
                     />
                   </button>

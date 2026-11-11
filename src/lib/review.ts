@@ -496,3 +496,53 @@ export function summarizeReview(
     reviewedPlies: reviews.length,
   };
 }
+
+/** A broad, uncalibrated training range, never a rating update. */
+export function estimatePerformanceElo(side: ColorReviewSummary) {
+  if (side.evaluatedMoves < 12 || side.quality === null) return null;
+  const estimate = Math.round((100 + 26 * side.quality) / 25) * 25;
+  return {
+    estimate,
+    range: [Math.max(100, estimate - 450), Math.min(3200, estimate + 450)] as [
+      number,
+      number,
+    ],
+    sampleSize: side.evaluatedMoves,
+  };
+}
+
+/** Material and full-move number define phases, including imported endgames. */
+export function summarizeGamePhases(
+  reviews: readonly MoveReview[],
+  moves: readonly MoveRecord[],
+) {
+  const buckets: MoveReview[][] = [[], [], []];
+  let phase = 0;
+  const phases = moves.map((move) => {
+    const board = new Chess(move.before);
+    const weights: Record<string, number> = { n: 1, b: 1, r: 2, q: 4 };
+    const material = board
+      .board()
+      .flat()
+      .reduce((sum, piece) => sum + (piece ? weights[piece.type] || 0 : 0), 0);
+    phase = Math.max(
+      phase,
+      material <= 8
+        ? 2
+        : Number(move.before.split(" ")[5]) > 10 || material <= 16
+          ? 1
+          : 0,
+    );
+    return phase;
+  });
+  for (const review of reviews)
+    if (phases[review.index] !== undefined)
+      buckets[phases[review.index]].push(review);
+  return ["Opening · early game", "Middlegame", "Endgame · late game"].map(
+    (title, index) => ({
+      title,
+      reviews: buckets[index],
+      summary: summarizeReview(buckets[index]),
+    }),
+  );
+}

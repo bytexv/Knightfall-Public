@@ -15,7 +15,7 @@ async function walk(directory) {
     if (entry.isDirectory()) await walk(absolute);
     else {
       const relative = path.relative(dist, absolute).split(path.sep).join('/');
-      if (relative === 'sw.js' || relative === 'sw-manifest.js' || relative.endsWith('.map') || relative.startsWith('downloads/') || (relative.endsWith('-source.tar.gz') || relative.endsWith('-source.tgz'))) continue;
+      if (relative === 'sw.js' || relative === 'sw-manifest.js' || relative.endsWith('.map') || relative.startsWith('downloads/') || relative.startsWith('engine/full/') || (relative.endsWith('-source.tar.gz') || relative.endsWith('-source.tgz'))) continue;
       const size = (await stat(absolute)).size;
       if (size > 64 * 1024 * 1024) throw new Error(`Offline asset exceeds 64 MiB: ${relative}`);
       assets.push({relative, absolute, size});

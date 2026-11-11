@@ -18,6 +18,15 @@ export type Gambit = {
 
 export const gambits: Gambit[] = [
   {
+    id: "alien", name: "Alien Gambit", subtitle: "A knight sacrifice against the Caro–Kann.", category: "creator", difficulty: "Advanced", eco: "B15",
+    moves: ["e4","c6","d4","d5","Nc3","dxe4","Nxe4","Nf6","Ng5","h6","Nxf7","Kxf7","Nf3"],
+    description: "An attacking Caro–Kann gambit popularized by Wittythealien. White sacrifices a knight on f7 to draw Black’s king out and seek a fast attack.",
+    idea: "After Nxf7 and ...Kxf7, develop quickly, open lines and look for checks against the exposed king. Practice the position from both sides.",
+    risk: "The sacrifice is risky and is not a forced win. Accurate defense can leave Black with a material advantage; do not assume the king must walk into a trap.",
+    creator: "Popularized by Wittythealien", tags: ["White", "Caro–Kann", "King attack"],
+    trap: "Nxf7 is the signature sacrifice. In Knightfall, playing this sequence unlocks alien pieces for that game; switch the Easter egg off in Settings if you prefer ordinary pieces.",
+  },
+  {
     id: "stafford",
     name: "Stafford Gambit",
     subtitle: "Black trades a pawn for quick development.",

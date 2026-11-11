@@ -16,8 +16,8 @@ await run(setup, ['/S', `/D=${installation}`], { timeout: 180000, windowsVerbati
 const installed = path.join(installation, 'Knightfall.exe');
 await access(installed);
 assert.ok((await readFile(path.join(installation, 'resources', 'app.asar'))).equals(await readFile(path.join(root, 'artifacts', 'windows', 'win-unpacked', 'resources', 'app.asar'))));
-const result = await run(installed, ['--smoke-test', '--smoke-game', `--smoke-screenshot=${path.join(output, 'app.png')}`],
-  { cwd: root, timeout: 90000, maxBuffer: 4 * 1024 * 1024, windowsHide: false });
+const result = await run(installed, ['--smoke-test', '--smoke-game', '--smoke-full-engine', `--smoke-screenshot=${path.join(output, 'app.png')}`],
+  { cwd: root, timeout: 180000, maxBuffer: 4 * 1024 * 1024, windowsHide: false });
 await writeFile(path.join(output, 'smoke.log'), result.stdout + '\n' + result.stderr);
 assert.match(result.stdout, /KNIGHTFALL_DESKTOP_SMOKE /, 'Native Windows renderer/engine check did not complete');
 const sentinel = path.join(installation, 'unrelated-user-file.txt');

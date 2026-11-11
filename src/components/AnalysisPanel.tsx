@@ -15,6 +15,8 @@ import { LocalEngine, type EngineResult } from "../lib/engine";
 import { bots, uciToSan, type GameSession } from "../lib/game";
 import {
   evaluationSummary,
+  estimatePerformanceElo,
+  summarizeGamePhases,
   formatEvaluation,
   moveClassifications,
   moveReference,
@@ -27,6 +29,9 @@ import { Modal } from "./Dialogs";
 export type { MoveReview } from "../lib/review";
 
 export type AnalysisPanelProps = {
+  engineMode?: "lite" | "full";
+  engineThreads?: number;
+  searchTime?: number;
   fen: string;
   game: GameSession;
   /** Index of the last played main-line move; -1 is the starting position. */
@@ -102,6 +107,9 @@ function QualityBadge({
 }
 
 export default function AnalysisPanel({
+  engineMode = "lite",
+  engineThreads = 2,
+  searchTime,
   fen,
   game,
   activeIndex,
@@ -137,8 +145,11 @@ export default function AnalysisPanel({
     key: string;
     message: string;
   } | null>(null);
-  const [depth, setDepth] = useState(16);
+  const [depth, setDepth] = useState(engineMode === "full" ? 24 : 16);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [summarySection, setSummarySection] = useState<"totals" | "phases">(
+    "totals",
+  );
   const closeSummary = useCallback(() => setSummaryOpen(false), []);
   // A same-length replacement is a different line. Board navigation is not.
   const gameKey = useMemo(
@@ -155,7 +166,7 @@ export default function AnalysisPanel({
       ]),
     [game.id, game.startFen, game.moves],
   );
-  const liveKey = `${depth}:${fen}`;
+  const liveKey = `${engineMode}:${engineThreads}:${searchTime}:${depth}:${fen}`;
   const latest = useRef({ fen, gameKey, liveKey, tab });
   latest.current = { fen, gameKey, liveKey, tab };
   const [reviewState, setReviewState] = useState<ReviewState>(() =>
@@ -177,6 +188,10 @@ export default function AnalysisPanel({
   const selectedReview =
     reviews.find((item) => item.index === selectedIndex) ?? null;
   const selectedMove = selectedReview ? game.moves[selectedReview.index] : null;
+  const phases = useMemo(
+    () => summarizeGamePhases(reviews, game.moves),
+    [reviews, game.moves],
+  );
   const summary = useMemo(
     () =>
       summarizeReview(
@@ -205,8 +220,8 @@ export default function AnalysisPanel({
   }
 
   useEffect(() => {
-    const live = new LocalEngine(),
-      review = new LocalEngine();
+    const live = new LocalEngine({ mode: engineMode, threads: engineThreads }),
+      review = new LocalEngine({ mode: engineMode, threads: engineThreads });
     liveEngine.current = live;
     reviewEngine.current = review;
     return () => {
@@ -266,7 +281,7 @@ export default function AnalysisPanel({
     engine.cancel();
     const timer = setTimeout(() => {
       void engine
-        .analyze(fen, { depth, movetime: 1200, multiPV: 3 })
+        .analyze(fen, { depth, movetime: searchTime ?? 1200, multiPV: 3 })
         .then((next) => {
           if (
             cancelled ||
@@ -327,7 +342,7 @@ export default function AnalysisPanel({
       const cached = positionCache.current.get(cacheKey);
       if (cached) return cached;
       const next = await engine!.analyze(position, {
-        movetime: 650,
+        movetime: searchTime ?? 650,
         depth,
         multiPV: 3,
       });
@@ -352,6 +367,7 @@ export default function AnalysisPanel({
       }
       if (isCurrent()) {
         saveReview(nextState("complete"));
+        setSummarySection("totals");
         setSummaryOpen(true);
         callbacks.current.onReviewSelect(
           (list.find(isKeyMove) ?? list[0]).index,
@@ -415,22 +431,176 @@ export default function AnalysisPanel({
 
   return (
     <div className="analysis-stack analysis-studio">
-      {summaryOpen && currentReview.status === "complete" && <Modal title="Your game, reviewed" onClose={closeSummary} size="wide">
-        <div className="review-recap">
-          <p>{reviews.length} moves reviewed. Compare both sides, then explore the decisions and recommended moves.</p>
-          <div className="recap-players">{(["w", "b"] as const).map(color => <div key={color}>
-            <span>{color === game.playerColor ? "You" : "Opponent"} · {color === "w" ? "White" : "Black"}</span>
-            <h3>{(color === "w" ? game.whiteName : game.blackName) || (color === "w" ? "White" : "Black")}</h3>
-            <strong>{summary[color].quality === null ? "—" : `${Math.round(summary[color].quality!)}%`}</strong><small>move quality</small>
-          </div>)}</div>
-          <table className="recap-totals"><caption>Move totals by classification</caption><thead><tr><th>Classification</th><th>White</th><th>Black</th></tr></thead><tbody>
-            {moveClassifications.map(label => <tr key={label}><th scope="row"><span className={`review-quality ${label.toLowerCase()}`}><b aria-hidden="true">{qualityMarks[label]}</b> {label}</span></th><td>{summary.w.counts[label]}</td><td>{summary.b.counts[label]}</td></tr>)}
-          </tbody></table>
-          <p className="review-estimate-note">Local training estimates. Start with the mistakes and misses to find your biggest opportunities.</p>
-          <button className="button primary full" onClick={() => { closeSummary(); setFilter("all"); select(reviews[0]?.index ?? -1); }}>Review step by step <ArrowRight size={16} /></button>
-          <button className="button secondary full" onClick={() => { closeSummary(); setFilter("mistakes"); select((reviews.find(isMistake) ?? reviews[0])?.index ?? -1); }}>Explore key moments</button>
-        </div>
-      </Modal>}
+      {summaryOpen && currentReview.status === "complete" && (
+        <Modal title="Your game, reviewed" onClose={closeSummary} size="wide">
+          <div className="review-recap">
+            <p>
+              {reviews.length} moves reviewed. Compare both sides, then explore
+              the decisions and recommended moves.
+            </p>
+            <div className="recap-players">
+              {(["w", "b"] as const).map((color) => (
+                <div key={color}>
+                  <span>
+                    {color === game.playerColor ? "You" : "Opponent"} ·{" "}
+                    {color === "w" ? "White" : "Black"}
+                  </span>
+                  <h3>
+                    {(color === "w" ? game.whiteName : game.blackName) ||
+                      (color === "w" ? "White" : "Black")}
+                  </h3>
+                  <strong>
+                    {summary[color].quality === null
+                      ? "—"
+                      : `${Math.round(summary[color].quality!)}%`}
+                  </strong>
+                  <small>move quality</small>
+                  {(() => {
+                    const estimate = estimatePerformanceElo(summary[color]);
+                    return (
+                      <p className="recap-elo">
+                        <b>
+                          {estimate
+                            ? `${estimate.range[0]}–${estimate.range[1]}`
+                            : "Not enough moves"}
+                        </b>
+                        <small>estimated performance Elo</small>
+                      </p>
+                    );
+                  })()}
+                </div>
+              ))}
+            </div>
+            <div className="recap-switch" aria-label="Summary view">
+              <button
+                aria-pressed={summarySection === "totals"}
+                onClick={() => setSummarySection("totals")}
+              >
+                Move totals
+              </button>
+              <button
+                aria-pressed={summarySection === "phases"}
+                onClick={() => setSummarySection("phases")}
+              >
+                Early · middle · late
+              </button>
+            </div>
+            <table
+              className="recap-totals"
+              hidden={summarySection !== "totals"}
+            >
+              <caption>Move totals by classification</caption>
+              <thead>
+                <tr>
+                  <th>Classification</th>
+                  <th>White</th>
+                  <th>Black</th>
+                </tr>
+              </thead>
+              <tbody>
+                {moveClassifications.map((label) => (
+                  <tr key={label}>
+                    <th scope="row">
+                      <span className={`review-quality ${label.toLowerCase()}`}>
+                        <b aria-hidden="true">{qualityMarks[label]}</b> {label}
+                      </span>
+                    </th>
+                    <td>{summary.w.counts[label]}</td>
+                    <td>{summary.b.counts[label]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <section
+              className="recap-phases"
+              aria-label="Game phases"
+              hidden={summarySection !== "phases"}
+            >
+              {phases.map((phase) => (
+                <div className="recap-phase" key={phase.title}>
+                  <h3>{phase.title}</h3>
+                  {!phase.reviews.length ? (
+                    <p>This game has no reviewed moves in this phase.</p>
+                  ) : (
+                    (["w", "b"] as const).map((color) => {
+                      const side = phase.summary[color];
+                      const critical = phase.reviews
+                        .filter((move) => move.color === color)
+                        .sort((a, b) => b.loss - a.loss)[0];
+                      return (
+                        <div key={color}>
+                          <h4>
+                            {color === "w"
+                              ? game.whiteName || "White"
+                              : game.blackName || "Black"}{" "}
+                            · {color === "w" ? "White" : "Black"}
+                          </h4>
+                          <p>
+                            {side.moves} moves · {side.counts.Great} great ·{" "}
+                            {side.counts.Brilliant} brilliant ·{" "}
+                            {side.counts.Mistake} mistakes ·{" "}
+                            {side.counts.Blunder} blunders · {side.counts.Miss}{" "}
+                            misses.
+                          </p>
+                          <p>
+                            {side.quality === null
+                              ? "Not enough independent decisions to estimate quality."
+                              : `${Math.round(side.quality)}% move quality across ${side.evaluatedMoves} independent decisions.`}
+                          </p>
+                          {critical && critical.loss >= 50 && (
+                            <button
+                              className="button secondary"
+                              onClick={() => {
+                                closeSummary();
+                                setFilter("all");
+                                select(critical.index);
+                              }}
+                            >
+                              Review{" "}
+                              {moveReference(
+                                game.moves[critical.index],
+                                critical.index,
+                              )}{" "}
+                              {critical.playedSAN} · {critical.label}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              ))}
+            </section>
+            <p className="review-estimate-note">
+              Performance Elo is a broad, uncalibrated training estimate from
+              move quality, not your rating. At least 12 independent decisions
+              per side are required. Book moves, forced replies, shallow
+              searches and already decisive positions are excluded. Phases use
+              move number and remaining material.
+            </p>
+            <button
+              className="button primary full"
+              onClick={() => {
+                closeSummary();
+                setFilter("all");
+                select(reviews[0]?.index ?? -1);
+              }}
+            >
+              Review step by step <ArrowRight size={16} />
+            </button>
+            <button
+              className="button secondary full"
+              onClick={() => {
+                closeSummary();
+                setFilter("mistakes");
+                select((reviews.find(isMistake) ?? reviews[0])?.index ?? -1);
+              }}
+            >
+              Explore key moments
+            </button>
+          </div>
+        </Modal>
+      )}
 
       <section className="card analysis-workbench">
         <div
@@ -486,7 +656,14 @@ export default function AnalysisPanel({
           >
             <div className="review-topline">
               <h2>Game review</h2>
-              {currentReview.status === "complete" && <button className="button secondary" onClick={() => setSummaryOpen(true)}>Summary</button>}
+              {currentReview.status === "complete" && (
+                <button
+                  className="button secondary"
+                  onClick={() => setSummaryOpen(true)}
+                >
+                  Summary
+                </button>
+              )}
               {reviews.length && !reviewing ? (
                 reviewButton
               ) : (
@@ -708,7 +885,7 @@ export default function AnalysisPanel({
                 >
                   {(["w", "b"] as const).map((color) => {
                     const side = summary[color];
-                    const estimate = side.performanceElo;
+                    const estimate = estimatePerformanceElo(side);
                     return (
                       <div key={color}>
                         <span className="review-side-name">
@@ -869,7 +1046,10 @@ export default function AnalysisPanel({
             </div>
             <div className="engine-indicator">
               <span className={`status-dot ${busy ? "pulsing" : ""}`} />
-              {result?.engine || "Stockfish 17.1 Lite"}
+              {result?.engine ||
+                (engineMode === "full"
+                  ? "Stockfish 17.1 Full NNUE"
+                  : "Stockfish 17.1 Lite")}
               <span>LOCAL</span>
             </div>
             <div className="evaluation-summary">

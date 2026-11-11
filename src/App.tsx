@@ -1,3 +1,5 @@
+import { AlienAudio } from "./components/AlienAudio";
+import { playedAlienGambit } from "./lib/alien-gambit";
 import { Chess, type Color } from "chess.js";
 import {
   Activity,
@@ -117,7 +119,7 @@ const pages = [
   { id: "analysis", label: "Analysis", icon: Activity },
   { id: "puzzles", label: "Puzzles", icon: Puzzle },
   { id: "challenge", label: "Tactics Sprint", icon: Target },
-  { id: "openings", label: "Opening lab", icon: BookOpen },
+  { id: "openings", label: "Learn chess", icon: BookOpen },
   { id: "endgames", label: "Endgame school", icon: GraduationCap },
   { id: "games", label: "My games", icon: FolderHeart },
   { id: "multiplayer", label: "Play with friends", icon: Wifi },
@@ -145,8 +147,9 @@ const pageTitles: Record<Page, { title: string; subtitle: string }> = {
       "Look for checks, captures, and threats. Finish the whole sequence.",
   },
   openings: {
-    title: "Opening notebook",
-    subtitle: "Main lines, traps, and the gambits you keep seeing online.",
+    title: "Learn & practice",
+    subtitle:
+      "Learn the basics, practice useful habits, and explore famous openings.",
   },
   games: {
     title: "Your games",
@@ -276,7 +279,10 @@ export default function App() {
   }, []);
   const [nameDraft, setNameDraft] = useState(settings.name);
   const [nameError, setNameError] = useState("");
-  useEffect(() => { setNameDraft(settings.name); setNameError(""); }, [settings.name, page]);
+  useEffect(() => {
+    setNameDraft(settings.name);
+    setNameError("");
+  }, [settings.name, page]);
   const puzzle = puzzles[puzzleIndex];
   const boardPage = ["play", "analysis", "puzzles"].includes(page);
   const isLan = game.mode === "lan" && !!lanSnapshot;
@@ -341,7 +347,12 @@ export default function App() {
     const timer = setTimeout(
       () =>
         setExploration((current) => {
-          if (!current || !current.playing || current.sourceId !== game.id || current.line !== preview.line)
+          if (
+            !current ||
+            !current.playing ||
+            current.sourceId !== game.id ||
+            current.line !== preview.line
+          )
             return current;
           const index = Math.min(
             current.line.moves.length - 1,
@@ -380,11 +391,6 @@ export default function App() {
     };
   }, [page]);
   useEffect(() => {
-    const bot = new LocalEngine({
-      onStatus: (_status, name) => setEngineName(name),
-    });
-    botEngine.current = bot;
-    hintEngine.current = new LocalEngine();
     const install = (e: Event) => {
       e.preventDefault();
       setInstallPrompt(e);
@@ -396,11 +402,28 @@ export default function App() {
       if (toastTimer.current) clearTimeout(toastTimer.current);
       lanUnsubscribe.current.forEach((fn) => fn());
       lanRef.current?.disconnect();
-      bot.destroy();
-      hintEngine.current?.destroy();
+
       window.removeEventListener("beforeinstallprompt", install);
     };
   }, []);
+  useEffect(() => {
+    const bot = new LocalEngine({
+      mode: settings.engineMode,
+      threads: settings.engineThreads,
+      onStatus: (_status, name) => setEngineName(name),
+    });
+    const hint = new LocalEngine({
+      mode: settings.engineMode,
+      threads: settings.engineThreads,
+    });
+    botEngine.current = bot;
+    hintEngine.current = hint;
+    setEngineName(bot.engineName);
+    return () => {
+      bot.destroy();
+      hint.destroy();
+    };
+  }, [settings.engineMode, settings.engineThreads]);
   useEffect(() => {
     writeStore("settings", settings);
   }, [settings]);
@@ -458,7 +481,11 @@ export default function App() {
     const bot = bots.find((b) => b.id === game.botId) || bots[1];
     const timer = setTimeout(() => {
       void botEngine.current
-        ?.analyze(fen, { movetime: bot.time, skill: bot.skill, depth: 20 })
+        ?.analyze(fen, {
+          movetime: bot.id === "stockfish" ? settings.botTime : bot.time,
+          skill: bot.skill,
+          depth: bot.id === "stockfish" ? 30 : 20,
+        })
         .then((r) => {
           if (
             !active ||
@@ -532,12 +559,17 @@ export default function App() {
     game.botId,
     game.id,
     settings.sound,
+    settings.engineMode,
+    settings.engineThreads,
+    settings.botTime,
     notify,
   ]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
-        e.defaultPrevented || document.querySelector('[aria-modal="true"]') || modal ||
+        e.defaultPrevented ||
+        document.querySelector('[aria-modal="true"]') ||
+        modal ||
         ["INPUT", "TEXTAREA", "SELECT"].includes(
           (e.target as HTMLElement)?.tagName,
         )
@@ -1540,6 +1572,16 @@ export default function App() {
                         : "Practice"}
                   </span>
                 </div>
+                <AlienAudio
+                  gameId={game.id}
+                  active={
+                    settings.alienEasterEgg &&
+                    (game.alienGambit === true ||
+                      (game.mode === "lan" &&
+                        playedAlienGambit(game.startFen, game.moves)))
+                  }
+                  enabled={settings.sound && settings.alienAudio}
+                />
                 {playerBar(topColor)}
                 <div className="board-with-eval">
                   {page === "analysis" && (
@@ -1557,6 +1599,12 @@ export default function App() {
                   )}
                   <ChessBoard
                     fen={position}
+                    alienTheme={
+                      settings.alienEasterEgg &&
+                      (game.alienGambit === true ||
+                        (game.mode === "lan" &&
+                          playedAlienGambit(game.startFen, game.moves)))
+                    }
                     orientation={orientation}
                     onMove={makeMove}
                     disabled={!boardEnabled}
@@ -1909,7 +1957,14 @@ export default function App() {
                           )}
                         </p>
                       </div>
-                      {!isLan && <button className="button primary" onClick={() => setModal("new")}><Plus size={15} /> New game</button>}
+                      {!isLan && (
+                        <button
+                          className="button primary"
+                          onClick={() => setModal("new")}
+                        >
+                          <Plus size={15} /> New game
+                        </button>
+                      )}
                       {isLan ? (
                         <button
                           className="button primary"
@@ -2267,6 +2322,10 @@ export default function App() {
                       </section>
                     )}
                     <AnalysisPanel
+                      key={`${settings.engineMode}:${settings.engineThreads}:${settings.analysisTime}`}
+                      engineMode={settings.engineMode}
+                      engineThreads={settings.engineThreads}
+                      searchTime={settings.analysisTime}
                       fen={position}
                       game={game}
                       activeIndex={historyIndex}
@@ -2469,6 +2528,7 @@ export default function App() {
           {page === "endgames" && <EndgameSchool onPractice={startDrill} />}
           {page === "openings" && (
             <LearnHub
+              onEndgames={() => navigate("endgames")}
               onExplore={openGambit}
               onPuzzle={() => navigate("puzzles")}
             />
@@ -2662,19 +2722,171 @@ export default function App() {
                 <label className="field-label" htmlFor="player-name">
                   YOUR NAME
                 </label>
-                <form className="name-editor" onSubmit={(event) => {
-                  event.preventDefault();
-                  const name = nameDraft.trim();
-                  if (!name || name.length > 24 || /[\u0000-\u001f\u007f]/.test(name)) {
-                    setNameError("Use 1–24 characters, without control characters."); return;
-                  }
-                  setSettings(current => ({ ...current, name }));
-                  setNameDraft(name); setNameError(""); notify("Name saved.");
-                }}>
-                  <input id="player-name" value={nameDraft} onChange={event => setNameDraft(event.target.value)} aria-describedby="name-help" aria-invalid={!!nameError} />
-                  <button className="button primary" type="submit">Save name</button>
-                  <p id="name-help" role={nameError ? "alert" : undefined}>{nameError || "1–24 characters. Changes apply when you save."}</p>
+                <form
+                  className="name-editor"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const name = nameDraft.trim();
+                    if (
+                      !name ||
+                      name.length > 24 ||
+                      /[\u0000-\u001f\u007f]/.test(name)
+                    ) {
+                      setNameError(
+                        "Use 1–24 characters, without control characters.",
+                      );
+                      return;
+                    }
+                    setSettings((current) => ({ ...current, name }));
+                    setNameDraft(name);
+                    setNameError("");
+                    notify("Name saved.");
+                  }}
+                >
+                  <input
+                    id="player-name"
+                    value={nameDraft}
+                    onChange={(event) => setNameDraft(event.target.value)}
+                    aria-describedby="name-help"
+                    aria-invalid={!!nameError}
+                  />
+                  <button className="button primary" type="submit">
+                    Save name
+                  </button>
+                  <p id="name-help" role={nameError ? "alert" : undefined}>
+                    {nameError ||
+                      "1–24 characters. Changes apply when you save."}
+                  </p>
                 </form>
+                <label className="alien-setting">
+                  <input
+                    type="checkbox"
+                    checked={settings.alienEasterEgg}
+                    onChange={(event) =>
+                      setSettings((s) => ({
+                        ...s,
+                        alienEasterEgg: event.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Alien Gambit Easter egg
+                </label>
+                <p className="review-estimate-note">
+                  Playing Wittythealien’s Alien Gambit turns the pieces into
+                  alien tokens for the rest of that game. Turn this off for
+                  ordinary pieces and no Easter egg sound.
+                </p>
+                <label className="alien-setting">
+                  <input
+                    type="checkbox"
+                    checked={settings.alienAudio}
+                    onChange={(event) =>
+                      setSettings((s) => ({
+                        ...s,
+                        alienAudio: event.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Alien Gambit sound
+                </label>
+                <p className="review-estimate-note">
+                  Play the short celebration once when the gambit is completed.
+                  Muting sounds also silences this clip.
+                </p>
+                <fieldset className="engine-preferences">
+                  <legend>Local engine</legend>
+                  <label>
+                    Engine strength
+                    <select
+                      aria-label="Engine strength"
+                      value={settings.engineMode}
+                      onChange={(event) =>
+                        setSettings((s) => ({
+                          ...s,
+                          engineMode: event.target.value as "lite" | "full",
+                        }))
+                      }
+                    >
+                      <option value="lite">
+                        Stockfish Lite · lighter on your device
+                      </option>
+                      <option value="full">
+                        Stockfish Full NNUE · stronger analysis
+                      </option>
+                    </select>
+                  </label>
+                  <p>
+                    Full uses a larger neural network and more memory. On the
+                    web, the first use loads about 75 MB. Native apps include it
+                    for offline play. Keep Lite for lower battery use.
+                  </p>
+                  <label>
+                    CPU cores
+                    <select
+                      aria-label="Engine CPU cores"
+                      value={settings.engineThreads}
+                      onChange={(event) =>
+                        setSettings((s) => ({
+                          ...s,
+                          engineThreads: Number(event.target.value),
+                        }))
+                      }
+                    >
+                      {[1, 2, 4].map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <small>
+                    Full uses multiple cores when supported; otherwise it uses
+                    the full single-core engine.
+                  </small>
+                  <label>
+                    Analysis time per position
+                    <select
+                      aria-label="Analysis thinking time"
+                      value={settings.analysisTime}
+                      onChange={(event) =>
+                        setSettings((s) => ({
+                          ...s,
+                          analysisTime: Number(event.target.value),
+                        }))
+                      }
+                    >
+                      {[650, 1200, 3000, 8000, 15000].map((n) => (
+                        <option key={n} value={n}>
+                          {n / 1000} seconds
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Maximum bot thinking time
+                    <select
+                      aria-label="Maximum bot thinking time"
+                      value={settings.botTime}
+                      onChange={(event) =>
+                        setSettings((s) => ({
+                          ...s,
+                          botTime: Number(event.target.value),
+                        }))
+                      }
+                    >
+                      {[1500, 3000, 8000, 15000].map((n) => (
+                        <option key={n} value={n}>
+                          {n / 1000} seconds
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <small>
+                    Select the Stockfish opponent to play at maximum strength.
+                    Longer searches use more battery; timed games still use the
+                    game clock. Changing engine settings restarts analysis.
+                  </small>
+                </fieldset>
                 <div className="field-label">BOARD COLORS</div>
                 <div className="theme-picker">
                   {(["sage", "walnut", "ocean"] as const).map((t) => (
@@ -2752,8 +2964,8 @@ export default function App() {
                   <div className="about-feature">
                     <Cpu size={18} />
                     <span>
-                      <strong>Local engine</strong>Stockfish 17.1 Lite, with a
-                      lightweight fallback.
+                      <strong>Local engine</strong>Stockfish 17.1 Lite or Full
+                      NNUE, with a lightweight fallback.
                     </span>
                   </div>
                   <div className="about-feature">
@@ -3058,7 +3270,7 @@ export default function App() {
             </p>
             <p>
               <strong>Build your chess instinct</strong>Practice verified
-              puzzles and explore famous gambits in the Opening lab. Rehearse a
+              puzzles and explore famous gambits in the Learn chess. Rehearse a
               line from memory.
             </p>
             <p>

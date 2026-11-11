@@ -1,3 +1,4 @@
+import { BeginnerCourse } from "./BeginnerCourse";
 import {
   ArrowDown,
   ArrowRight,
@@ -24,6 +25,7 @@ import "./LearnHub.css";
 type LearnHubProps = {
   onExplore: (gambit: Gambit) => void;
   onPuzzle: () => void;
+  onEndgames: () => void;
 };
 type Category = "all" | Gambit["category"] | "saved";
 const filters: { id: Category; label: string }[] = [
@@ -237,7 +239,7 @@ function LessonDialog({
   );
 }
 
-export function LearnHub({ onExplore, onPuzzle }: LearnHubProps) {
+export function LearnHub({ onExplore, onPuzzle, onEndgames }: LearnHubProps) {
   const [tab, setTab] = useState<"openings" | "lessons">("openings");
   const [category, setCategory] = useState<Category>("all");
   const [query, setQuery] = useState("");
@@ -290,18 +292,19 @@ export function LearnHub({ onExplore, onPuzzle }: LearnHubProps) {
       <header className="lh-heading">
         <div>
           <div className="lh-eyebrow">
-            <Compass size={15} /> OPENING STUDY
+            <Compass size={15} /> LEARN & PRACTICE
           </div>
-          <h1>Build your repertoire.</h1>
+          <h1>Your next good move starts here.</h1>
           <p>
-            Study the move order, the plans, and what happens when the trap
-            fails.
+            Learn the basics on the board, build useful habits, then explore the
+            openings you enjoy.
           </p>
         </div>
         <button className="lh-practice-button" onClick={onPuzzle}>
           <Target size={18} /> Practice tactics <ArrowRight size={17} />
         </button>
       </header>
+      <BeginnerCourse onPractice={onPuzzle} onEndgames={onEndgames} />
       <div
         className="lh-tabs"
         role="tablist"
@@ -375,7 +378,11 @@ export function LearnHub({ onExplore, onPuzzle }: LearnHubProps) {
                 Study the threats against f2 and the replies that let White keep
                 the extra pawn.
               </p>
-              <button onClick={() => onExplore(gambits[0])}>
+              <button
+                onClick={() =>
+                  onExplore(gambits.find((g) => g.id === "stafford")!)
+                }
+              >
                 Meet the Stafford <ArrowRight size={17} />
               </button>
             </div>

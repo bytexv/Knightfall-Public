@@ -1,16 +1,14 @@
 # Local chess analysis
 
-Knightfall runs **Stockfish.js 17.1 Lite, single-threaded** on the player's device.
-Its worker and roughly 7 MB WebAssembly file are bundled with the application.
-No game positions, moves, or analysis requests are sent to an analysis service.
-The web version downloads these assets from its own origin the first time;
-installed desktop/mobile builds include them. Offline web use depends on the
-application and engine assets having been cached successfully.
+Knightfall offers Stockfish.js 17.1 Lite (the default) and **Full NNUE** in Settings → Local engine. Every search runs on the player's device; positions are never sent to an analysis service.
 
-This small Stockfish build uses a smaller neural network than the full Stockfish
-release. It is strong local analysis, but it is not the full multi-threaded engine
-or a guarantee of perfect play. Keeping it single-threaded lets it work without
-SharedArrayBuffer or cross-origin-isolation headers on normal mobile browsers.
+Lite uses the roughly 7 MB single-threaded build. Full uses the larger Stockfish neural networks and about 75 MB of model/WASM assets per architecture. The Windows and mobile packages include both full architectures; the web downloads the applicable one on first use and caches it when browser storage permits. Full assets are excluded from the required offline-shell download, so installing the PWA does not silently download 150 MB. Full needs considerably more memory; Lite is a useful choice on phones or for battery life.
+
+Full uses up to 1, 2, or 4 CPU cores where cross-origin isolation and SharedArrayBuffer are available, bounded by reported hardware concurrency. The desktop host supplies COOP/COEP headers. Browsers and mobile WebViews without isolation use the full single-thread build instead. This is still the full neural network. Analysis budgets range from 0.65 to 15 seconds per position; maximum-strength bot budgets range from 1.5 to 15 seconds. Longer searches do not guarantee perfect play.
+
+If the selected Stockfish build cannot start, Knightfall explicitly labels its lightweight JavaScript fallback. Native packages work without an engine download. Offline web use requires the relevant assets to have been cached successfully; an installed Lite shell does not guarantee that optional full models are cached.
+
+Both builds preserve upstream bytes and names. `public/engine/stockfish-source.tgz` contains Lite corresponding source. `vendor/stockfish-full-source.tgz` in the public repository and matching source release contains the original source, build scripts, Lite network, and both full networks. See `public/engine/FULL-SOURCE.txt` for the exact upstream commit and SHA-256 hashes.
 
 ## Scores and suggested moves
 

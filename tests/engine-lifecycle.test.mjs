@@ -127,3 +127,17 @@ test('a fallback instance can go idle and restart without retrying unsupported W
     assert.equal(starts, 1);
   } finally { engine.destroy(); }
 });
+
+test('full engine uses single-thread NNUE without isolation and bounded multi-core with isolation',async()=>{
+ const original=Object.getOwnPropertyDescriptor(globalThis,'crossOriginIsolated');
+ try{
+  for(const isolated of [false,true]){
+   Object.defineProperty(globalThis,'crossOriginIsolated',{value:isolated,configurable:true});
+   const {factory,workers}=mockFactory();let url;
+   const engine=new LocalEngine({mode:'full',threads:100,workerFactory:u=>{url=u;return factory();}});
+   try{await engine.initialize();assert.match(url,isolated?/8e4d048/:/single-a496a04/);assert.ok(workers[0].commands.includes('setoption name Hash value 32'));
+    const threads=Number(workers[0].commands.find(s=>s.startsWith('setoption name Threads')).split(' ').at(-1));assert.ok(threads>=1&&threads<=4);if(!isolated)assert.equal(threads,1);
+   }finally{engine.destroy();}
+  }
+ }finally{if(original)Object.defineProperty(globalThis,'crossOriginIsolated',original);else delete globalThis.crossOriginIsolated;}
+});

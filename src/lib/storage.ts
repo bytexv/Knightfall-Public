@@ -17,6 +17,12 @@ export interface Settings {
   coordinates: boolean;
   legalMoves: boolean;
   name: string;
+  alienEasterEgg: boolean;
+  alienAudio: boolean;
+  engineMode: "lite" | "full";
+  engineThreads: number;
+  analysisTime: number;
+  botTime: number;
 }
 export const defaultSettings: Settings = {
   boardTheme: "walnut",
@@ -24,6 +30,12 @@ export const defaultSettings: Settings = {
   coordinates: true,
   legalMoves: true,
   name: "You",
+  alienEasterEgg: true,
+  alienAudio: true,
+  engineMode: "lite",
+  engineThreads: 2,
+  analysisTime: 1200,
+  botTime: 1500,
 };
 const modes = new Set(["bot", "local", "analysis", "gambit", "puzzle", "lan"]);
 const puzzleIds = new Set(puzzles.map((puzzle) => puzzle.id));
@@ -66,6 +78,20 @@ export function sanitizeSettings(value: unknown): Settings {
         ? raw.legalMoves
         : defaultSettings.legalMoves,
     name: safeText(raw.name, defaultSettings.name, 24),
+    alienEasterEgg: raw.alienEasterEgg !== false,
+    alienAudio: raw.alienAudio !== false,
+    engineMode: raw.engineMode === "full" ? "full" : "lite",
+    engineThreads: [1, 2, 4].includes(Number(raw.engineThreads))
+      ? Number(raw.engineThreads)
+      : 2,
+    analysisTime: [650, 1200, 3000, 8000, 15000].includes(
+      Number(raw.analysisTime),
+    )
+      ? Number(raw.analysisTime)
+      : 1200,
+    botTime: [1500, 3000, 8000, 15000].includes(Number(raw.botTime))
+      ? Number(raw.botTime)
+      : 1500,
   };
 }
 
@@ -168,6 +194,7 @@ export function validateSavedGame(value: unknown): GameSession | null {
         ? (value.botId as string)
         : "scout",
       started: value.started === true,
+      alienGambit: value.alienGambit === true,
       result: resultFor(chess) || storedResult,
       createdAt: boundedNumber(
         value.createdAt,

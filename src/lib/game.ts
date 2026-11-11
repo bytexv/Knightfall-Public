@@ -1,4 +1,5 @@
 import { Chess, type Color, type Square } from "chess.js";
+import { playedAlienGambit } from "./alien-gambit";
 import { validatedPosition } from "./engine-position";
 import type { GameRatingMetadata } from "./ratings";
 export const START_FEN = new Chess().fen();
@@ -69,6 +70,7 @@ export interface GameSession {
   whiteName?: string;
   blackName?: string;
   rating?: GameRatingMetadata;
+  alienGambit?: boolean;
 }
 export const bots = [
   {
@@ -218,6 +220,10 @@ export function applyMove(
       started: true,
       fen: chess.fen(),
       moves: [...session.moves, record],
+      alienGambit:
+        session.alienGambit === true ||
+        ((session.mode !== "bot" || session.playerColor === "w") &&
+          playedAlienGambit(session.startFen, [...session.moves, record])),
       result: resultFor(chess),
       clocks: {
         ...session.clocks,

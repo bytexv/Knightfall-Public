@@ -672,3 +672,6 @@
 }
 
 .review-recap {display:grid;gap:16px}.recap-players {display:grid;grid-template-columns:1fr 1fr;gap:12px}.recap-players>div {padding:16px;background:var(--surface-soft,#f2eee6);border-radius:12px;min-width:0}.recap-players h3 {overflow-wrap:anywhere;margin:8px 0}.recap-players strong {font-size:32px;display:block}.recap-players small {display:block}.recap-totals {width:100%;border-collapse:collapse}.recap-totals caption {text-align:left;padding-bottom:12px;font-weight:600}.recap-totals th,.recap-totals td {padding:8px;border-bottom:1px solid #d8d0c2;text-align:center}.recap-totals th:first-child {text-align:left}.recap-totals td {font-weight:700;font-variant-numeric:tabular-nums}
+
+.recap-phases {display:grid;gap:16px}.recap-phase {border:1px solid #d8d0c2;border-radius:12px;padding:16px}.recap-phase h3{margin:0 0 12px}.recap-phase h4{margin:12px 0 6px}.recap-phase p{font-size:13px;line-height:1.6}.recap-elo b{display:block;font-size:18px}
+.recap-switch {display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:12px}.recap-switch button{border:1px solid var(--border);border-radius:7px;padding:10px 14px;background:transparent;font:inherit;font-size:13px;cursor:pointer}.recap-switch button[aria-pressed=true]{background:#934526;border-color:#934526;color:white}.recap-phases[hidden],.recap-totals[hidden]{display:none}

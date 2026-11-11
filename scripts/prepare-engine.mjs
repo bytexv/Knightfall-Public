@@ -24,3 +24,14 @@ await writeFile(path.join(output, 'SOURCE.txt'), `Stockfish.js ${packageInfo.ver
 await Promise.all(['stockfish.js', 'stockfish.wasm', 'COPYING.txt', 'AUTHORS.txt', 'SOURCE.txt']
   .map(file => chmod(path.join(output, file), 0o644)));
 console.log(`Prepared Stockfish ${packageInfo.version} lite single-thread engine in public/engine.`);
+
+// Preserve upstream basenames: full builds assemble six WASM parts at runtime.
+const full = files.filter(file => /^stockfish-17\.1-(?:single-)?(?:a496a04|8e4d048)(?:-part-\d)?\.(?:js|wasm)$/.test(file));
+if (full.length !== 14) throw new Error('Expected both full NNUE builds and twelve WASM parts.');
+await mkdir(path.join(output, 'full'), {recursive:true});
+for (const file of full) {
+  await copyFile(path.join(source, 'src', file), path.join(output, 'full', file));
+  await chmod(path.join(output, 'full', file), 0o644);
+}
+await writeFile(path.join(output, 'FULL-SOURCE.txt'), `Full Stockfish.js 17.1, unchanged upstream single- and multi-threaded builds.\nUpstream gitHead: 602fd7e1a571a2be71f242942db90483731f2a1f\nCorresponding source, build scripts and both full NNUE networks are in vendor/stockfish-full-source.tgz in the matching Knightfall source release:\nhttps://github.com/bytexv/Knightfall-Public/releases\nBig network SHA256: 1c0000000000a67d629999d932d0c373f7450ce43cd12d0562868f4eaf9ae2ad\nSmall network SHA256: 37f18f62d772f3107e1d6aaca3898c130c3c86f2ab63e6555fbbca20635a899d\nLicense: GPL-3.0; see COPYING.txt and AUTHORS.txt.\n`);
+await chmod(path.join(output, 'FULL-SOURCE.txt'), 0o644);

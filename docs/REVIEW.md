@@ -42,3 +42,9 @@ This range is a local training estimate, **not an official rating**, not a predi
 ## Validation
 
 The unit fixtures in `tests/fixtures/review-stockfish.json` record the actual bundled Stockfish 17.1 Lite engine at depth 18 with three principal variations. They include sound queen, rook, bishop, and exchange sacrifices for both colors. The positions are from the CC0 Lichess puzzle database. Tests also cover equal-value trades, only-legal replies, illegal/short principal variations, shallow/fallback searches, White/Black score directions, mates, recognized opening prefixes, and insufficient performance samples.
+
+## Phase summary and both-side performance estimates (1.4)
+
+The completed review opens an interactive summary with Move totals and Early · middle · late views. Each phase shows both sides' classification totals and move quality, and a link to its largest evaluated loss when at least 50 centipawns. Phases advance monotonically: opening until move 10, middlegame afterward or with reduced material (phase weight ≤16), endgame at phase weight ≤8. Weights are knight/bishop 1, rook 2, queen 4 across both armies; kings and pawns contribute zero. Imported endgames therefore start in the endgame phase. These are practical teaching boundaries, not a universal definition of game phases.
+
+Both sides use the same uncalibrated training mapping: round `(100 + 26 × quality)` to 25 Elo, with a broad ±450 interval bounded to 100–3200. At least 12 independent decisions are needed for each side; book, forced, shallow, forced-mate, and already decisive positions are excluded. This is not a measured Elo prediction, official rating, or change to the persistent Local Elo ledger. Small samples display Not enough moves.

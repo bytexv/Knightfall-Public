@@ -77,7 +77,7 @@ async function start() {
     if (!details.url.startsWith(localOrigin + '/')) return callback({responseHeaders: details.responseHeaders});
     const headers = {...details.responseHeaders};
     headers['Content-Security-Policy'] = [
-      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: wss:; media-src 'self' data: blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: ws: wss:; media-src 'self' data: blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
     ];
     callback({responseHeaders: headers});
   });
@@ -165,6 +165,7 @@ async function start() {
     app.once('before-quit', () => clearInterval(timer));
   }
   if (smokeTest) {
+    if(process.argv.includes('--smoke-full-engine')) await require('./full-engine-smoke.cjs').verifyFullEngines(mainWindow);
     const report = await require('./smoke.cjs').runSmoke(mainWindow);
     console.log('KNIGHTFALL_DESKTOP_SMOKE ' + JSON.stringify(report));
     if (acceptanceTest) {

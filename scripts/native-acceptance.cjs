@@ -265,6 +265,7 @@ async function runAcceptance({ window, app, outputDir }) {
   };
   const step = async (name, action) => {
     if (process.argv.includes("--updates-only") && name !== "native-update-notifications-and-controls") return;
+    if (process.argv.includes("--learning-only") && !["guided-beginner-course", "alien-gambit-pieces-audio-and-settings"].includes(name)) return;
     currentStep = name;
     const started = Date.now();
     const detail = await action();
@@ -492,7 +493,12 @@ async function runAcceptance({ window, app, outputDir }) {
       );
       check(await evaluate("!!document.querySelector('.review-recap')"), "Completed review did not open its summary");
       check(await evaluate("[...document.querySelectorAll('.recap-totals tbody td')].reduce((sum,cell)=>sum+Number(cell.textContent),0)===7"), "Review totals do not match the game");
+      check(await evaluate("document.querySelectorAll('.recap-phase').length===3"),"Review must show three game phases");
+      check(await evaluate("document.querySelectorAll('.recap-elo').length===2"),"Review must show performance estimates for both sides");
       await captureResponsive("review-summary");
+      await clickText("Early · middle · late");
+      await captureResponsive("review-phases");
+      await clickText("Move totals");
       await clickText("Review step by step");
       const messages = await evaluate("window.__knightfallAcceptanceEngine");
       check(
@@ -629,8 +635,27 @@ async function runAcceptance({ window, app, outputDir }) {
       return { invalidEmpty: true, invalidAdjacentKings: true, validFen: fen };
     });
 
+    await step("guided-beginner-course", async () => {
+      await navigate("Learn chess");
+      await clickText("Learn to play");
+      await boardMove("e2","e3");
+      check(await evaluate("document.querySelector('.beginner-feedback').textContent.includes('does not complete')"),"Wrong legal move needs helpful feedback");
+      await clickText("Show a hint");
+      await captureResponsive("beginner-course");
+      const moves=[['e2','e4'],['a1','a7'],['c1','g5'],['b1','c3'],['d1','h5'],['e1','d2'],['e1','d1'],['e1','g1'],['a7','a8','q'],['g6','g7']];
+      for(let i=0;i<moves.length;i++){
+        await boardMove(...moves[i]);
+        check(await evaluate("!!document.querySelector('.beginner-feedback.solved')"),`Challenge ${i+1} was not solved`);
+        if(i<moves.length-1)await clickText("Next challenge");
+      }
+      check(await evaluate("JSON.parse(localStorage.getItem('knightfall:beginner-course')).length===10"),"Course progress did not persist");
+      await captureResponsive("beginner-checkmate");
+      await click('[aria-label="Close dialog"]');
+      return {completed:10,wrongMoveFeedback:true,hints:true};
+    });
+
     await step("opening-replay-and-rehearsal", async () => {
-      await navigate("Opening lab");
+      await navigate("Learn chess");
       await poll(
         "document.querySelectorAll('.lh-opening-card').length>0",
         "opening cards",
@@ -1042,6 +1067,34 @@ async function runAcceptance({ window, app, outputDir }) {
       } finally {
         socket.terminate();
       }
+    });
+
+    await step("alien-gambit-pieces-audio-and-settings", async () => {
+      await navigate("Play chess");
+      await clickText("New game", ".page-heading button");
+      await clickText("Pass & play");
+      await clickText("Start local game");
+      if(await evaluate("!!document.querySelector('[aria-label=\"Enable sounds\"]')"))await click('[aria-label="Enable sounds"]');
+      await evaluate("window.__alienPlayCalls=0;window.__originalAudioPlay=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){if(this.src.includes('alien-gambit'))window.__alienPlayCalls++;return window.__originalAudioPlay.call(this)};void 0");
+      const line=['e2e4','c7c6','d2d4','d7d5','b1c3','d5e4','c3e4','g8f6','e4g5','h7h6','g5f7'];
+      for(const uci of line)await boardMove(uci.slice(0,2),uci.slice(2,4));
+      await poll("JSON.parse(localStorage.getItem('knightfall:current')).alienGambit===true","Alien sacrifice");
+      check(await evaluate("document.querySelectorAll('.chess-piece[src*=\"pieces/alien/\"]').length>20"),"Alien pieces did not activate");
+      check(await evaluate("window.__alienPlayCalls===1"),"Sound did not trigger exactly once");
+      await captureResponsive("alien-gambit");
+      await navigate("Settings");
+      await evaluate("[...document.querySelectorAll('label.alien-setting')].find(x=>x.textContent.includes('Easter egg')).querySelector('input').click()");
+      await navigate("Play chess");
+      check(await evaluate("document.querySelectorAll('.chess-piece[src*=\"pieces/alien/\"]').length===0"),"Easter egg setting failed to restore standard pieces");
+      await navigate("Settings");
+      await evaluate("[...document.querySelectorAll('label.alien-setting')].find(x=>x.textContent.includes('Easter egg')).querySelector('input').click()");
+      await navigate("Play chess");
+      check(await evaluate("window.__alienPlayCalls===1"),"Navigation replayed the celebration automatically");
+      await clickText("New game", ".page-heading button");await clickText("Pass & play");await clickText("Start local game");
+      check(await evaluate("document.querySelectorAll('.chess-piece[src*=\"pieces/alien/\"]').length===0"),"New game kept alien pieces");
+      await evaluate("void (HTMLMediaElement.prototype.play=window.__originalAudioPlay)");
+      await click('[aria-label="Mute sounds"]');
+      return {signaturePly:11,oneAudioTrigger:true,settingRespected:true,newGameReset:true};
     });
 
     await step("settings-responsive-and-offline-reload", async () => {

@@ -32,6 +32,7 @@ export class BoardAnimator {
   constructor(
     private board: HTMLElement,
     private layer: HTMLElement,
+    private pieceDirectory = "pieces",
   ) {
     this.media = board.ownerDocument.defaultView?.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
@@ -45,7 +46,7 @@ export class BoardAnimator {
 
   private image(piece: BoardPiece) {
     const image = this.board.ownerDocument.createElement("img");
-    image.src = `./pieces/${piece.color}${piece.type.toUpperCase()}.svg`;
+    image.src = `./${this.pieceDirectory}/${piece.color}${piece.type.toUpperCase()}.svg`;
     image.alt = "";
     image.draggable = false;
     image.className = "chess-piece";

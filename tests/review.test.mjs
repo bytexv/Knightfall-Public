@@ -583,3 +583,23 @@ test("moves in already hopeless or overwhelming positions cannot inflate perform
     assert.equal(summarizeReview(stillInformative)[color].evaluatedMoves, 12);
   }
 });
+
+test('performance Elo is available symmetrically only with enough independent decisions', async()=>{
+ const {estimatePerformanceElo}=await import('../src/lib/review.ts');
+ const summary=summarizeReview([...sample(12,'w',20),...sample(12,'b',120)]);
+ const white=estimatePerformanceElo(summary.w),black=estimatePerformanceElo(summary.b);
+ assert.ok(white && black);assert.ok(white.estimate>black.estimate);
+ assert.equal(estimatePerformanceElo(summarizeReview(sample(11)).w),null);
+ assert.equal(estimatePerformanceElo(summarizeReview(sample(15).map(m=>({...m,label:'Book'}))).w),null);
+ assert.ok(white.range[0]>=100 && white.range[1]<=3200);
+});
+test('phase summaries handle early imported endgames and never count a move twice', async()=>{
+ const {summarizeGamePhases}=await import('../src/lib/review.ts');
+ const start=new Chess().fen();
+ const moves=[{before:start},{before:start.replace('0 1','0 11')},{before:'7k/8/8/8/8/8/P7/7K w - - 0 12'},{before:start.replace('0 1','0 13')}];
+ const phases=summarizeGamePhases(sample(4),moves);
+ assert.deepEqual(phases.map(p=>p.summary.reviewedPlies),[1,1,2]);
+ assert.equal(phases.reduce((n,p)=>n+p.summary.w.moves+p.summary.b.moves,0),4);
+ const imported=summarizeGamePhases(sample(1),[{before:'7k/8/8/8/8/8/P7/7K w - - 0 1'}]);
+ assert.deepEqual(imported.map(p=>p.summary.reviewedPlies),[0,0,1]);
+});

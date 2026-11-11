@@ -27,6 +27,8 @@ interface EngineWorker {
 export interface LocalEngineOptions {
   /** Useful when deploying under a subdirectory. Defaults to the app's base URL. */
   workerUrl?: string;
+  mode?: "lite" | "full";
+  threads?: number;
   initializationTimeout?: number;
   /** Hash table size in MiB, bounded to 4–64. Defaults to 16 for mobile memory use. */
   hashMb?: number;
@@ -116,7 +118,25 @@ export class LocalEngine {
   private serial = 0;
 
   constructor(settings: LocalEngineOptions = {}) {
-    this.settings = settings;
+    const threaded =
+      settings.mode === "full" &&
+      globalThis.crossOriginIsolated === true &&
+      typeof SharedArrayBuffer !== "undefined";
+    const threads = threaded
+      ? clamp(
+          settings.threads,
+          1,
+          Math.min(4, globalThis.navigator?.hardwareConcurrency || 2),
+          2,
+        )
+      : 1;
+    this.settings = { ...settings, threads };
+    if (settings.mode === "full") {
+      this.engineName = `Stockfish 17.1 Full NNUE · ${threads} ${threads === 1 ? "core" : "cores"}`;
+      this.settings.workerUrl ??= `${import.meta.env?.BASE_URL ?? "./"}engine/full/${threaded ? "stockfish-17.1-8e4d048.js" : "stockfish-17.1-single-a496a04.js"}`;
+      this.settings.hashMb ??= 32;
+      this.settings.initializationTimeout ??= 60000;
+    }
   }
 
   async initialize(): Promise<void> {
@@ -347,7 +367,9 @@ export class LocalEngine {
       this.worker?.postMessage(
         `setoption name Hash value ${clamp(this.settings.hashMb, 4, 64, 16)}`,
       );
-      this.worker?.postMessage("setoption name Threads value 1");
+      this.worker?.postMessage(
+        `setoption name Threads value ${this.settings.threads || 1}`,
+      );
       this.worker?.postMessage("isready");
       return;
     }

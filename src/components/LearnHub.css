@@ -1025,3 +1025,23 @@
   color: #655e56;
   opacity: 1;
 }
+.beginner-path {display:grid;grid-template-columns:1.1fr 1fr;gap:32px;padding:30px;margin:24px 0 32px;background:var(--panel);border:1px solid var(--border);border-radius:14px;}
+.beginner-intro h2 {font-size:clamp(24px,3vw,34px);line-height:1.15;margin:12px 0;max-width:380px;letter-spacing:-.8px;}
+.beginner-intro p,.beginner-steps p {color:var(--muted);line-height:1.6;}
+.beginner-progress {display:block;font-size:12px;margin:16px 0 8px;}
+.beginner-intro progress {width:100%;height:6px;accent-color:var(--lh-accent);}
+.beginner-steps {display:grid;gap:16px;}
+.beginner-steps>div {border-bottom:1px solid var(--border);padding-bottom:14px;}
+.beginner-steps>div:last-child {border-bottom:0;padding-bottom:0;}
+.beginner-steps b {font-size:14px;}.beginner-steps p {font-size:13px;margin:6px 0;}
+.beginner-steps button {border:0;background:transparent;padding:0;color:var(--lh-accent);font-weight:600;cursor:pointer;}
+.beginner-lesson-nav {display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px;}
+.beginner-lesson-nav button {display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--border);border-radius:50%;background:var(--panel);color:var(--text);cursor:pointer;}
+.beginner-lesson-nav .current {background:var(--lh-accent);color:white;border-color:var(--lh-accent);}
+.beginner-exercise {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start;}
+.beginner-instructions h3 {font-size:25px;line-height:1.2;margin:12px 0;}
+.beginner-instructions p {font-size:14px;line-height:1.65;}.beginner-goal {padding:14px;border-left:3px solid var(--lh-accent);background:var(--panel);}.beginner-goal p {margin:6px 0 0;}
+.beginner-feedback {min-height:66px;}.beginner-feedback.solved {color:var(--lh-accent);font-weight:600;}
+.beginner-actions {display:flex;gap:8px;flex-wrap:wrap;margin:16px 0;}
+.beginner-instructions details {font-size:12px;color:var(--muted);margin-top:20px;}.beginner-instructions summary {cursor:pointer;}
+@media(max-width:700px){.beginner-path{grid-template-columns:1fr;padding:20px;gap:24px}.beginner-exercise{grid-template-columns:1fr;gap:18px}.beginner-exercise>.chess-board{max-width:400px;margin:auto}.beginner-feedback{min-height:0}.beginner-instructions h3{font-size:22px}}

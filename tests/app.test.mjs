@@ -332,7 +332,7 @@ test("a queued bot result cannot resume a game paused by navigation", async () =
   const job = engineJobs.at(-1);
   assert.ok(job);
   const openingLab = all("button").find(
-    (button) => button.textContent.trim() === "Opening lab",
+    (button) => button.textContent.trim() === "Learn chess",
   );
   assert.ok(openingLab);
   // Resolve before React can run the bot effect cleanup. Cancellation alone
@@ -420,7 +420,7 @@ const beforeMate = ["e2e4", "e7e5", "f1c4", "b8c6", "d1h5", "g8f6"];
 test("a timeout discovered by navigation records the terminal bot result before pausing or opening analysis", async (t) => {
   let now = 1000;
   t.mock.method(performance, "now", () => now);
-  for (const destination of ["Opening lab", "Analysis"]) {
+  for (const destination of ["Learn chess", "Analysis"]) {
     if (destination === "Analysis") {
       await remount();
       localStorage.clear();

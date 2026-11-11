@@ -42,7 +42,7 @@ test('settings only retain valid known runtime values', () => {
   for (const invalid of [null, undefined, 5, 'settings', [], true]) assert.deepEqual(sanitizeSettings(invalid), defaultSettings);
   assert.deepEqual(sanitizeSettings({ name: null, boardTheme: 'unknown', sound: 'false', coordinates: 0, legalMoves: {}, extra: true }), defaultSettings);
   assert.deepEqual(sanitizeSettings({ name: '  Ava\u0000  ', boardTheme: 'ocean', sound: false, coordinates: false, legalMoves: false, extra: true }), {
-    name: 'Ava', boardTheme: 'ocean', sound: false, coordinates: false, legalMoves: false,
+    ...defaultSettings, name: 'Ava', boardTheme: 'ocean', sound: false, coordinates: false, legalMoves: false,
   });
   assert.equal(sanitizeSettings({ name: 'x'.repeat(1000) }).name.length, 24);
   assert.equal(sanitizeSettings({ name: '   ' }).name, 'You');

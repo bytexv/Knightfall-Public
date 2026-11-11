@@ -1,0 +1,7 @@
+Full Stockfish.js 17.1, unchanged upstream single- and multi-threaded builds.
+Upstream gitHead: 602fd7e1a571a2be71f242942db90483731f2a1f
+Corresponding source, build scripts and both full NNUE networks are in vendor/stockfish-full-source.tgz in the matching Knightfall source release:
+https://github.com/bytexv/Knightfall-Public/releases
+Big network SHA256: 1c0000000000a67d629999d932d0c373f7450ce43cd12d0562868f4eaf9ae2ad
+Small network SHA256: 37f18f62d772f3107e1d6aaca3898c130c3c86f2ab63e6555fbbca20635a899d
+License: GPL-3.0; see COPYING.txt and AUTHORS.txt.

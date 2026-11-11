@@ -3986,3 +3986,7 @@ textarea:focus-visible {
 }
 
 .name-editor {display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px}.name-editor input {flex:1;min-width:160px}.name-editor p {flex-basis:100%;font-size:12px}.game-result {flex-wrap:wrap}.page-heading .heading-action.new-game-action {display:inline-flex;flex-shrink:0;min-height:44px}@media(max-width:600px){.page-heading {flex-wrap:wrap;gap:12px}.game-result .button {flex:1;min-height:44px}.page-heading .analysis-heading-actions {display:flex;flex-wrap:wrap}}
+
+.engine-preferences {border:1px solid #d8d0c2;border-radius:12px;padding:20px;margin:24px 0;display:grid;gap:14px}.engine-preferences label{display:grid;gap:8px;font-weight:600}.engine-preferences select{width:100%;min-width:0;min-height:44px}.engine-preferences p,.engine-preferences small{font-size:12px;line-height:1.6}
+.alien-audio { display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:10px 12px; color:var(--text); background:var(--panel); border:1px solid var(--border); border-radius:8px; margin-bottom:8px; font-size:13px; }
+.alien-audio button { margin-left:auto; }

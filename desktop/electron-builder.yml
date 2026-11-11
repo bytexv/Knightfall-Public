@@ -26,6 +26,7 @@ files:
   - desktop/update.cjs
   - desktop/auto-update.cjs
   - desktop/smoke.cjs
+  - desktop/full-engine-smoke.cjs
   - server/**/*
   - public/icons/icon-512.png
   - package.json

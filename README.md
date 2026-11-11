@@ -15,7 +15,7 @@ Get the latest apps from [GitHub Releases](https://github.com/bytexv/Knightfall-
 1. Open **Play chess**. Choose one of six local bots, or **Pass & play** for two people sharing a screen. Pick a side and time control, then start.
 2. Click or drag a piece to a legal destination. Choose a queen, rook, bishop or knight when a pawn promotes.
 3. Open **Analysis** for a guided game review, move classifications, an evaluation graph and per-side summaries. Switch to **Live analysis** for current engine suggestions. Explore a suggested line or retry a move without changing the original game. **Set up** opens the board editor; **Save game** keeps an imported or edited study, and **Play position** starts practice from the current board.
-4. Explore **Puzzles**, **Tactics Sprint**, **Opening lab**, and **Endgame school** for guided practice.
+4. Explore **Puzzles**, **Tactics Sprint**, **Learn chess**, and **Endgame school** for guided practice.
 5. Use **Settings → Download a backup** and PGN exports to keep copies of your games.
 
 Press **F** to flip the board. Outside input fields and the board itself, **← / →** replay moves. On the board, arrow keys move focus and Enter or Space selects a piece or destination. Right-drag draws an arrow, right-click marks a square, and Escape clears those temporary annotations. The editor also supports Delete to erase a square. **Focus view** in the board toolbar reduces the surrounding interface while you play.
@@ -56,11 +56,11 @@ More details: [Same-Wi-Fi play](docs/LAN.md).
 ## What runs locally
 
 - **Play:** six adjustable bot personalities, a shared-screen mode, clocks with increment, legal-move enforcement, promotion choice, takebacks in local play, hints, replay and results.
-- **Analysis:** Stockfish 17.1 Lite in a worker, up to three principal variations, configurable depth limits, an evaluation bar and cancelable guided review. Review includes ten move classifications, per-side summaries, an interactive evaluation graph, suggested-line previews and move retries. A clearly labeled lightweight JavaScript engine is available if Stockfish cannot load.
+- **Analysis:** Stockfish 17.1 Lite or optional Full NNUE in local workers, up to three principal variations, configurable depth limits, an evaluation bar and cancelable guided review. Review includes ten move classifications, early/middle/late-game summaries, both-side performance Elo ranges, an interactive evaluation graph, suggested-line previews and move retries. A clearly labeled lightweight JavaScript engine is available if Stockfish cannot load.
 - **Local Elo:** a persistent practice rating, result history and trend graph for eligible completed games against local bots. It starts at 800 and stays provisional for the first 20 rated games. Games using hints, takebacks or live analysis while in progress are unrated, as are custom starting positions and fallback-engine play. Reviewing an already completed game does not change its recorded result. This device-local estimate is separate from online or official ratings and from a single game's review performance estimate.
-- **Learning:** 60 curated tactics from the Lichess CC0 puzzle database; Tactics Sprint with 3-minute, 5-minute and untimed Survival modes; 27 opening primers; nine short lessons; and 15 endgame drills, including four draw-defense exercises.
+- **Learning:** 60 curated tactics from the Lichess CC0 puzzle database; Tactics Sprint with 3-minute, 5-minute and untimed Survival modes; 28 opening primers (including Wittythealien’s Alien Gambit); ten interactive beginner challenges, nine short lessons; and 15 endgame drills, including four draw-defense exercises.
 - **Study tools:** a position editor, custom-position bot/shared-screen play, PGN/FEN import, PGN export with plain-text position notes, a searchable local game archive with resume controls, and JSON backup/restore.
-- **Personalization:** Sage, Walnut and Ocean boards; sound, coordinates and legal-move hints; a local display name; keyboard and touch controls. Piece movement, captures, castling and promotions animate while leaving move input responsive; reduced-motion preferences disable automatic piece travel and fades.
+- **Personalization:** An Alien Gambit Easter egg switches to labeled alien tokens and plays the supplied short celebration once; disable the Easter egg or its sound independently in Settings. Sage, Walnut and Ocean boards; sound, coordinates and legal-move hints; a local display name; keyboard and touch controls. Piece movement, captures, castling and promotions animate while leaving move input responsive; reduced-motion preferences disable automatic piece travel and fades.
 
 Bot difficulty descriptions are training estimates, not calibrated online ratings. Sprout and Scout combine local engine suggestions with beginner-oriented move policies; higher levels use the engine's chosen move. Opening creator references are educational, not official celebrity bots. The Botez Gambit and Bongcloud are explicitly identified as memes; the Cow Opening is a system rather than a gambit.
 
@@ -78,7 +78,7 @@ The web version needs an initial online load. Keep it open long enough for the f
 
 Saved games and preferences belong to the current browser origin or native app profile. Clearing site/app data, private browsing, uninstalling, storage eviction, or changing to another host address can remove or hide that data. The archive keeps up to 200 recently saved games. Reloaded casual games pause until **Resume saved game** is selected. Bot and shared-screen games also pause when you browse another section inside the app; unfinished games can be resumed from **My games**. LAN clocks remain controlled by the host and do not pause when you browse; leaving an active room requires confirmation and ends that game as a loss.
 
-The JSON backup includes saved games, the Local Elo ledger, board/profile settings and unassisted puzzle progress. Opening bookmarks, lesson-completion markers, endgame practice markers and Tactics Sprint personal bests are separate local records and are not included in that backup. Export individual games as PGN for a portable chess record. Save a study note before switching to another position; notes and annotation symbols travel as plain-text PGN comments.
+The JSON backup includes saved games, the Local Elo ledger, board/profile settings and unassisted puzzle progress. Beginner-course progress, opening bookmarks, lesson-completion markers, endgame practice markers and Tactics Sprint personal bests are separate local records and are not included in that backup. Export individual games as PGN for a portable chess record. Save a study note before switching to another position; notes and annotation symbols travel as plain-text PGN comments.
 
 ## Run from source
 
@@ -106,7 +106,7 @@ To inspect only the built frontend, use `npm run preview`. To open the desktop w
 | Command | Purpose |
 | --- | --- |
 | `npm ci` | Install the versions in `package-lock.json` |
-| `node scripts/prepare-engine.mjs` | Copy the matching Stockfish 17.1 Lite worker/WASM and engine notices into `public/engine/` |
+| `node scripts/prepare-engine.mjs` | Copy the matching Stockfish 17.1 Lite and Full workers/WASM and engine notices into `public/engine/` |
 | `npm run dev` | Run the Vite development server |
 | `npm test` | Run the automated chess, engine, UI, storage, PWA and LAN checks |
 | `npm run build` | Type-check, build Vite output and generate the offline asset manifest |

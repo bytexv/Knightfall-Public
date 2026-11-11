@@ -1,6 +1,14 @@
-# Knightfall 1.3.2
+# Knightfall 1.4.0
 
 An independent chess studio for web, Windows and Android. Local play, analysis and learning run on your device.
+
+## New in 1.4.0
+
+- Optional Stockfish 17.1 Full NNUE, with up to four cores on supported devices, longer analysis and maximum-bot search budgets, and Lite retained as the default. Full models are bundled in native apps and downloaded on first use on the web.
+- Review summary views for move totals and opening/middlegame/endgame decisions. Jump from a phase to a key mistake. Both players receive a broad performance Elo range when there are at least 12 independent decisions; estimates are uncalibrated and never change Local Elo.
+- A ten-challenge beginner course with interactive boards, hints, feedback, saved progress, and clear routes into tactics and endgame school. The former Opening lab is now Learn chess.
+- Wittythealien’s Alien Gambit in the opening library and rehearsal. Completing the signature Nxf7 line turns the pieces into distinct alien tokens for that match and plays the supplied nine-second sound once. Settings can disable the entire Easter egg or only its audio; the main sound mute also applies. Browsers that block autoplay offer a Play sound button.
+- Optional engine caching preserves pthread worker URLs, preventing recursive worker startup after a cached full-engine load.
 
 ## New in 1.3.2
 
@@ -39,7 +47,7 @@ The warm paper, walnut and charcoal club design, personalized board heading and 
 
 - Six local bots, shared-screen chess, timed or untimed games, promotion choices, hints, takebacks, replay and a focus view.
 - Stockfish 17.1 Lite analysis, three suggested lines, game review and a clearly labeled lightweight fallback.
-- 60 tactical puzzles, Tactics Sprint, 27 opening primers, nine lessons and 15 endgame drills, including draw-defense practice.
+- 60 tactical puzzles, Tactics Sprint, 28 opening primers, nine lessons and 15 endgame drills, including draw-defense practice.
 - A board editor, play from a custom position, PGN/FEN import, PGN export with study notes, a local game archive, backups and board settings.
 - Same-Wi-Fi rooms with host-validated moves and clocks, reconnection, draw offers and rematches.
 
@@ -47,9 +55,9 @@ Tactics Sprint offers 3-minute, 5-minute and untimed Survival modes with three l
 
 ## Install
 
-**Windows:** Install `Knightfall-1.3.2-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.3.2-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
+**Windows:** Install `Knightfall-1.4.0-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.4.0-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
 
-**Android:** Open `Knightfall-1.3.2-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
+**Android:** Open `Knightfall-1.4.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
 
 **Web:** Use the private web link supplied with the release. The hosting provider may require sign-in. Chrome/Edge can install the app from their menu; on iPhone, use Safari **Share → Add to Home Screen**. Keep the first online load open while offline assets finish caching.
 
