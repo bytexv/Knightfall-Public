@@ -172,6 +172,8 @@ export async function startLanServer({port=8787, host='0.0.0.0', staticDir=path.
   };
 
   const server = http.createServer(async(req,res)=>{
+    res.setHeader('Cross-Origin-Opener-Policy','same-origin');
+    res.setHeader('Cross-Origin-Embedder-Policy','require-corp');
     const json=(code,data)=>{res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(data));};
     if(!trustedHost(req.headers.host)) return json(403,{error:'Use this computer’s local address to connect.'});
     if(!['GET','HEAD'].includes(req.method || '')) {res.setHeader('Allow','GET, HEAD');return json(405,{error:'Method not allowed'});}
