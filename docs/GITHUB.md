@@ -1,21 +1,21 @@
 # GitHub source and releases
 
-The planned repository is `bytexv/knightfall`. It has **not been created**: the connected account could not create repositories. The workflows are ready for a repository supplied by its owner. This document does not claim that a GitHub release or workflow run has been published.
+The public source repository is [bytexv/Knightfall-Public](https://github.com/bytexv/Knightfall-Public). The source includes CI, a tagged release workflow and a desktop update checker. Publishing source does not publish app downloads automatically.
 
-Desktop update configuration remains blank until the actual repository URL is confirmed. Creating an empty repository and pushing this source does not require putting an account token, Android keystore, or signing password in the source tree.
+`public/update-config.json` points to this public repository. Newly built apps can check its latest stable release without signing in. Previously distributed 1.2.0 binaries retain their original blank configuration and need a new build to gain this connection. Update downloads remain manual; the app does not install or execute replacements automatically.
 
 ## Connect the repository
 
-After the repository exists, add a separate remote so an existing hosting remote is preserved:
+Keep an existing hosting remote and add GitHub separately:
 
 ```sh
-git remote add github https://github.com/OWNER/REPOSITORY.git
+git remote add github https://github.com/bytexv/Knightfall-Public.git
 git push github main
 ```
 
-Replace `OWNER/REPOSITORY` with the confirmed repository. If the `github` remote already exists, inspect it with `git remote -v` and update that remote instead of adding it again. Use your normal GitHub sign-in or credential helper for Git operations; credentials do not belong in application files.
+If the `github` remote already exists, inspect it with `git remote -v`. Use your normal GitHub sign-in or credential helper; credentials do not belong in application files.
 
-Set the confirmed repository in `public/update-config.json`, then rebuild the app. A public repository lets desktop update checks read GitHub's latest stable release without signing in. Anonymous requests cannot read a private repository's releases. The app reports that update checks are unavailable in that case; it does not embed a personal access token or ask for GitHub credentials.
+Before the first automated Android release, configure the signing secrets described below. No signing keys or passwords are supplied by this source push. Until a stable release is published, update checks report that no release is available.
 
 ## What the workflows do
 
