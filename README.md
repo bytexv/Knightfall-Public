@@ -1,0 +1,196 @@
+# Knightfall
+
+**Your move. Your world.**
+
+Knightfall is an independent chess studio for the web, Windows and Android. Play local bots, review games with on-device Stockfish, study openings and endgames, solve tactics, or invite a friend on the same Wi-Fi. The native apps bundle the engine and learning content; the web app supports offline use after its first successful cache installation.
+
+Knightfall has its own branding and interface. It is not affiliated with Chess.com, Lichess, or the creators mentioned in its educational content.
+
+## Start playing
+
+1. Open **Play chess**. Choose one of six local bots, or **Pass & play** for two people sharing a screen. Pick a side and time control, then start.
+2. Click or drag a piece to a legal destination. Choose a queen, rook, bishop or knight when a pawn promotes.
+3. Open **Analysis** to replay a game, inspect engine suggestions, run a move-by-move review, or import a PGN/FEN. **Set up** opens the board editor. Use **Save game** to keep an imported or edited study, or **Play position** to practice the current board against a bot or another person.
+4. Explore **Puzzles**, **Tactics Sprint**, **Opening lab**, and **Endgame school** for guided practice.
+5. Use **Settings → Download a backup** and PGN exports to keep copies of your games.
+
+Press **F** to flip the board. Outside input fields and the board itself, **← / →** replay moves. On the board, arrow keys move focus and Enter or Space selects a piece or destination. Right-drag draws an arrow, right-click marks a square, and Escape clears those temporary annotations. The editor also supports Delete to erase a square. **Focus view** in the board toolbar reduces the surrounding interface while you play.
+
+For installation details, see [Install Knightfall](docs/INSTALL.md). For a full feature inventory, see [Features](docs/FEATURES.md).
+
+### Available formats
+
+| Format | What it contains | Delivery/build output |
+| --- | --- | --- |
+| Web / installable PWA | Responsive app, local engine, learning content, offline cache | `dist/` after `npm run build` |
+| Windows x64 | Portable Electron 45 app with a built-in Wi-Fi host | `artifacts/windows/Knightfall-1.0.0-Windows-x64.exe` |
+| Android | Capacitor 7 app with bundled assets and direct LAN joining | `artifacts/Knightfall-1.0.0-android-debug.apk` |
+| iPhone / iPad | Native Capacitor project; the web app can also be added to the Home Screen | `ios/`; no signed IPA is included |
+
+The Windows executable is unsigned. The Android APK is a development build signed with a debug key. They are not app-store releases. Native iOS builds require macOS, Xcode and Apple signing. See [Packaging](docs/PACKAGING.md) and [Mobile](docs/MOBILE.md).
+
+The managed web deployment is private to its owner by default and may require the hosting provider's sign-in. Packaged apps and local-network play do not require a Knightfall account. A private hosted website is not a public multiplayer server.
+
+## Play with a friend on the same Wi-Fi
+
+One computer hosts the game; the other player can use a phone, tablet or computer.
+
+1. Connect both devices to the same normal Wi-Fi network.
+2. On Windows, open **Play with friends → Create a room**, choose your name, side and time control, then click **Create Wi-Fi room**. The desktop app starts the local host automatically.
+3. Share the displayed local address, such as `http://192.168.1.20:8787`, and the six-character room code. Share the LAN address, not `localhost` or `127.0.0.1`.
+4. On the other device, open that address in a browser, choose **Play with friends → Join a room**, and enter the code. The Android app can join directly by entering the host address and code.
+5. Keep the host computer awake and Knightfall open. Allow the host through the private-network firewall if the operating system asks.
+
+A computer running the source can host with `npm run lan` instead of the Windows app. The default port is `8787`; use the addresses printed by the server.
+
+The host validates all moves and owns the clocks. Clocks start when the second player joins and continue during a disconnection. Reconnection and saved-seat resumption are supported; keep the same browser tab and host address. Draw offers, resignation and mutually accepted rematches are available. Rematches swap colors.
+
+Rooms exist in host memory and end when the host stops. Guest Wi-Fi or device isolation can block local connections. A hosted HTTPS page cannot usually connect directly to an insecure local WebSocket: use **Open local host** to open the host's HTTP app instead. Local multiplayer uses HTTP/WebSocket on a trusted network; it is not designed for router port forwarding or public internet hosting.
+
+More details: [Same-Wi-Fi play](docs/LAN.md).
+
+## What runs locally
+
+- **Play:** six adjustable bot personalities, a shared-screen mode, clocks with increment, legal-move enforcement, promotion choice, takebacks in local play, hints, replay and results.
+- **Analysis:** Stockfish 17.1 Lite in a worker, up to three principal variations, configurable depth limits, an evaluation bar, cancelable game review and selected-move feedback. A clearly labeled lightweight JavaScript engine is available if Stockfish cannot load.
+- **Learning:** 60 curated tactics from the Lichess CC0 puzzle database; Tactics Sprint with 3-minute, 5-minute and untimed Survival modes; 27 opening primers; nine short lessons; and 15 endgame drills, including four draw-defense exercises.
+- **Study tools:** a position editor, custom-position bot/shared-screen play, PGN/FEN import, PGN export with plain-text position notes, a searchable local game archive with resume controls, and JSON backup/restore.
+- **Personalization:** Sage, Walnut and Ocean boards; sound, coordinates and legal-move hints; a local display name; keyboard and touch controls.
+
+Bot difficulty descriptions are training estimates, not calibrated online ratings. Sprout and Scout combine local engine suggestions with beginner-oriented move policies; higher levels use the engine's chosen move. Opening creator references are educational, not official celebrity bots. The Botez Gambit and Bongcloud are explicitly identified as memes; the Cow Opening is a system rather than a gambit.
+
+Tactics Sprint gives you three lives and one point for each complete puzzle sequence. A wrong legal move costs a life; the timed modes keep running during feedback and background tabs. The fixed 60-puzzle course becomes harder as you progress. Finish a run to see solved/missed/unfinished positions and study them in the normal puzzle view. Personal bests stay on this device; leaving the Sprint page abandons the active run.
+
+Endgame starting positions were checked against exact tablebases during content preparation. The app does **not** download or query tablebases while you practice: its opponent is the local engine, which may choose different defenses.
+
+## Privacy, saved games and offline use
+
+Positions and analysis requests stay on the device. The application does not include analytics, advertising, cloud game uploads, or cross-device account sync. Fonts, pieces and engine assets are served with the app. Opening an optional source/reference link visits that external website in the normal way.
+
+The web version needs an initial online load. Keep it open long enough for the full app and engine cache to finish. PWA installation requires HTTPS or a supported localhost origin; a plain HTTP LAN address is for local multiplayer and does not provide the same install/offline guarantees. Native Windows and Android packages already contain the runtime assets. A Wi-Fi game still needs a live network and host even when internet access is unavailable.
+
+Saved games and preferences belong to the current browser origin or native app profile. Clearing site/app data, private browsing, uninstalling, storage eviction, or changing to another host address can remove or hide that data. The archive keeps up to 200 recently saved games. Reloaded casual games pause until **Resume saved game** is selected. Bot and shared-screen games also pause when you browse another section inside the app; unfinished games can be resumed from **My games**. LAN clocks remain controlled by the host and do not pause when you browse; leaving an active room requires confirmation and ends that game as a loss.
+
+The JSON backup currently includes saved games, board/profile settings and unassisted puzzle progress. Opening bookmarks, lesson-completion markers, endgame practice markers and Tactics Sprint personal bests are separate local records and are not included in that backup. Export individual games as PGN for a portable chess record. Save a study note before switching to another position; notes and annotation symbols travel as plain-text PGN comments.
+
+## Run from source
+
+Use **Node.js 24 LTS** and npm. Node 22.15 or newer also supports the test runner's module hooks. Native packaging has additional requirements below.
+
+```sh
+npm ci
+node scripts/prepare-engine.mjs
+npm run dev
+```
+
+Open the URL printed by Vite. The development server is for UI development; offline caching is generated for the production build.
+
+To build and serve the production app with the local multiplayer host:
+
+```sh
+npm run build
+npm run lan
+```
+
+To inspect only the built frontend, use `npm run preview`. To open the desktop wrapper from source, build first and run `npm run desktop`.
+
+### Commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm ci` | Install the versions in `package-lock.json` |
+| `node scripts/prepare-engine.mjs` | Copy the matching Stockfish 17.1 Lite worker/WASM and engine notices into `public/engine/` |
+| `npm run dev` | Run the Vite development server |
+| `npm test` | Run the automated chess, engine, UI, storage, PWA and LAN checks |
+| `npm run build` | Type-check, build Vite output and generate the offline asset manifest |
+| `npm run preview` | Serve the built frontend for inspection |
+| `npm run lan` | Serve `dist/` and host local WebSocket games |
+| `npm run desktop` | Open the Electron wrapper using the existing `dist/` |
+| `npm run package:windows` | Package the existing web build as a Windows x64 portable EXE |
+| `npm run package:android` | Build the web app, synchronize Android assets and assemble a debug APK |
+
+Run `prepare-engine.mjs` after a fresh dependency installation or an intentional engine change. The script rejects a mismatched engine version because the included corresponding-source bundle must match the shipped engine.
+
+### Windows packaging
+
+```sh
+npm run build
+npm run package:windows
+node scripts/package-verify.mjs
+```
+
+The packaging script writes the EXE, `SHA256SUMS.txt` and build metadata under `artifacts/windows/`. It can cross-build the unsigned portable target from Linux. The app uses a sandboxed renderer and a restricted preload bridge; a LAN listener starts when the user creates a room.
+
+On a machine with a desktop session, this command exercises the real Electron renderer and trusted LAN bridge:
+
+```sh
+npx electron . --smoke-test
+```
+
+Add `--smoke-game` to also play `1.e4` through the normal UI and verify a legal reply from the actual Stockfish WASM worker:
+
+```sh
+npx electron . --smoke-test --smoke-game
+```
+
+A successful Linux Electron smoke test does not establish Windows-device compatibility. See [Packaging](docs/PACKAGING.md) for the verification boundaries and release-signing considerations.
+
+### Android and iOS
+
+Android builds require **JDK 21**, Android SDK platform **35**, and build-tools **35.0.0**. Set `JAVA_HOME` and `ANDROID_HOME` (or `ANDROID_SDK_ROOT`) for your installation.
+
+```sh
+npm run package:android
+```
+
+If `dist/` is already the current tested build, use `npm run package:android -- --skip-web-build`. Android exports use the system Save dialog. The app targets Android 6.0 or newer; an up-to-date Android System WebView is recommended.
+
+On macOS, prepare the native iOS project with:
+
+```sh
+npm run build
+npx cap sync ios
+npx cap open ios
+```
+
+Select an Apple development team in Xcode and run or archive the app. The bundle ID is `studio.knightfall.chess`. The checked-in project is not a signed installer. See [Mobile](docs/MOBILE.md) for signing, local-network behavior and installation instructions.
+
+The included [GitHub Actions workflow](.github/workflows/build-release.yml) builds Windows and Android artifacts on demand or for version tags. It does not publish to stores or deploy the website.
+
+## Development map
+
+| Area | Location |
+| --- | --- |
+| Application navigation and game flows | `src/App.tsx` |
+| Board, analysis, editor and learning views | `src/components/` |
+| Chess history, PGN, clocks and persistence | `src/lib/game.ts`, `src/lib/clock.ts`, `src/lib/storage.ts` |
+| Local UCI client, fallback and bot policies | `src/lib/engine.ts`, `src/lib/engine-fallback.ts`, `src/lib/bot-policy.ts` |
+| Review scoring and formatting | `src/lib/review.ts` |
+| Openings, lessons, puzzles and verified endgames | `src/data/` |
+| Authoritative HTTP/WebSocket room server | `server/index.mjs` |
+| Desktop main process, preload and packaging config | `desktop/` |
+| Capacitor native projects | `android/`, `ios/`, `capacitor.config.ts` |
+| Service worker, bundled assets and licenses | `public/` |
+| Build helpers and regression tests | `scripts/`, `tests/` |
+
+The frontend is a static Vite build. The optional Node server handles LAN play; a static web deployment alone does not add internet matchmaking. When hosting `dist/`, preserve relative asset paths, serve `.wasm` with the correct MIME type, and use HTTPS for installable PWA behavior. The managed deployment configuration lives in `.openai/hosting.json` and preserves the site's private audience.
+
+### Validation
+
+Run `npm test` and `npm run build` after changes. The suite includes real bundled Stockfish execution, a browser-worker loading harness, chess legality and special-move checks, React/jsdom interaction tests, actual HTTP/WebSocket room tests, storage validation and service-worker lifecycle tests. The worker harness is not a substitute for full browser or physical-device testing.
+
+For native changes, also run the relevant packaging verification and test the produced app on its target platform. Android compilation is not the same as a phone/emulator acceptance test. Before distributing a signed release, check move input, promotion, local engine startup, file export, offline launch and a two-device LAN game on the actual target devices.
+
+## Scope and current limitations
+
+Knightfall is a local chess product, not a replacement for an online chess network. It does not include public matchmaking, accounts, a rated ladder, tournaments, cloud synchronization, fair-play monitoring, streaming, subscriptions or app-store publication.
+
+Analysis quality depends on device speed and search time. The Lite engine is single-threaded; game-review quality percentages are estimates, not an official accuracy score. A depth setting is a limit, not a promise that every search reaches it. The fallback is substantially weaker than Stockfish.
+
+PGN support is for a single main-line game with plain-text comments. Playing from an earlier analysis position replaces the current continuation; it is not a persistent branching variation tree. FEN validation rejects common impossible states but does not prove complete historical reachability. Draw rules are applied automatically for this casual format rather than using tournament claim procedures. Keep timed mobile games in the foreground because operating systems may suspend background web views.
+
+## License and credits
+
+The application source is **GPL-3.0-or-later**; see [LICENSE](LICENSE). Stockfish's matching source, license and neural-network data are included under `public/engine/`. Distribute the corresponding application/engine source and notices with binaries as required by their licenses.
+
+See [Third-party notices](docs/THIRD-PARTY.md) for Stockfish, chess.js, React, Electron, Capacitor, Lucide, the Cburnett pieces, locally bundled fonts and Lichess CC0 puzzle data. [Engine details](docs/ENGINE.md) document the exact engine build and its local fallback.

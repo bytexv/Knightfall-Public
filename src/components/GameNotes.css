@@ -1,0 +1,129 @@
+.game-notes {
+  padding: 20px;
+}
+.game-notes > .panel-heading {
+  align-items: center;
+  margin-bottom: 17px;
+}
+.game-notes h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.game-notes h3 > svg {
+  color: var(--muted, #7c887d);
+  flex-shrink: 0;
+}
+.game-notes-position {
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--muted, #7c887d);
+  max-width: 52%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.game-notes-label {
+  display: block;
+  font-size: 10px;
+  color: var(--text, #27382e);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.game-notes textarea {
+  font-family: var(--sans, system-ui, sans-serif);
+  font-size: 12px;
+  line-height: 1.75;
+  min-height: 110px;
+  resize: vertical;
+  display: block;
+}
+.game-notes-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+.game-notes-tools > span {
+  font-size: 9px;
+  color: var(--muted, #7c887d);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.game-notes-tools > span.near-limit {
+  color: #8f4b28;
+}
+.game-notes-symbols {
+  display: flex;
+  gap: 4px;
+}
+.game-notes-symbols > button {
+  border: 1px solid var(--border, #e0e5db);
+  border-radius: 5px;
+  background: var(--bg, #f7f8f3);
+  padding: 4px 6px;
+  min-width: 26px;
+  min-height: 28px;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--text, #27382e);
+}
+.game-notes-symbols > button:hover:not(:disabled) {
+  background: #e9efdf;
+}
+.game-notes-hint {
+  font-size: 9px;
+  line-height: 1.6;
+  color: var(--muted, #7c887d);
+  margin: 12px 0 15px;
+}
+.game-notes-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.game-notes-actions > .button {
+  padding: 8px 10px;
+  min-height: 34px;
+  font-size: 10px;
+}
+.game-notes-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  font-size: 9px;
+  line-height: 1.5;
+  color: #48673b;
+}
+.game-notes-status.failed {
+  color: #943d2c;
+}
+.game-notes-unsaved {
+  font-size: 9px;
+  color: #755a36;
+  line-height: 1.6;
+  margin: 10px 0 0;
+}
+@media (max-width: 420px) {
+  .game-notes {
+    padding: 16px;
+  }
+  .game-notes-symbols {
+    gap: 3px;
+  }
+  .game-notes-symbols > button {
+    min-width: 24px;
+    padding: 4px;
+  }
+  .game-notes-position {
+    max-width: 45%;
+  }
+  .game-notes-status {
+    width: 100%;
+    margin-left: 0;
+  }
+}

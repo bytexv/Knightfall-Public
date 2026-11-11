@@ -1,0 +1,48 @@
+{
+  "name": "knightfall-chess",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Your move. Your world. An offline-first chess studio.",
+  "author": "Knightfall",
+  "license": "GPL-3.0-or-later",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --import tsx --test tests/*.test.mjs",
+    "lan": "node server/index.mjs",
+    "desktop": "electron .",
+    "postbuild": "node scripts/package-pwa.mjs",
+    "package:windows": "node scripts/package-windows.mjs",
+    "package:android": "node scripts/package-mobile.mjs"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.0",
+    "chess.js": "^1.4.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.4.0",
+    "@capacitor/cli": "^7.4.0",
+    "@capacitor/ios": "^7.4.0",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.4.0",
+    "electron": "^45.3.0",
+    "electron-builder": "^26.0.12",
+    "jsdom": "^31.0.0",
+    "stockfish": "^17.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5"
+  },
+  "engines": {
+    "node": ">=22.15.0"
+  }
+}

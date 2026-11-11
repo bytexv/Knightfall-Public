@@ -1,0 +1,51 @@
+appId: studio.knightfall.chess
+productName: Knightfall
+copyright: Copyright © 2026 Knightfall contributors
+asar: true
+npmRebuild: false
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
+directories:
+  output: artifacts/windows
+  buildResources: desktop/resources
+files:
+  - dist/**/*
+  - desktop/main.cjs
+  - desktop/preload.cjs
+  - desktop/smoke.cjs
+  - server/**/*
+  - public/icons/icon-512.png
+  - package.json
+  - LICENSE*
+  - docs/THIRD-PARTY.md
+  - '!**/*.map'
+  - '!**/node_modules/stockfish/**/*'
+  - '!**/node_modules/@capacitor/**/*'
+  - '!**/node_modules/lucide-react/**/*'
+  - '!**/node_modules/react/**/*'
+  - '!**/node_modules/react-dom/**/*'
+win:
+  target:
+    - target: portable
+      arch: [x64]
+  icon: public/icons/icon.ico
+  signAndEditExecutable: false
+  artifactName: Knightfall-${version}-Windows-x64.${ext}
+portable:
+  requestExecutionLevel: user
+  unicode: true
+  splashImage: null
+linux:
+  target: [dir]
+  icon: public/icons/icon-512.png
+  category: Game
+mac:
+  target: [dmg]
+  icon: public/icons/icon-512.png
+  category: public.app-category.board-games

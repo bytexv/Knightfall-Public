@@ -1,0 +1,181 @@
+.chessboard-shell {
+  --square-light: #e8ebd9;
+  --square-dark: #7d987d;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px #182b1e16;
+  user-select: none;
+  touch-action: manipulation;
+}
+.chessboard-shell.theme-walnut {
+  --square-light: #f0dec6;
+  --square-dark: #aa805d;
+}
+.chessboard-shell.theme-ocean {
+  --square-light: #dce7eb;
+  --square-dark: #6f92a6;
+}
+.chessboard {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+}
+.square {
+  appearance: none;
+  border: 0;
+  border-radius: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  cursor: pointer;
+  background: var(--square-light);
+  touch-action: none;
+}
+.square.dark {
+  background: var(--square-dark);
+}
+.square.last-move.light {
+  background: color-mix(in srgb, var(--square-light), #e4dd74 55%);
+}
+.square.last-move.dark {
+  background: color-mix(in srgb, var(--square-dark), #d2cd5b 60%);
+}
+.square.selected {
+  background: #eed775 !important;
+}
+.square.in-check {
+  background:
+    radial-gradient(ellipse, #df6660 5%, #df666055 65%, transparent 95%),
+    var(--square-light);
+}
+.square.dark.in-check {
+  background:
+    radial-gradient(ellipse, #df6660 5%, #df666055 65%, transparent 95%),
+    var(--square-dark);
+}
+.square:focus-visible {
+  outline: 3px solid #304d37;
+  outline-offset: -3px;
+  z-index: 2;
+}
+.chess-piece {
+  width: 87%;
+  height: 87%;
+  position: relative;
+  pointer-events: none;
+  z-index: 1;
+  filter: drop-shadow(0 2px 1px #14221922);
+}
+.coordinate {
+  position: absolute;
+  font-size: clamp(9px, 1.1vw, 12px);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--square-dark);
+  z-index: 2;
+}
+.dark .coordinate {
+  color: var(--square-light);
+}
+.coordinate.rank {
+  left: 5px;
+  top: 5px;
+}
+.coordinate.file {
+  bottom: 4px;
+  right: 5px;
+}
+.legal-dot {
+  position: absolute;
+  width: 27%;
+  height: 27%;
+  background: #243a3260;
+  border-radius: 50%;
+  z-index: 2;
+}
+.legal-ring {
+  position: absolute;
+  inset: 1px;
+  border: 5px solid #253e3755;
+  border-radius: 50%;
+  z-index: 2;
+}
+.square.marked:after {
+  content: "";
+  position: absolute;
+  inset: 5%;
+  border: 4px solid #db9f56;
+  border-radius: 50%;
+  z-index: 4;
+}
+.board-arrows {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+.promotion-backdrop {
+  position: absolute;
+  inset: 0;
+  background: #111b1955;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+.promotion-dialog {
+  padding: 18px;
+  background: #f8f9f2;
+  border-radius: 12px;
+  box-shadow: 0 12px 50px #13231644;
+}
+.promotion-dialog > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: space-between;
+}
+.promotion-choices {
+  display: flex;
+  margin-top: 12px;
+}
+.promotion-choices button {
+  width: 64px;
+  height: 64px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.promotion-choices button:hover {
+  background: #d7e4c6;
+}
+.promotion-choices img {
+  width: 100%;
+}
+
+@supports not (aspect-ratio: 1) {
+  .chessboard-shell {
+    height: 0;
+    padding-bottom: 100%;
+  }
+  .chessboard {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+}

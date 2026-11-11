@@ -1,0 +1,49 @@
+name: Build desktop and mobile
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node scripts/prepare-engine.mjs
+      - run: npm run build
+      - run: node scripts/package-windows.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Knightfall-Windows-x64
+          path: |
+            artifacts/windows/*.exe
+            artifacts/windows/SHA256SUMS.txt
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: node scripts/prepare-engine.mjs
+      - run: npm run build
+      - run: npx cap sync android
+      - run: chmod +x android/gradlew
+      - run: cd android && ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Knightfall-Android-debug
+          path: android/app/build/outputs/apk/debug/*.apk
