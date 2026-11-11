@@ -27,8 +27,8 @@ For installation details, see [Install Knightfall](docs/INSTALL.md). For a full 
 | Format | What it contains | Delivery/build output |
 | --- | --- | --- |
 | Web / installable PWA | Responsive app, local engine, learning content, offline cache | `dist/` after `npm run build` |
-| Windows x64 | Electron 45 Setup installer with automatic updates, plus portable edition and Wi-Fi host | `artifacts/windows/Knightfall-1.3.0-Windows-Setup.exe` and `Windows-x64.exe` |
-| Android | Capacitor 7 app with bundled assets and direct LAN joining | `artifacts/Knightfall-1.3.0-android-debug.apk` |
+| Windows x64 | Electron 45 Setup installer with automatic updates, plus portable edition and Wi-Fi host | `artifacts/windows/Knightfall-1.3.1-Windows-Setup.exe` and `Windows-x64.exe` |
+| Android | Capacitor 7 app with bundled assets and direct LAN joining | `artifacts/Knightfall-1.3.1-android-debug.apk` |
 | iPhone / iPad | Native Capacitor project; the web app can also be added to the Home Screen | `ios/`; no signed IPA is included |
 
 The Windows executable is unsigned. The Android APK is a development build signed with a debug key. They are not app-store releases. Native iOS builds require macOS, Xcode and Apple signing. See [Packaging](docs/PACKAGING.md) and [Mobile](docs/MOBILE.md).

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing stable version tag, for example v1.3.0
+        description: Existing stable version tag, for example v1.3.1
         required: true
         type: string
 
@@ -109,6 +109,13 @@ jobs:
       - run: node scripts/package-verify.mjs
       - run: node scripts/verify-windows-smoke.mjs
       - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Windows-validation
+          path: artifacts/qa/windows/
+          if-no-files-found: ignore
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
         with:
           name: Knightfall-Windows-x64
           path: |
@@ -139,6 +146,9 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - run: npm ci
       - uses: actions/download-artifact@v4

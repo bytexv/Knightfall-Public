@@ -21,7 +21,7 @@ The connected GitHub integration currently cannot manage repository signing secr
 
 `Check source` runs on main/master pushes, pull requests, or a manual run. It installs the locked dependencies with Node.js 24, prepares the bundled engine, runs the tests, builds the web app, and checks that committed engine files match their preparation script.
 
-`Build and publish release` runs when a `v*` tag is pushed, or manually for an existing tag. It requires a stable version such as `v1.3.0`, matching `package.json` and Android's `versionName`. It builds the web app once and gives both native jobs the same assets and tested source commit.
+`Build and publish release` runs when a `v*` tag is pushed, or manually for an existing tag. It requires a stable version such as `v1.3.1`, matching `package.json` and Android's `versionName`. It builds the web app once and gives both native jobs the same assets and tested source commit.
 
 The release contains:
 
@@ -74,8 +74,8 @@ Before signing secrets are configured, a maintainer can publish locally verified
 3. Create and push the matching stable tag. For example:
 
 ```sh
-git tag v1.3.0
-git push github v1.3.0
+git tag v1.3.1
+git push github v1.3.1
 ```
 
 Alternatively, choose **Actions → Build and publish release → Run workflow** and enter an existing stable tag. The workflow checks out `refs/tags/<tag>` and pins both native jobs to the commit that passed the source checks. A failed Windows/source build or failed configured Android signing does not publish a release. An unconfigured Android signing identity omits only the APK. Existing releases are retained without replacing their files. Use a new version for changed binaries.

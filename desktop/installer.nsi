@@ -13,10 +13,10 @@ ShowInstDetails show
 ShowUninstDetails show
 !define MUI_ABORTWARNING
 !ifndef MUI_ICON
-  !define MUI_ICON "${PROJECT_DIR}/public/icons/icon.ico"
+  !define MUI_ICON "${PROJECT_DIR}\public\icons\icon.ico"
 !endif
 !ifndef MUI_UNICON
-  !define MUI_UNICON "${PROJECT_DIR}/public/icons/icon.ico"
+  !define MUI_UNICON "${PROJECT_DIR}\public\icons\icon.ico"
 !endif
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
@@ -70,7 +70,7 @@ Section "Install"
   SetOutPath "$INSTDIR"
   ; Build-time payload comes from the exact verified win-unpacked directory.
   ; File /r uses NSIS's own extraction/error handling, not an external archive.
-  File /r "${PROJECT_DIR}/artifacts/windows/win-unpacked/*"
+  File /r "${PROJECT_DIR}\artifacts\windows\win-unpacked\*"
   WriteUninstaller "$INSTDIR\Uninstall Knightfall.exe"
   CreateDirectory "$SMPROGRAMS\Knightfall"
   CreateShortcut "$SMPROGRAMS\Knightfall\Knightfall.lnk" "$INSTDIR\Knightfall.exe"
@@ -101,7 +101,7 @@ Function un.onInit
 FunctionEnd
 Section "Uninstall"
   Call un.waitForApp
-  !include "${PROJECT_DIR}/artifacts/windows/knightfall-uninstall-files.nsh"
+  !include "${PROJECT_DIR}\artifacts\windows\knightfall-uninstall-files.nsh"
   Delete "$INSTDIR\Uninstall Knightfall.exe"
   RMDir "$INSTDIR"
   Delete "$DESKTOP\Knightfall.lnk"

@@ -1,6 +1,10 @@
-# Knightfall 1.3
+# Knightfall 1.3.1
 
 An independent chess studio for web, Windows and Android. Local play, analysis and learning run on your device.
+
+## New in 1.3.1
+
+The first automated release fixes native Windows installer source paths and removes the retired Android SDK `tools` package from CI setup.
 
 ## New in 1.3
 
@@ -36,9 +40,9 @@ Tactics Sprint offers 3-minute, 5-minute and untimed Survival modes with three l
 
 ## Install
 
-**Windows:** Install `Knightfall-1.3.0-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.3.0-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
+**Windows:** Install `Knightfall-1.3.1-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.3.1-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
 
-**Android:** Open `Knightfall-1.3.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
+**Android:** Open `Knightfall-1.3.1-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
 
 **Web:** Use the private web link supplied with the release. The hosting provider may require sign-in. Chrome/Edge can install the app from their menu; on iPhone, use Safari **Share → Add to Home Screen**. Keep the first online load open while offline assets finish caching.
 
@@ -73,6 +77,6 @@ There is no public matchmaking, cloud account system, public rated ladder, cloud
 
 The source includes native Linux Electron acceptance checks for the real renderer, legal board moves, local Stockfish WASM and the desktop LAN bridge. Automated checks cover chess rules, review scoring, rating persistence, animations, content, clocks, storage, UI interactions and actual local HTTP/WebSocket rooms. The release's accompanying QA reports identify which checks ran against its exact build; historical Android emulator checks do not establish acceptance of every new interaction.
 
-The Windows package was cross-built; running Electron on Linux does not establish Windows-device compatibility. Emulator checks do not certify every physical Android device or phone-to-PC Wi-Fi setup. No signed iOS build or iPhone native-device test is claimed. Windows code signing, Android release signing and target-device acceptance testing remain release-distribution steps.
+The release workflow builds on Windows and runs an installer, renderer/Stockfish and safe-uninstall check before publication. Local Linux Electron checks alone do not establish Windows-device compatibility. Emulator checks do not certify every physical Android device or phone-to-PC Wi-Fi setup. No signed iOS build or iPhone native-device test is claimed. Windows code signing, Android release signing and target-device acceptance testing remain release-distribution steps.
 
 The source archive includes native projects, build scripts, tests, documentation and licenses. Knightfall is GPL-3.0-or-later; bundled Stockfish source/notices and third-party credits are included. See the source archive’s `README.md`, `docs/INSTALL.md` and `docs/THIRD-PARTY.md` for details.
