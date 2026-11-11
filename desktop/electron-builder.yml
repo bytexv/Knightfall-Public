@@ -1,5 +1,9 @@
 appId: studio.knightfall.chess
 productName: Knightfall
+electronLanguages:
+  - en-US
+  - en-GB
+compression: maximum
 copyright: Copyright © 2026 Knightfall contributors
 asar: true
 npmRebuild: false
