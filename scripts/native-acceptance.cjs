@@ -332,7 +332,12 @@ async function runAcceptance({ window, app, outputDir }) {
 
     await step("personalized-heading-and-recent-game-resume", async () => {
       await click('[aria-label="Your profile"]');
+      await fill("#player-name", "");
+      check(await evaluate("document.querySelector('#player-name').value === ''"), "Name cannot be cleared while editing");
+      await clickText("Save name");
+      check(await evaluate("!!document.querySelector('#name-help[role=alert]')"), "Invalid name was accepted");
       await fill("#player-name", "Alex");
+      await clickText("Save name");
       await navigate("Play chess");
       check(
         await evaluate(
@@ -447,6 +452,13 @@ async function runAcceptance({ window, app, outputDir }) {
         ),
         "Checkmate is not visible",
       );
+      window.setContentSize(390, 844);
+      await poll("innerWidth===390", "finished game on a phone");
+      check(await evaluate("getComputedStyle(document.querySelector('.new-game-action')).display!=='none'"), "Mobile new-game button is hidden");
+      await clickText("New game", ".game-result button");
+      check(await evaluate("!!document.querySelector('[role=dialog] .new-game-card') || !!document.querySelector('[role=dialog] .time-picker')"), "New-game setup did not open after game completion");
+      await click('[aria-label="Close dialog"]');
+      await captureResponsive("finished-game");
       return {
         moves: played.moves.map((move) => move.san),
         result: played.result,
@@ -478,6 +490,10 @@ async function runAcceptance({ window, app, outputDir }) {
         "all seven reviewed moves",
         45000,
       );
+      check(await evaluate("!!document.querySelector('.review-recap')"), "Completed review did not open its summary");
+      check(await evaluate("[...document.querySelectorAll('.recap-totals tbody td')].reduce((sum,cell)=>sum+Number(cell.textContent),0)===7"), "Review totals do not match the game");
+      await captureResponsive("review-summary");
+      await clickText("Review step by step");
       const messages = await evaluate("window.__knightfallAcceptanceEngine");
       check(
         messages.some((entry) => entry.message.startsWith("bestmove ")),
@@ -1031,6 +1047,7 @@ async function runAcceptance({ window, app, outputDir }) {
     await step("settings-responsive-and-offline-reload", async () => {
       await navigate("Settings");
       await fill("#player-name", "Native QA");
+      await clickText("Save name");
       await clickText("Walnut", ".theme-option");
       await captureResponsive("settings");
       const settings = await evaluate(

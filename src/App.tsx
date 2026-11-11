@@ -274,6 +274,9 @@ export default function App() {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(""), 4500);
   }, []);
+  const [nameDraft, setNameDraft] = useState(settings.name);
+  const [nameError, setNameError] = useState("");
+  useEffect(() => { setNameDraft(settings.name); setNameError(""); }, [settings.name, page]);
   const puzzle = puzzles[puzzleIndex];
   const boardPage = ["play", "analysis", "puzzles"].includes(page);
   const isLan = game.mode === "lan" && !!lanSnapshot;
@@ -338,7 +341,7 @@ export default function App() {
     const timer = setTimeout(
       () =>
         setExploration((current) => {
-          if (!current || !current.playing || current.sourceId !== game.id)
+          if (!current || !current.playing || current.sourceId !== game.id || current.line !== preview.line)
             return current;
           const index = Math.min(
             current.line.moves.length - 1,
@@ -534,7 +537,7 @@ export default function App() {
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
-        modal ||
+        e.defaultPrevented || document.querySelector('[aria-modal="true"]') || modal ||
         ["INPUT", "TEXTAREA", "SELECT"].includes(
           (e.target as HTMLElement)?.tagName,
         )
@@ -1422,9 +1425,9 @@ export default function App() {
               </h1>
               <p>{pageTitles[page].subtitle}</p>
             </div>
-            {page === "play" && (
+            {(page === "play" || page === "analysis") && (
               <button
-                className="button subtle heading-action"
+                className="button subtle heading-action new-game-action"
                 onClick={() => {
                   setModal("new");
                 }}
@@ -1906,6 +1909,7 @@ export default function App() {
                           )}
                         </p>
                       </div>
+                      {!isLan && <button className="button primary" onClick={() => setModal("new")}><Plus size={15} /> New game</button>}
                       {isLan ? (
                         <button
                           className="button primary"
@@ -2162,7 +2166,7 @@ export default function App() {
                       <MoveList
                         game={game}
                         index={historyIndex}
-                        onSelect={setHistoryIndex}
+                        onSelect={selectReviewMove}
                       />
                       {!game.result && game.started && (
                         <GameActions
@@ -2432,7 +2436,7 @@ export default function App() {
                     <MoveList
                       game={game}
                       index={historyIndex}
-                      onSelect={setHistoryIndex}
+                      onSelect={selectReviewMove}
                     />
                   </>
                 )}
@@ -2658,17 +2662,19 @@ export default function App() {
                 <label className="field-label" htmlFor="player-name">
                   YOUR NAME
                 </label>
-                <input
-                  id="player-name"
-                  maxLength={24}
-                  value={settings.name}
-                  onChange={(e) =>
-                    setSettings((s) => ({
-                      ...s,
-                      name: e.target.value || "You",
-                    }))
+                <form className="name-editor" onSubmit={(event) => {
+                  event.preventDefault();
+                  const name = nameDraft.trim();
+                  if (!name || name.length > 24 || /[\u0000-\u001f\u007f]/.test(name)) {
+                    setNameError("Use 1–24 characters, without control characters."); return;
                   }
-                />
+                  setSettings(current => ({ ...current, name }));
+                  setNameDraft(name); setNameError(""); notify("Name saved.");
+                }}>
+                  <input id="player-name" value={nameDraft} onChange={event => setNameDraft(event.target.value)} aria-describedby="name-help" aria-invalid={!!nameError} />
+                  <button className="button primary" type="submit">Save name</button>
+                  <p id="name-help" role={nameError ? "alert" : undefined}>{nameError || "1–24 characters. Changes apply when you save."}</p>
+                </form>
                 <div className="field-label">BOARD COLORS</div>
                 <div className="theme-picker">
                   {(["sage", "walnut", "ocean"] as const).map((t) => (

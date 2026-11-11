@@ -10,7 +10,7 @@ import {
   Target,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LocalEngine, type EngineResult } from "../lib/engine";
 import { bots, uciToSan, type GameSession } from "../lib/game";
 import {
@@ -23,6 +23,7 @@ import {
   type MoveReview,
 } from "../lib/review";
 import "./AnalysisPanel.css";
+import { Modal } from "./Dialogs";
 export type { MoveReview } from "../lib/review";
 
 export type AnalysisPanelProps = {
@@ -137,6 +138,8 @@ export default function AnalysisPanel({
     message: string;
   } | null>(null);
   const [depth, setDepth] = useState(16);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const closeSummary = useCallback(() => setSummaryOpen(false), []);
   // A same-length replacement is a different line. Board navigation is not.
   const gameKey = useMemo(
     () =>
@@ -216,6 +219,7 @@ export default function AnalysisPanel({
   }, []);
 
   useEffect(() => {
+    setSummaryOpen(false);
     reviewToken.current++;
     reviewEngine.current?.cancel();
     const cached = reviewCache.current.get(gameKey);
@@ -331,6 +335,7 @@ export default function AnalysisPanel({
       return next;
     }
     engine.cancel();
+    setSummaryOpen(false);
     saveReview(nextState("running"));
     try {
       let before = await search(startFen);
@@ -347,6 +352,7 @@ export default function AnalysisPanel({
       }
       if (isCurrent()) {
         saveReview(nextState("complete"));
+        setSummaryOpen(true);
         callbacks.current.onReviewSelect(
           (list.find(isKeyMove) ?? list[0]).index,
         );
@@ -409,6 +415,23 @@ export default function AnalysisPanel({
 
   return (
     <div className="analysis-stack analysis-studio">
+      {summaryOpen && currentReview.status === "complete" && <Modal title="Your game, reviewed" onClose={closeSummary} size="wide">
+        <div className="review-recap">
+          <p>{reviews.length} moves reviewed. Compare both sides, then explore the decisions and recommended moves.</p>
+          <div className="recap-players">{(["w", "b"] as const).map(color => <div key={color}>
+            <span>{color === game.playerColor ? "You" : "Opponent"} · {color === "w" ? "White" : "Black"}</span>
+            <h3>{(color === "w" ? game.whiteName : game.blackName) || (color === "w" ? "White" : "Black")}</h3>
+            <strong>{summary[color].quality === null ? "—" : `${Math.round(summary[color].quality!)}%`}</strong><small>move quality</small>
+          </div>)}</div>
+          <table className="recap-totals"><caption>Move totals by classification</caption><thead><tr><th>Classification</th><th>White</th><th>Black</th></tr></thead><tbody>
+            {moveClassifications.map(label => <tr key={label}><th scope="row"><span className={`review-quality ${label.toLowerCase()}`}><b aria-hidden="true">{qualityMarks[label]}</b> {label}</span></th><td>{summary.w.counts[label]}</td><td>{summary.b.counts[label]}</td></tr>)}
+          </tbody></table>
+          <p className="review-estimate-note">Local training estimates. Start with the mistakes and misses to find your biggest opportunities.</p>
+          <button className="button primary full" onClick={() => { closeSummary(); setFilter("all"); select(reviews[0]?.index ?? -1); }}>Review step by step <ArrowRight size={16} /></button>
+          <button className="button secondary full" onClick={() => { closeSummary(); setFilter("mistakes"); select((reviews.find(isMistake) ?? reviews[0])?.index ?? -1); }}>Explore key moments</button>
+        </div>
+      </Modal>}
+
       <section className="card analysis-workbench">
         <div
           className="analysis-tabs"
@@ -463,6 +486,7 @@ export default function AnalysisPanel({
           >
             <div className="review-topline">
               <h2>Game review</h2>
+              {currentReview.status === "complete" && <button className="button secondary" onClick={() => setSummaryOpen(true)}>Summary</button>}
               {reviews.length && !reviewing ? (
                 reviewButton
               ) : (

@@ -319,3 +319,17 @@ test('review restart reuses completed searches and cannot consume a late cancell
   assert.equal(host.querySelectorAll('.eval-chart button').length, 1);
   assert.ok(!host.textContent.includes('+M1'), 'Cancelled review cannot overwrite restarted review');
 });
+
+
+test('completed review opens totals once and lets the player enter step-by-step review', async () => {
+  const game = sampleGame(); await render(game); await completeReview(game);
+  const dialog = host.querySelector('[role="dialog"]'); assert.ok(dialog);
+  const counts = [...dialog.querySelectorAll('tbody td')].map(cell => Number(cell.textContent));
+  assert.equal(counts.reduce((a,b)=>a+b,0), game.moves.length);
+  assert.equal(dialog.querySelectorAll('tbody tr').length, 10);
+  await click('Review step by step'); assert.equal(host.querySelector('[role="dialog"]'), null);
+  assert.equal(selections.at(-1), 0);
+  await render(game, game.startFen, {activeIndex:-1}); assert.equal(host.querySelector('[role="dialog"]'), null);
+  await click('Summary'); assert.ok(host.querySelector('[role="dialog"]'));
+  await render({...game,id:'another-game'}); assert.equal(host.querySelector('[role="dialog"]'),null);
+});

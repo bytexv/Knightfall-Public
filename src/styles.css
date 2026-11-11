@@ -3984,3 +3984,5 @@ textarea:focus-visible {
 .modal > .muted {
   color: #655e56;
 }
+
+.name-editor {display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px}.name-editor input {flex:1;min-width:160px}.name-editor p {flex-basis:100%;font-size:12px}.game-result {flex-wrap:wrap}.page-heading .heading-action.new-game-action {display:inline-flex;flex-shrink:0;min-height:44px}@media(max-width:600px){.page-heading {flex-wrap:wrap;gap:12px}.game-result .button {flex:1;min-height:44px}.page-heading .analysis-heading-actions {display:flex;flex-wrap:wrap}}

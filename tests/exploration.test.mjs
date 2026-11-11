@@ -27,7 +27,7 @@ test("preview lines are legal, bounded, and cannot overwrite the recorded game",
     preview.line.moves.map((m) => m.san),
     ["c5", "Nf3"],
   );
-  assert.equal(preview.playing, true);
+  assert.equal(preview.playing, false, "A line opens paused so its starting position never races the controls");
   assert.equal(explorationFen(preview), original.moves[0].fen);
   assert.equal(JSON.stringify(original), snapshot);
 });

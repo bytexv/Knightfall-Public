@@ -43,7 +43,7 @@ export function explorePosition(
     mode,
     line,
     index: -1,
-    playing: mode === "line" && line.moves.length > 0,
+    playing: false,
     expected,
   };
 }

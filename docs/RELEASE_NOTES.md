@@ -1,6 +1,13 @@
-# Knightfall 1.3.1
+# Knightfall 1.3.2
 
 An independent chess studio for web, Windows and Android. Local play, analysis and learning run on your device.
+
+## New in 1.3.2
+
+- Completed game reviews open a summary with both players’ quality estimates and all ten move-classification totals. Reopen it with Summary, or continue to step-by-step review and key moments.
+- Suggested lines open paused. Playback cannot advance a replacement line, and selecting a recorded move exits the variation.
+- New game remains visible on phones, including after a finished game and from analysis.
+- Player names are drafts until Save name. Empty or invalid drafts can be edited freely; validation happens on submission.
 
 ## New in 1.3.1
 
@@ -40,9 +47,9 @@ Tactics Sprint offers 3-minute, 5-minute and untimed Survival modes with three l
 
 ## Install
 
-**Windows:** Install `Knightfall-1.3.1-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.3.1-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
+**Windows:** Install `Knightfall-1.3.2-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.3.2-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
 
-**Android:** Open `Knightfall-1.3.1-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
+**Android:** Open `Knightfall-1.3.2-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
 
 **Web:** Use the private web link supplied with the release. The hosting provider may require sign-in. Chrome/Edge can install the app from their menu; on iPhone, use Safari **Share → Add to Home Screen**. Keep the first online load open while offline assets finish caching.
 

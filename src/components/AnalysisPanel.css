@@ -670,3 +670,5 @@
   line-height: 1.6;
   margin: 8px 0 0;
 }
+
+.review-recap {display:grid;gap:16px}.recap-players {display:grid;grid-template-columns:1fr 1fr;gap:12px}.recap-players>div {padding:16px;background:var(--surface-soft,#f2eee6);border-radius:12px;min-width:0}.recap-players h3 {overflow-wrap:anywhere;margin:8px 0}.recap-players strong {font-size:32px;display:block}.recap-players small {display:block}.recap-totals {width:100%;border-collapse:collapse}.recap-totals caption {text-align:left;padding-bottom:12px;font-weight:600}.recap-totals th,.recap-totals td {padding:8px;border-bottom:1px solid #d8d0c2;text-align:center}.recap-totals th:first-child {text-align:left}.recap-totals td {font-weight:700;font-variant-numeric:tabular-nums}
