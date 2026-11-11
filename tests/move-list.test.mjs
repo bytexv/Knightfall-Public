@@ -50,5 +50,5 @@ test('an arriving move does not pull history away from an earlier selected move'
 });
 
 test('empty move histories preserve replay bounds and starting-position guidance',async()=>{
- await render(newSession(),-1);assert.match(host.textContent,/Your story starts with a move/);assert.equal(host.querySelectorAll('.move-pair').length,0);assert.equal(host.querySelector('.move-list').hasAttribute('role'),false,'Empty guidance is not a malformed ARIA list');assert.equal(host.querySelector('.panel-heading h2').textContent,'Move history');for(const button of host.querySelectorAll('.replay-controls button'))assert.equal(button.disabled,true);
+ await render(newSession(),-1);assert.match(host.textContent,/No moves yet/);assert.equal(host.querySelectorAll('.move-pair').length,0);assert.equal(host.querySelector('.move-list').hasAttribute('role'),false,'Empty guidance is not a malformed ARIA list');assert.equal(host.querySelector('.panel-heading h2').textContent,'Move history');for(const button of host.querySelectorAll('.replay-controls button'))assert.equal(button.disabled,true);
 });

@@ -84,7 +84,7 @@ async function start() {
 
   mainWindow = new BrowserWindow({
     width: smokeViewport?.width || 1440, height: smokeViewport?.height || 980, minWidth: Math.min(smokeViewport?.width || 880,880), minHeight: Math.min(smokeViewport?.height || 660,660),
-    backgroundColor: '#171b19', title: 'Knightfall',
+    backgroundColor: '#24272b', title: 'Knightfall',
     icon: path.join(__dirname, '..', 'public', 'icons', 'icon-512.png'),
     show: false,
     webPreferences: {

@@ -30,7 +30,7 @@ Run `node --test tests/pwa.test.mjs` for offline fetch, cache lifecycle, multipl
 node scripts/package-windows.mjs
 ```
 
-The script requires an existing web build. Output is under `artifacts/windows/`; the distributable is `Knightfall-1.0.0-Windows-x64.exe`. It packages the app into ASAR and wraps the 64-bit runtime as a portable executable. No Node.js install is required on the recipient's computer.
+The script requires an existing web build. Output is under `artifacts/windows/`; the distributable is `Knightfall-1.1.0-Windows-x64.exe`. It packages the app into ASAR and wraps the 64-bit runtime as a portable executable. No Node.js install is required on the recipient's computer.
 
 The build is unsigned, and Windows resource editing is disabled to permit cross-compilation from Linux without Wine. It therefore does not claim verified publisher identity. Publishing a signed release should run on Windows with your signing configuration.
 
@@ -49,7 +49,7 @@ The Android development artifact is signed with a debug key. A production APK/AA
 `package-windows.mjs` writes `artifacts/windows/SHA256SUMS.txt`. To verify a Windows download in PowerShell:
 
 ```powershell
-Get-FileHash .\Knightfall-1.0.0-Windows-x64.exe -Algorithm SHA256
+Get-FileHash .\Knightfall-1.1.0-Windows-x64.exe -Algorithm SHA256
 ```
 
 Compare the hexadecimal value with the checksum file distributed with the build. The checksum detects changed bytes; it does not replace code signing or authenticate a publisher by itself.

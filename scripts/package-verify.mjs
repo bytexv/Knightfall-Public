@@ -11,10 +11,12 @@ const require = createRequire(import.meta.url);
 const asar = require('@electron/asar');
 const {getCurrentFuseWire, FuseV1Options} = require('@electron/fuses');
 const root = path.resolve(import.meta.dirname,'..');
+const packageJson = JSON.parse(await readFile(path.join(root,'package.json'),'utf8'));
 const windowsDir = path.resolve(root, process.argv[2] || 'artifacts/windows');
 const unpacked = path.join(windowsDir,'win-unpacked');
 const archive = path.join(unpacked,'resources','app.asar');
 const entries = new Set(asar.listPackage(archive));
+assert.equal(JSON.parse(asar.extractFile(archive,'package.json')).version,packageJson.version,'Packaged app version is stale');
 const essentials = ['/LICENSE','/docs/THIRD-PARTY.md','/dist/licenses/SOFTWARE-NOTICES.txt','/dist/licenses/KNIGHTFALL-GPL-3.0.txt','/desktop/main.cjs','/desktop/preload.cjs','/desktop/smoke.cjs','/server/index.mjs','/dist/index.html','/dist/sw.js','/dist/sw-manifest.js','/dist/manifest.webmanifest','/dist/engine/stockfish-source.tgz','/dist/engine/COPYING.txt','/dist/engine/SOURCE.txt','/node_modules/ws/package.json','/node_modules/chess.js/package.json'];
 for (const entry of essentials) assert.ok(entries.has(entry), `Missing packaged file ${entry}`);
 for (const relative of ['desktop/main.cjs','desktop/preload.cjs','desktop/smoke.cjs','server/index.mjs']) {
@@ -30,8 +32,8 @@ assert.equal(nativeExe.readUInt16LE(peOffset+4),0x8664,'Windows app payload must
 const wire = await getCurrentFuseWire(path.join(unpacked,'Knightfall.exe'));
 for(const key of ['RunAsNode','EnableNodeOptionsEnvironmentVariable','EnableNodeCliInspectArguments','GrantFileProtocolExtraPrivileges']) assert.equal(wire[FuseV1Options[key]],48,`Unsafe packaged Electron fuse ${key}`);
 for(const key of ['EnableEmbeddedAsarIntegrityValidation','OnlyLoadAppFromAsar']) assert.equal(wire[FuseV1Options[key]],49,`Missing packaged integrity fuse ${key}`);
-const portable = (await readdir(windowsDir)).find(file => file.endsWith('.exe'));
-assert.ok(portable,'Missing portable .exe');
+const portable = `Knightfall-${packageJson.version}-Windows-x64.exe`;
+assert.ok((await readdir(windowsDir)).includes(portable),'Missing current-version portable .exe');
 assert.ok((await stat(path.join(windowsDir,portable))).size > 30_000_000,'Portable .exe unexpectedly small');
 
 const temp = await mkdtemp(path.join(tmpdir(),'knightfall-package-check-'));
@@ -49,6 +51,15 @@ try {
     const original = await readFile(path.join(root,'dist',asset));
     assert.ok(packaged.equals(original),`Stale packaged asset ${asset}`);
   }
+  const allDistFiles = await readdir(path.join(root,'dist'),{recursive:true,withFileTypes:true});
+  let matchedFiles=0;
+  for(const entry of allDistFiles) {
+    if(!entry.isFile()) continue;
+    const originalPath=path.join(entry.parentPath,entry.name);
+    const relative=path.relative(path.join(root,'dist'),originalPath);
+    assert.ok((await readFile(path.join(temp,'dist',relative))).equals(await readFile(originalPath)),`Stale packaged dist file ${relative}`);
+    matchedFiles++;
+  }
   const {startLanServer} = await import(pathToFileURL(path.join(temp,'server','index.mjs')).href);
   server = await startLanServer({host:'127.0.0.1',port:0,staticDir:path.join(temp,'dist')});
   const base = `http://127.0.0.1:${server.port}`;
@@ -62,7 +73,7 @@ try {
   assert.equal(wasm.status,200);
   assert.match(wasm.headers.get('content-type'),/application\/wasm/);
   assert.ok((await wasm.arrayBuffer()).byteLength>1_000_000);
-  console.log(`Verified Windows x64 payload, ${assets.length} current offline assets, WASM MIME, and isolated bundled HTTP server.`);
+  console.log(`Verified Windows x64 payload, ${matchedFiles} current dist files (${assets.length} offline assets), WASM MIME, and isolated bundled HTTP server.`);
   console.log(`Portable executable: ${portable}`);
 } finally {
   await server?.close();

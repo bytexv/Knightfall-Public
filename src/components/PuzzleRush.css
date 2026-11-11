@@ -20,7 +20,7 @@
   gap: 12px;
   align-items: center;
   margin-bottom: 15px;
-  color: #65745c;
+  color: #655e56;
   font-size: 9px;
 }
 .rush-board-meta > span:first-child {
@@ -29,7 +29,7 @@
   align-items: center;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #526f3e;
+  color: #655e56;
 }
 .rush-player {
   display: flex;
@@ -45,7 +45,7 @@
 .rush-player img {
   width: 35px;
   height: 35px;
-  background: #e8eddc;
+  background: #f0ebe2;
   border-radius: 8px;
   padding: 4px;
 }
@@ -55,11 +55,11 @@
 }
 .rush-player strong {
   font-size: 12px;
-  color: #4f6542;
+  color: #655e56;
 }
 .rush-player small {
   font-size: 9px;
-  color: #586f49;
+  color: #655e56;
   margin-top: 4px;
 }
 .rush-clock {
@@ -67,10 +67,10 @@
   align-items: center;
   gap: 9px;
   padding: 9px 14px;
-  background: #e9efdc;
-  border: 1px solid #dfe8ce;
+  background: #f0ebe2;
+  border: 1px solid #d8d0c4;
   border-radius: 7px;
-  color: #70885a;
+  color: #655e56;
 }
 .rush-clock > strong {
   font: 26px var(--serif);
@@ -95,7 +95,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #233d2875;
+  background: #2b2e3275;
   border-radius: 8px;
   backdrop-filter: blur(1.5px);
   pointer-events: none;
@@ -104,14 +104,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #f9faeff2;
-  border: 1px solid #ffffff73;
-  box-shadow: 0 15px 40px #15301f20;
+  background: #faf8f4f2;
+  border: 1px solid #d8d0c473;
+  box-shadow: 0 15px 40px #21232620;
   padding: 26px 28px;
   border-radius: 10px;
   max-width: 85%;
   text-align: center;
-  color: #6e8b54;
+  color: #655e56;
 }
 .rush-ready-cover strong {
   font: 27px var(--serif);
@@ -120,7 +120,7 @@
 .rush-ready-cover small {
   font-size: 10px;
   line-height: 1.7;
-  color: #69795b;
+  color: #655e56;
 }
 .rush-board-status {
   display: flex;
@@ -128,11 +128,11 @@
   gap: 8px;
   min-height: 49px;
   padding: 11px 2px;
-  color: #586f49;
+  color: #655e56;
   font-size: 11px;
 }
 .rush-board-status.solved {
-  color: #4f732e;
+  color: #272a2d;
 }
 .rush-board-status.mistake {
   color: #985034;
@@ -150,8 +150,8 @@
   align-items: flex-start;
   gap: 11px;
   padding-top: 14px;
-  border-top: 1px solid #e7ebdf;
-  color: #586f49;
+  border-top: 1px solid #d8d0c4;
+  color: #655e56;
   font-size: 9px;
   line-height: 1.7;
 }
@@ -177,7 +177,7 @@
   height: 65px;
   border: 1px solid #eadbc0;
   border-radius: 18px;
-  background: #f2ead7;
+  background: #f0ebe2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -187,19 +187,19 @@
 .rush-setup h2 {
   font: 38px/1.09 var(--serif);
   letter-spacing: -0.5px;
-  color: #68834f;
+  color: #655e56;
   margin: 0 0 16px;
 }
 .rush-setup > p,
 .rush-score-card > p {
   font-size: 11px;
   line-height: 1.85;
-  color: #68775b;
+  color: #655e56;
 }
 .rush-mode-label {
   font-size: 9px;
   letter-spacing: 1.25px;
-  color: #5b7148;
+  color: #655e56;
   font-weight: 700;
   margin: 25px 0 11px;
 }
@@ -209,24 +209,24 @@
   gap: 8px;
 }
 .rush-modes > button {
-  border: 1px solid #e5eade;
+  border: 1px solid #d8d0c4;
   border-radius: 7px;
-  background: #fbfcf7;
+  background: #faf8f4;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   padding: 14px 6px;
-  color: #586f49;
+  color: #655e56;
   cursor: pointer;
   transition:
     background 0.15s,
     border-color 0.15s;
 }
 .rush-modes > button.selected {
-  background: #eef4e3;
-  border-color: #9cb77d;
-  color: #526f3d;
+  background: #f0ebe2;
+  border-color: #b99b7b;
+  color: #655e56;
 }
 .rush-modes > button strong {
   font-size: 11px;
@@ -254,30 +254,30 @@
   gap: 12px;
   margin-top: 25px;
   padding-top: 20px;
-  border-top: 1px solid #e7ecde;
+  border-top: 1px solid #d8d0c4;
 }
 .rush-rules > span {
   font-size: 10px;
-  color: #687b53;
+  color: #655e56;
   display: flex;
   gap: 9px;
   align-items: center;
 }
 .rush-rules svg {
   flex-shrink: 0;
-  color: #a0b585;
+  color: #655e56;
 }
 .rush-setup .rush-footnote {
   font-size: 9px;
   line-height: 1.8;
-  color: #586f49;
+  color: #655e56;
   margin: 23px 0 0;
 }
 .rush-score-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #6f8059;
+  color: #655e56;
 }
 .rush-score-heading .soft-badge {
   font-size: 9px;
@@ -286,7 +286,7 @@
 .rush-score {
   text-align: center;
   margin: 23px 0 17px;
-  color: #547332;
+  color: #655e56;
 }
 .rush-score > strong {
   display: block;
@@ -298,32 +298,32 @@
   display: block;
   font-size: 10px;
   letter-spacing: 0.5px;
-  color: #6c7b59;
+  color: #655e56;
   margin-top: 10px;
 }
 .rush-lives {
   display: flex;
   justify-content: center;
   gap: 12px;
-  color: #b5c699;
+  color: #d5cdc1;
   margin: 21px 0 24px;
 }
 .rush-lives .lost {
-  color: #dfe4d5;
+  color: #d5cdc1;
 }
 .rush-active-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   padding: 19px 0;
-  border-top: 1px solid #e9eddf;
-  border-bottom: 1px solid #e9eddf;
+  border-top: 1px solid #d8d0c4;
+  border-bottom: 1px solid #d8d0c4;
 }
 .rush-active-stats > span {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  color: #6b7c58;
+  color: #655e56;
   font-size: 9px;
 }
 .rush-active-stats > span:last-child {
@@ -331,31 +331,31 @@
 }
 .rush-active-stats strong {
   font: 25px var(--serif);
-  color: #547538;
+  color: #655e56;
 }
 .rush-sequence {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
   margin-top: 21px;
-  color: #6c7b58;
+  color: #655e56;
   font-size: 9px;
 }
 .rush-sequence > strong {
   font-weight: 500;
-  color: #5a7742;
+  color: #655e56;
 }
 .rush-sequence > div {
   grid-column: 1/-1;
   height: 5px;
-  background: #eef2e6;
+  background: #f0ebe2;
   border-radius: 20px;
   overflow: hidden;
 }
 .rush-sequence i {
   display: block;
   height: 100%;
-  background: #a9bf8a;
+  background: #d9b48d;
   border-radius: 20px;
   transition: width 0.2s;
 }
@@ -372,7 +372,7 @@
 }
 .rush-score-card h2 {
   font: 30px/1.15 var(--serif);
-  color: #537333;
+  color: #655e56;
   text-align: center;
   margin: 25px 0 12px;
 }
@@ -386,19 +386,19 @@
   gap: 8px;
   margin: 25px 0;
   padding: 19px 0;
-  border-top: 1px solid #e8eddf;
-  border-bottom: 1px solid #e8eddf;
+  border-top: 1px solid #d8d0c4;
+  border-bottom: 1px solid #d8d0c4;
 }
 .rush-result-stats strong {
   display: block;
   font: 24px var(--serif);
-  color: #5a7641;
+  color: #655e56;
 }
 .rush-result-stats span {
   display: block;
   margin-top: 6px;
   font-size: 9px;
-  color: #586f49;
+  color: #655e56;
 }
 .rush-recap {
   padding: 22px;
@@ -408,11 +408,11 @@
 }
 .rush-recap .panel-heading > span {
   font-size: 10px;
-  color: #6c7e58;
+  color: #655e56;
 }
 .rush-recap h2 {
   font-size: 12px;
-  color: #5a7443;
+  color: #655e56;
 }
 .rush-recap ol {
   list-style: none;
@@ -428,7 +428,7 @@
   align-items: center;
   gap: 9px;
   padding: 12px 0;
-  border-top: 1px solid #edf0e5;
+  border-top: 1px solid #d8d0c4;
 }
 .rush-recap li:first-child {
   border-top: 0;
@@ -441,12 +441,12 @@
   height: 25px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: #f0f3e8;
-  color: #728858;
+  background: #f0ebe2;
+  color: #655e56;
 }
 .rush-recap-icon.solved {
-  background: #edf4e0;
-  color: #91aa6d;
+  background: #f0ebe2;
+  color: #655e56;
 }
 .rush-recap-icon.missed {
   background: #f9ece1;
@@ -460,14 +460,14 @@
   display: block;
   font-size: 10px;
   font-weight: 500;
-  color: #5c7447;
+  color: #655e56;
   line-height: 1.6;
 }
 .rush-recap li small {
   display: block;
   font-size: 9px;
   margin-top: 3px;
-  color: #586f49;
+  color: #655e56;
 }
 .rush-recap li > .text-button {
   font-size: 9px;
@@ -478,7 +478,7 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  color: #586f49;
+  color: #655e56;
   padding: 23px 10px;
 }
 .rush-recap-empty p {
@@ -490,16 +490,16 @@
 .rush-source-note {
   font-size: 9px;
   line-height: 1.9;
-  color: #586f49;
+  color: #655e56;
   margin-top: 15px;
 }
 .rush-source-note a {
-  color: #567638;
+  color: #655e56;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .rush-layout button:focus-visible {
-  outline: 2px solid #456d32;
+  outline: 2px solid #5b5147;
   outline-offset: 3px;
 }
 .rush-layout .inline-error {

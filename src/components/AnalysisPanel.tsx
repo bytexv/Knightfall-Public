@@ -5,7 +5,6 @@ import {
   ChevronDown,
   Cpu,
   LoaderCircle,
-  Sparkles,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -289,7 +288,7 @@ export default function AnalysisPanel({
         <div className="engine-indicator">
           <span className={`status-dot ${busy ? "pulsing" : ""}`} />
           {result?.engine || "Stockfish 17.1 Lite"}
-          <span>ON DEVICE</span>
+          <span>LOCAL ENGINE</span>
         </div>
         <div className="evaluation-summary">
           <strong>{result ? formatEvaluation(result) : "—"}</strong>
@@ -346,13 +345,13 @@ export default function AnalysisPanel({
           </p>
         )}
         <p className="privacy-note">
-          <Check size={13} /> Your positions stay on your device.
+          <Check size={13} /> Select a line to mark its first move on the board.
         </p>
       </section>
       <section className="card review-card">
         <div className="panel-heading">
           <div className="icon-label">
-            <Sparkles size={18} />
+            <Activity size={18} />
             <h3>Game review</h3>
           </div>
           {quality !== null && (
@@ -362,7 +361,10 @@ export default function AnalysisPanel({
             </span>
           )}
         </div>
-        <p>Find the turning points. See what to improve on your next game.</p>
+        <p>
+          Check each move against the engine and review the biggest evaluation
+          changes.
+        </p>
         {reviewing ? (
           <>
             <div
@@ -488,7 +490,7 @@ export default function AnalysisPanel({
               {reviews.every((item) => item.loss < 35) && (
                 <p className="muted">
                   {currentReview.status === "complete"
-                    ? "A clean game at this search depth."
+                    ? "No major evaluation losses at this search depth."
                     : "No major evaluation losses in the moves reviewed so far."}
                 </p>
               )}

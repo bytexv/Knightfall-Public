@@ -18,7 +18,7 @@ export interface Settings {
   name: string;
 }
 export const defaultSettings: Settings = {
-  boardTheme: "sage",
+  boardTheme: "walnut",
   sound: true,
   coordinates: true,
   legalMoves: true,

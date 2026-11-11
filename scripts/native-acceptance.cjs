@@ -258,6 +258,21 @@ async function runAcceptance({ window, app, outputDir }) {
     report.steps.push({ name, durationMs: Date.now() - started, detail });
     process.stdout.write(`ACCEPTANCE_STEP ${name} passed\n`);
   };
+  const reloadLocalApp = async () => {
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error("Offline reload timed out")),
+        15000,
+      );
+      window.webContents.once("did-finish-load", () => {
+        clearTimeout(timer);
+        resolve();
+      });
+      window.webContents.reload();
+    });
+    await poll("!!document.querySelector('.chessboard')", "reloaded local app");
+    await observeEngine();
+  };
 
   try {
     await poll("!!document.querySelector('.chessboard')", "initial board");
@@ -267,7 +282,89 @@ async function runAcceptance({ window, app, outputDir }) {
     )
       await click('[aria-label="Mute sounds"]');
 
+    await step("personalized-heading-and-recent-game-resume", async () => {
+      await click('[aria-label="Your profile"]');
+      await fill("#player-name", "Alex");
+      await navigate("Play chess");
+      check(
+        await evaluate(
+          "document.querySelector('.page-heading h1')?.textContent==='Alex’s board'&&document.querySelector('.profile-avatar')?.textContent.trim()==='AL'",
+        ),
+        "The board heading and profile initials did not follow the saved name",
+      );
+      await clickText("Pass & play");
+      await evaluate(
+        "(() => {const unlimited=[...document.querySelectorAll('.time-picker button')].find(button=>button.textContent.includes('∞'));if(!unlimited)throw new Error('Untimed option unavailable');unlimited.click();})()",
+      );
+      await clickText("Start local game");
+      await boardMove("d2", "d4");
+      await boardMove("d7", "d5");
+      await poll(
+        "JSON.parse(localStorage.getItem('knightfall:current')||'null')?.moves.length===2",
+        "two-ply game for the recent-games sidebar",
+      );
+      const saved = await game();
+      await navigate("Settings");
+      const archived = await evaluate(
+        `JSON.parse(localStorage.getItem('knightfall:games')||'[]').find(game=>game.id===${JSON.stringify(saved.id)})`,
+      );
+      check(
+        archived?.fen === saved.fen && archived.moves.length === 2 &&
+          archived.mode === "local" && !archived.started,
+        "Leaving the board did not save the paused local game",
+      );
+      await reloadLocalApp();
+      check(
+        await evaluate(
+          "document.querySelector('.page-heading h1')?.textContent==='Alex’s board'&&document.querySelector('.profile-avatar')?.textContent.trim()==='AL'",
+        ),
+        "The personalized board heading did not survive an offline reload",
+      );
+      check(
+        await evaluate(
+          "document.querySelector('.sidebar-recent .recent-game > span')?.textContent==='Pass & play'&&document.querySelector('.sidebar-recent .recent-game > small')?.textContent.includes('Continue')",
+        ),
+        "The saved unfinished game is missing from the recent-games sidebar",
+      );
+      window.setMinimumSize(320, 280);
+      window.setContentSize(390, 844);
+      await poll("innerWidth===390", "phone viewport for the recent-game menu");
+      await click('[aria-label="Open navigation"]');
+      await poll(
+        "!!document.querySelector('.sidebar.is-open')",
+        "phone navigation opened",
+      );
+      await click(".sidebar-recent .recent-game");
+      await poll(
+        "JSON.parse(localStorage.getItem('knightfall:current')||'null')?.started===true&&!document.querySelector('.sidebar.is-open')&&!document.querySelector('.nav-scrim')",
+        "recent game resumed and phone navigation closed",
+      );
+      const resumed = await game();
+      check(
+        resumed.id === saved.id && resumed.fen === saved.fen &&
+          resumed.mode === "local" && resumed.moves.length === 2,
+        "The sidebar resumed a different game, position, or mode",
+      );
+      check(
+        await evaluate(
+          "document.querySelector('.page-heading h1')?.textContent==='Alex’s board'&&document.querySelector('[data-square=\"d4\"] img')?.getAttribute('src').endsWith('wP.svg')&&document.querySelector('[data-square=\"d5\"] img')?.getAttribute('src').endsWith('bP.svg')&&JSON.parse(localStorage.getItem('knightfall:settings')||'null')?.name==='Alex'",
+        ),
+        "The resumed board or saved profile does not match the prior game",
+      );
+      await captureResponsive("personal-board");
+      return {
+        persistedName: "Alex",
+        heading: "Alex’s board",
+        resumedGameId: resumed.id,
+        moves: resumed.moves.map(move => move.san),
+        fen: resumed.fen,
+        resumedVia: "Recent games sidebar after offline reload",
+        phoneNavigationClosed: true,
+      };
+    });
+
     await step("complete-local-game", async () => {
+      await clickText("New game", ".page-heading button");
       await clickText("Pass & play");
       await evaluate(
         "(() => {const unlimited=[...document.querySelectorAll('.time-picker button')].find(button=>button.textContent.includes('∞'));if(!unlimited)throw new Error('Untimed option unavailable');unlimited.click();})()",
@@ -800,22 +897,7 @@ async function runAcceptance({ window, app, outputDir }) {
       const archiveBefore = await evaluate(
         "JSON.parse(localStorage.getItem('knightfall:games')||'[]').length",
       );
-      await new Promise((resolve, reject) => {
-        const timer = setTimeout(
-          () => reject(new Error("Offline reload timed out")),
-          15000,
-        );
-        window.webContents.once("did-finish-load", () => {
-          clearTimeout(timer);
-          resolve();
-        });
-        window.webContents.reload();
-      });
-      await poll(
-        "!!document.querySelector('.chessboard')",
-        "reloaded local app",
-      );
-      await observeEngine();
+      await reloadLocalApp();
       await navigate("Settings");
       check(
         await evaluate(

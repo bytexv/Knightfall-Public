@@ -103,41 +103,41 @@ const pages = [
 ] as const;
 const pageTitles: Record<Page, { title: string; subtitle: string }> = {
   challenge: {
-    title: "Build a streak. Keep your cool.",
-    subtitle: "Three lives. A growing challenge. All on your device.",
+    title: "Tactics Sprint",
+    subtitle: "Three lives. Calculate the full line. Beat your own score.",
   },
   endgames: {
-    title: "Bring it home.",
-    subtitle:
-      "Learn the endgame patterns that turn good positions into good results.",
+    title: "Endgame practice",
+    subtitle: "Win the won positions. Hold the drawn ones.",
   },
   play: {
-    title: "Your next great move.",
-    subtitle: "A place to play, explore, and get a little better.",
+    title: "Your board",
+    subtitle: "Pick an opponent, set the clock, and play.",
   },
   analysis: {
-    title: "Every move tells a story.",
-    subtitle: "Find the ideas behind your game. All on your device.",
+    title: "Analysis board",
+    subtitle: "Check the critical move. Try another line.",
   },
   puzzles: {
-    title: "Small puzzles. Big progress.",
-    subtitle: "Train your eye. Trust your calculation.",
+    title: "Tactics",
+    subtitle:
+      "Look for checks, captures, and threats. Finish the whole sequence.",
   },
   openings: {
-    title: "Find your opening.",
-    subtitle: "From timeless classics to the internet’s favorite gambits.",
+    title: "Opening notebook",
+    subtitle: "Main lines, traps, and the gambits you keep seeing online.",
   },
   games: {
-    title: "Your chess, collected.",
-    subtitle: "Every game is a chance to discover something new.",
+    title: "Your games",
+    subtitle: "Resume a game, replay it, or find the move you missed.",
   },
   multiplayer: {
-    title: "Good company. Great chess.",
+    title: "Play with friends",
     subtitle: "One Wi-Fi network. Two players. No account needed.",
   },
   settings: {
-    title: "Make yourself at home.",
-    subtitle: "A chess space that feels like yours.",
+    title: "Your setup",
+    subtitle: "Your name, your board, your preferences.",
   },
 };
 const glyphs: Record<string, string> = {
@@ -986,10 +986,10 @@ export default function App() {
       <div className={`player-bar ${bottom ? "bottom" : ""}`}>
         <div
           className={`player-avatar ${bot ? "bot" : ""}`}
-          style={bot ? { background: currentBot.color } : undefined}
+          data-bot={bot ? currentBot.id : undefined}
         >
           {bot ? (
-            currentBot.icon
+            currentBot.name.slice(0, 2).toUpperCase()
           ) : (
             <img src={`./pieces/${color}K.svg`} alt="" />
           )}
@@ -1018,8 +1018,10 @@ export default function App() {
                     ? "Same Wi-Fi"
                     : "Reconnecting…"
                   : color === game.playerColor && game.mode === "bot"
-                    ? "Make yourself a little better."
-                    : "Ready for a good game."}
+                    ? "Playing as " + (color === "w" ? "White" : "Black")
+                    : game.mode === "analysis"
+                      ? "Analysis position"
+                      : "Local player"}
           </small>
           {captures.length > 0 && (
             <span className="captured-pieces">
@@ -1072,10 +1074,10 @@ export default function App() {
         >
           <img src="./icon.svg" alt="" />
           <span>
-            knightfall<span className="brand-dot">.</span>
+            Knightfall<small>CHESS CLUB</small>
           </span>
         </a>
-        <div className="sidebar-caption">YOUR CHESS SPACE</div>
+        <div className="sidebar-caption">THE CLUBHOUSE</div>
         <nav>
           {pages.map((item) => (
             <button
@@ -1094,21 +1096,47 @@ export default function App() {
             </button>
           ))}
         </nav>
-        <div className="sidebar-note">
-          <span className="tiny-star">✦</span>
-          <p>
-            A little better,
-            <br />
-            one move at a time.
-          </p>
-          <div className="note-line" />
-          <small>YOUR NEXT CHAPTER STARTS HERE</small>
-        </div>
+        <section className="sidebar-recent" aria-label="Recent games">
+          <div className="sidebar-caption">YOUR SCORESHEETS</div>
+          {archive.length ? (
+            archive.slice(0, 2).map((recent) => (
+              <button
+                className="recent-game"
+                key={recent.id}
+                onClick={() => {
+                  setMobileNav(false);
+                  !recent.result && ["bot", "local"].includes(recent.mode)
+                    ? resumeGame(recent)
+                    : imported({
+                        ...recent,
+                        mode: "analysis",
+                        started: true,
+                        time: { base: 0, increment: 0 },
+                      });
+                }}
+              >
+                <span>{recent.title}</span>
+                <small>
+                  {Math.ceil(recent.moves.length / 2)} moves ·{" "}
+                  {!recent.result && ["bot", "local"].includes(recent.mode)
+                    ? "Continue"
+                    : "Review game"}
+                </small>
+              </button>
+            ))
+          ) : (
+            <p>
+              Your games will appear here.
+              <br />
+              Start with a quick 10-minute game.
+            </p>
+          )}
+        </section>
         <div className="sidebar-bottom">
           <div className="local-badge">
             <span className="status-dot" />
             <span>
-              All yours. All local.<small>No account. No distractions.</small>
+              Offline ready<small>Games stay on this device</small>
             </span>
             <ShieldCheck size={17} />
           </div>
@@ -1129,7 +1157,7 @@ export default function App() {
             <span>How to play</span>
           </button>
           <div className="sidebar-footer">
-            <span>Knightfall v1.0</span>
+            <span>Knightfall v1.1</span>
             <Heart size={12} />
           </div>
         </div>
@@ -1151,7 +1179,7 @@ export default function App() {
             <Menu size={22} />
           </button>
           <div className="breadcrumb">
-            <span>Your chess space</span>
+            <span>Clubhouse</span>
             <ChevronRight size={13} />
             <strong>
               {page === "settings"
@@ -1161,7 +1189,7 @@ export default function App() {
           </div>
           <div className="topbar-right">
             <span className="on-device">
-              <span className="status-dot" /> Plays on your device
+              <span className="status-dot" /> Local play
             </span>
             <button
               className="icon-button"
@@ -1185,18 +1213,11 @@ export default function App() {
         <main>
           <div className="page-heading">
             <div>
-              <div className="eyebrow">
-                {page === "play"
-                  ? "WELCOME TO THE BOARD"
-                  : page === "puzzles"
-                    ? "A LITTLE TRAINING, EVERY DAY"
-                    : page === "analysis"
-                      ? "LOOK A LITTLE DEEPER"
-                      : page === "openings"
-                        ? "CURIOSITY IS A GOOD OPENING"
-                        : "THE KNIGHTFALL CLUB"}
-              </div>
-              <h1>{pageTitles[page].title}</h1>
+              <h1>
+                {page === "play" && settings.name !== "You"
+                  ? `${settings.name}’s board`
+                  : pageTitles[page].title}
+              </h1>
               <p>{pageTitles[page].subtitle}</p>
             </div>
             {page === "play" && (
@@ -1494,8 +1515,11 @@ export default function App() {
                   <div className="underboard-tip">
                     <Lightbulb size={17} />
                     <p>
-                      <strong>A thought for your next move</strong>Before you
-                      move, check for checks, captures, and threats.
+                      <strong>At the board</strong>
+                      <span>
+                        <kbd>F</kbd> flip &nbsp; <kbd>←</kbd> <kbd>→</kbd>{" "}
+                        replay &nbsp; Right-drag to draw an arrow
+                      </span>
                     </p>
                   </div>
                 )}
@@ -1905,7 +1929,7 @@ export default function App() {
                             className="button secondary full"
                             onClick={() => void hint()}
                           >
-                            <Lightbulb size={16} /> A little hint
+                            <Lightbulb size={16} /> Hint
                           </button>
                           <button
                             className="text-button full reveal-button"
@@ -1989,13 +2013,13 @@ export default function App() {
                 {page === "play" && (
                   <div className="mini-puzzle-card">
                     <div>
-                      <span className="eyebrow">A QUICK BRAIN WARM-UP</span>
-                      <h3>One puzzle. A sharper you.</h3>
+                      <span className="eyebrow">TACTICS PRACTICE</span>
+                      <h3>Find the winning move.</h3>
                       <button
                         className="text-button"
                         onClick={() => navigate("puzzles")}
                       >
-                        Find your next tactic <ArrowRight size={15} />
+                        Solve a puzzle <ArrowRight size={15} />
                       </button>
                     </div>
                     <Puzzle size={45} strokeWidth={1.2} />
@@ -2169,7 +2193,7 @@ export default function App() {
                 {!archive.length && (
                   <div className="empty-library">
                     <FolderHeart size={48} strokeWidth={1.2} />
-                    <h2>Your collection starts here.</h2>
+                    <h2>No saved games yet</h2>
                     <p>
                       Play a game and it will be saved automatically on this
                       device.
@@ -2202,7 +2226,7 @@ export default function App() {
             <div className="settings-layout">
               <section className="card settings-card">
                 <div className="panel-heading">
-                  <h2>Your board, your way.</h2>
+                  <h2>Player and board settings</h2>
                   <Settings2 size={20} />
                 </div>
                 <label className="field-label" htmlFor="player-name">
@@ -2248,7 +2272,7 @@ export default function App() {
                   {
                     key: "sound",
                     name: "Move sounds",
-                    desc: "A little feedback with every move.",
+                    desc: "Play a sound after each move.",
                   },
                   {
                     key: "coordinates",
@@ -2286,7 +2310,7 @@ export default function App() {
               <div className="settings-aside">
                 <section className="card about-card">
                   <img src="./icon.svg" alt="" />
-                  <h2>Chess feels good here.</h2>
+                  <h2>About Knightfall</h2>
                   <p>
                     Knightfall is an independent chess studio. Play offline,
                     explore ideas, and share a game across the room.
@@ -2294,39 +2318,39 @@ export default function App() {
                   <div className="about-feature">
                     <Cpu size={18} />
                     <span>
-                      <strong>On-device intelligence</strong>Stockfish 17.1
-                      Lite, with a lightweight fallback.
+                      <strong>Local engine</strong>Stockfish 17.1 Lite, with a
+                      lightweight fallback.
                     </span>
                   </div>
                   <div className="about-feature">
                     <ShieldCheck size={18} />
                     <span>
-                      <strong>Private by design</strong>No account, analytics,
-                      or cloud game uploads.
+                      <strong>Your game data</strong>No account, analytics, or
+                      cloud game uploads.
                     </span>
                   </div>
                   <div className="about-feature">
                     <Wifi size={18} />
                     <span>
-                      <strong>Closer together</strong>Host a room for players on
-                      your local network.
+                      <strong>Same-Wi-Fi games</strong>Host a room for players
+                      on your local network.
                     </span>
                   </div>
                   <button
                     className="button secondary full"
                     onClick={() => setModal("install")}
                   >
-                    <Download size={16} /> Take Knightfall with you
+                    <Download size={16} /> Install Knightfall
                   </button>
                   <p className="fine-print">
-                    Knightfall v1.0 · GPL-3.0-or-later. Chess rules by chess.js.
+                    Knightfall v1.1 · GPL-3.0-or-later. Chess rules by chess.js.
                     Pieces by Colin M. L. Burnett, CC BY-SA 3.0. Stockfish is
                     GPLv3. Creator mentions are educational; no endorsement or
                     affiliation is implied.
                   </p>
                 </section>
                 <section className="card backup-card">
-                  <h3>A little peace of mind.</h3>
+                  <h3>Back up your games</h3>
                   <p>
                     Back up your saved games, settings, and puzzle progress.
                   </p>
@@ -2414,10 +2438,8 @@ export default function App() {
             </div>
           )}
           <footer className="main-footer">
-            <span>Built for the love of the game.</span>
-            <span>
-              Play. Learn. Repeat. <span className="footer-star">✦</span>
-            </span>
+            <span>Knightfall · Independent chess software</span>
+            <span>No accounts. No ads.</span>
           </footer>
         </main>
       </div>
@@ -2582,7 +2604,7 @@ export default function App() {
               Wi-Fi.
             </p>
             <p>
-              <strong>Go a little deeper</strong>Open Analysis for engine
+              <strong>Review a position</strong>Open Analysis for engine
               suggestions and game review. Import PGN games or FEN positions.
               Click the move list to replay.
             </p>

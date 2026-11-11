@@ -13,12 +13,13 @@ await new Promise((resolve, reject) => {
   child.on('exit', code => code === 0 ? resolve() : reject(new Error(`Windows packaging failed (${code})`)));
 });
 const output = path.join(root, 'artifacts', 'windows');
-const files = (await readdir(output)).filter(file => file.endsWith('.exe'));
-if (!files.length) throw new Error('No Windows .exe was produced.');
+const packageJson = JSON.parse(await readFile(path.join(root,'package.json'),'utf8'));
+const filename = `Knightfall-${packageJson.version}-Windows-x64.exe`;
+if (!(await readdir(output)).includes(filename)) throw new Error(`Expected Windows executable was not produced: ${filename}`);
+const files = [filename];
 const checksums = [];
 for (const file of files) checksums.push(`${createHash('sha256').update(await readFile(path.join(output,file))).digest('hex')}  ${file}`);
 await writeFile(path.join(output, 'SHA256SUMS.txt'), checksums.join('\n') + '\n');
-const packageJson = JSON.parse(await readFile(path.join(root,'package.json'),'utf8'));
 const electronJson = JSON.parse(await readFile(path.join(root,'node_modules/electron/package.json'),'utf8'));
 const digest = data => createHash('sha256').update(data).digest('hex');
 await writeFile(path.join(output,'windows-build.json'),JSON.stringify({

@@ -1,9 +1,9 @@
 {
   "name": "knightfall-chess",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
-  "description": "Your move. Your world. An offline-first chess studio.",
+  "description": "Local chess, analysis, and training.",
   "author": "Knightfall",
   "license": "GPL-3.0-or-later",
   "main": "desktop/main.cjs",

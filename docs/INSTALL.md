@@ -4,7 +4,7 @@ Knightfall is an original chess studio for web, Windows, and Android. The game r
 
 ## Windows portable app
 
-1. Download `Knightfall-1.0.0-Windows-x64.exe` from the release artifacts.
+1. Download `Knightfall-1.1.0-Windows-x64.exe` from the release artifacts.
 2. Run it on a 64-bit Windows 10/11 computer. The portable app does not need administrator rights.
 3. Games and preferences are kept in the current Windows user's app-data directory. Export important games as PGN before moving to a different computer.
 

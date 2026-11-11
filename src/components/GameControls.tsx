@@ -40,12 +40,12 @@ export function NewGamePanel({
   return (
     <section className="card new-game-card">
       <div className="panel-heading">
-        <h2>Make your next move.</h2>
+        <h2>Set up a game</h2>
         <span className="live-pill">
-          <span /> Offline ready
+          <span /> Local play
         </span>
       </div>
-      <p className="panel-intro">A little practice. A better player.</p>
+      <p className="panel-intro">Pick an opponent, a clock, and your side.</p>
       <div className="segmented mode-tabs">
         <button
           className={mode === "bot" ? "active" : ""}
@@ -65,7 +65,7 @@ export function NewGamePanel({
       {mode === "bot" ? (
         <>
           <div className="field-label">
-            YOUR OPPONENT <span>6 personalities</span>
+            YOUR OPPONENT <span>6 levels</span>
           </div>
           <div className="bot-picker">
             {bots.map((b) => (
@@ -76,8 +76,8 @@ export function NewGamePanel({
                 aria-label={`${b.name}, ${b.rating}`}
                 aria-pressed={botId === b.id}
               >
-                <span className="bot-avatar" style={{ background: b.color }}>
-                  {b.icon}
+                <span className="bot-avatar" aria-hidden="true" data-bot={b.id}>
+                  {b.name.slice(0, 2).toUpperCase()}
                 </span>
                 <strong>{b.name}</strong>
                 <small>{b.rating}</small>
@@ -90,8 +90,8 @@ export function NewGamePanel({
             ))}
           </div>
           <div className="bot-description">
-            <div className="bot-avatar" style={{ background: bot.color }}>
-              {bot.icon}
+            <div className="bot-avatar" aria-hidden="true" data-bot={bot.id}>
+              {bot.name.slice(0, 2).toUpperCase()}
             </div>
             <div>
               <strong>
@@ -106,9 +106,9 @@ export function NewGamePanel({
           <div className="large-icon">
             <Users size={26} />
           </div>
-          <h3>Across the table.</h3>
+          <h3>Two players. One board.</h3>
           <p>
-            Two players, one screen. Share a board and enjoy a game together.
+            Take turns on this screen. Choose the clock below, or play untimed.
           </p>
         </div>
       )}
@@ -180,7 +180,7 @@ export function NewGamePanel({
         <ArrowRight size={18} />
       </button>
       <button className="wifi-link" onClick={onWifi}>
-        <Wifi size={15} /> Challenge a friend on your Wi-Fi{" "}
+        <Wifi size={15} /> Play a friend on the same Wi-Fi{" "}
         <ArrowRight size={14} />
       </button>
     </section>
@@ -298,7 +298,7 @@ export function MoveList({
         ) : (
           <div className="moves-empty">
             <img src="./pieces/wN.svg" alt="" />
-            <p>Your story starts with a move.</p>
+            <p>No moves yet.</p>
             <small>Moves will appear here as you play.</small>
           </div>
         )}

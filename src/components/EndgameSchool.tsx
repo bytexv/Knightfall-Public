@@ -11,7 +11,6 @@ import {
   Search,
   Shield,
   ShieldCheck,
-  Sparkles,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -295,8 +294,10 @@ export function EndgameSchool({ onPractice }: Props) {
           <span className="eg-eyebrow">
             <Crown size={15} /> ENDGAME SCHOOL
           </span>
-          <h1>Finish with confidence.</h1>
-          <p>Fewer pieces. Clearer ideas. A whole new kind of chess.</p>
+          <h1>Work on your endings.</h1>
+          <p>
+            Practice checkmates, pawn races, rook endings, and holding a draw.
+          </p>
         </div>
         <div className="eg-progress-summary">
           <span>
@@ -309,30 +310,24 @@ export function EndgameSchool({ onPractice }: Props) {
       <section className="eg-hero">
         <div>
           <span className="eg-hero-label">
-            <Sparkles size={14} /> THE FINAL FEW PIECES
+            <BookOpen size={14} /> ENDGAME PRACTICE
           </span>
-          <h2>
-            Technique is a quiet
-            <br />
-            superpower.
-          </h2>
+          <h2>King activity and technique</h2>
           <p>
-            Learn the plan, then make it happen. Practice essential checkmates,
-            turn pawns into queens, or save a position with a resourceful draw.
+            Bring your king into the game, convert the extra pawn, or find the
+            defense that holds. Each drill starts from a specific position.
           </p>
           <button onClick={() => setSelected(endgames[0])}>
             Start with the essentials <ArrowRight size={17} />
           </button>
         </div>
         <div className="eg-hero-art" aria-hidden="true">
-          <span className="eg-orbit eg-orbit-one" />
-          <span className="eg-orbit eg-orbit-two" />
           <img className="eg-hero-king" src="./pieces/wK.svg" alt="" />
           <img className="eg-hero-pawn" src="./pieces/bP.svg" alt="" />
           <span className="eg-art-note">
-            A good ending
+            ENDGAME CHECKLIST
             <br />
-            <strong>starts with a plan.</strong>
+            <strong>King activity · Passed pawns</strong>
           </span>
         </div>
       </section>

@@ -11,13 +11,13 @@
   gap: 8px;
 }
 .game-notes h3 > svg {
-  color: var(--muted, #7c887d);
+  color: var(--muted, #655e56);
   flex-shrink: 0;
 }
 .game-notes-position {
   font-family: monospace;
   font-size: 10px;
-  color: var(--muted, #7c887d);
+  color: var(--muted, #655e56);
   max-width: 52%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -26,7 +26,7 @@
 .game-notes-label {
   display: block;
   font-size: 10px;
-  color: var(--text, #27382e);
+  color: var(--text, #272a2d);
   margin-bottom: 8px;
   font-weight: 500;
 }
@@ -47,7 +47,7 @@
 }
 .game-notes-tools > span {
   font-size: 9px;
-  color: var(--muted, #7c887d);
+  color: var(--muted, #655e56);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -59,24 +59,24 @@
   gap: 4px;
 }
 .game-notes-symbols > button {
-  border: 1px solid var(--border, #e0e5db);
+  border: 1px solid var(--border, #d8d0c4);
   border-radius: 5px;
-  background: var(--bg, #f7f8f3);
+  background: var(--bg, #faf8f4);
   padding: 4px 6px;
   min-width: 26px;
   min-height: 28px;
   font-family: monospace;
   font-weight: 600;
   font-size: 11px;
-  color: var(--text, #27382e);
+  color: var(--text, #272a2d);
 }
 .game-notes-symbols > button:hover:not(:disabled) {
-  background: #e9efdf;
+  background: #f0ebe2;
 }
 .game-notes-hint {
   font-size: 9px;
   line-height: 1.6;
-  color: var(--muted, #7c887d);
+  color: var(--muted, #655e56);
   margin: 12px 0 15px;
 }
 .game-notes-actions {
@@ -97,7 +97,7 @@
   margin-left: auto;
   font-size: 9px;
   line-height: 1.5;
-  color: #48673b;
+  color: #272a2d;
 }
 .game-notes-status.failed {
   color: #943d2c;

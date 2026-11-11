@@ -13,7 +13,6 @@ import {
   Lightbulb,
   Search,
   ShieldCheck,
-  Sparkles,
   Target,
   X,
 } from "lucide-react";
@@ -101,7 +100,7 @@ function OpeningCard({
       </div>
       {gambit.creator ? (
         <span className="lh-creator">
-          <Sparkles size={12} /> {gambit.creator}
+          <GraduationCap size={12} /> {gambit.creator}
         </span>
       ) : (
         <span className="lh-creator lh-eco">
@@ -291,10 +290,13 @@ export function LearnHub({ onExplore, onPuzzle }: LearnHubProps) {
       <header className="lh-heading">
         <div>
           <div className="lh-eyebrow">
-            <Compass size={15} /> THE LEARNING ROOM
+            <Compass size={15} /> OPENING STUDY
           </div>
-          <h1>Small ideas. Big improvements.</h1>
-          <p>A little curiosity is your best opening move.</p>
+          <h1>Build your repertoire.</h1>
+          <p>
+            Study the move order, the plans, and what happens when the trap
+            fails.
+          </p>
         </div>
         <button className="lh-practice-button" onClick={onPuzzle}>
           <Target size={18} /> Practice tactics <ArrowRight size={17} />
@@ -365,23 +367,19 @@ export function LearnHub({ onExplore, onPuzzle }: LearnHubProps) {
           <div className="lh-feature">
             <div className="lh-feature-copy">
               <span className="lh-feature-label">
-                <Sparkles size={14} /> YOUR NEXT FAVORITE OPENING
+                <BookOpen size={14} /> FEATURED LINE · PETROFF DEFENSE
               </span>
-              <h2>
-                A little risk.
-                <br />A lot of possibility.
-              </h2>
+              <h2>Stafford Gambit</h2>
               <p>
-                From timeless classics to the internet’s favorite gambits. Learn
-                the idea, explore the line and know what you’re giving up.
+                The Stafford gives Black quick development and tactical chances.
+                Study the threats against f2 and the replies that let White keep
+                the extra pawn.
               </p>
               <button onClick={() => onExplore(gambits[0])}>
                 Meet the Stafford <ArrowRight size={17} />
               </button>
             </div>
             <div className="lh-feature-art" aria-hidden="true">
-              <div className="lh-art-orbit" />
-              <div className="lh-art-board" />
               <img className="lh-art-knight" src="./pieces/bN.svg" alt="" />
               <span className="lh-art-caption">
                 1. e4 e5 &nbsp; 2. Nf3 Nf6
@@ -475,12 +473,12 @@ export function LearnHub({ onExplore, onPuzzle }: LearnHubProps) {
               <Search size={30} />
               <h3>
                 {category === "saved" && !saved.size
-                  ? "Your repertoire starts here"
+                  ? "No saved openings yet"
                   : "No openings found"}
               </h3>
               <p>
                 {category === "saved" && !saved.size
-                  ? "Tap the bookmark on any opening to keep it close."
+                  ? "Bookmark an opening to add it to your repertoire."
                   : "Try a different name, theme or difficulty."}
               </p>
               <button
@@ -509,13 +507,11 @@ export function LearnHub({ onExplore, onPuzzle }: LearnHubProps) {
         >
           <div className="lh-lessons-intro">
             <div>
-              <span className="lh-eyebrow">
-                A FEW MINUTES, A STRONGER FOUNDATION
-              </span>
-              <h2>Build the habits behind good moves.</h2>
+              <span className="lh-eyebrow">CHESS FUNDAMENTALS</span>
+              <h2>What to look for before you move.</h2>
               <p>
-                No memorization marathon. Just practical ideas you can use in
-                your next game.
+                Short lessons on tactics, development, king safety, and the
+                decisions that come up in real games.
               </p>
             </div>
             <div className="lh-progress">
@@ -569,9 +565,10 @@ export function LearnHub({ onExplore, onPuzzle }: LearnHubProps) {
           <div className="lh-practice-callout">
             <Target size={27} />
             <div>
-              <h3>Make the patterns stick.</h3>
+              <h3>Try the tactics board.</h3>
               <p>
-                Put what you’ve learned to work with a few tactical puzzles.
+                Calculate the full line before you move. The opponent’s reply
+                matters.
               </p>
             </div>
             <button onClick={onPuzzle}>

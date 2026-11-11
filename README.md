@@ -1,6 +1,6 @@
 # Knightfall
 
-**Your move. Your world.**
+**Local chess, analysis and training.**
 
 Knightfall is an independent chess studio for the web, Windows and Android. Play local bots, review games with on-device Stockfish, study openings and endgames, solve tactics, or invite a friend on the same Wi-Fi. The native apps bundle the engine and learning content; the web app supports offline use after its first successful cache installation.
 
@@ -23,8 +23,8 @@ For installation details, see [Install Knightfall](docs/INSTALL.md). For a full 
 | Format | What it contains | Delivery/build output |
 | --- | --- | --- |
 | Web / installable PWA | Responsive app, local engine, learning content, offline cache | `dist/` after `npm run build` |
-| Windows x64 | Portable Electron 45 app with a built-in Wi-Fi host | `artifacts/windows/Knightfall-1.0.0-Windows-x64.exe` |
-| Android | Capacitor 7 app with bundled assets and direct LAN joining | `artifacts/Knightfall-1.0.0-android-debug.apk` |
+| Windows x64 | Portable Electron 45 app with a built-in Wi-Fi host | `artifacts/windows/Knightfall-1.1.0-Windows-x64.exe` |
+| Android | Capacitor 7 app with bundled assets and direct LAN joining | `artifacts/Knightfall-1.1.0-android-debug.apk` |
 | iPhone / iPad | Native Capacitor project; the web app can also be added to the Home Screen | `ios/`; no signed IPA is included |
 
 The Windows executable is unsigned. The Android APK is a development build signed with a debug key. They are not app-store releases. Native iOS builds require macOS, Xcode and Apple signing. See [Packaging](docs/PACKAGING.md) and [Mobile](docs/MOBILE.md).

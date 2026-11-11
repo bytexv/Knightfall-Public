@@ -1,14 +1,14 @@
 {
   "id": "./",
-  "name": "Knightfall — Your move. Your world.",
+  "name": "Knightfall Chess Club",
   "short_name": "Knightfall",
   "description": "Play, analyze and explore chess. Local bots, tactics, gambits and same-Wi-Fi play.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#171b19",
-  "theme_color": "#171b19",
+  "background_color": "#24272b",
+  "theme_color": "#24272b",
   "lang": "en",
   "categories": ["games", "education"],
   "icons": [

@@ -175,20 +175,20 @@ export default function PuzzleRush({
       : run.phase === "solved"
         ? "Found it. One point earned."
         : run.phase === "mistake"
-          ? "One life down. A new position awaits."
+          ? "One life lost. Continue to the next position."
           : run.phase === "finished"
-            ? "Take a breath. Take a lesson."
+            ? "Run finished. Review your positions below."
             : `${playerColor === "w" ? "White" : "Black"} to move. Find the best sequence.`;
   const finishedTitle =
     run?.finishReason === "completed"
-      ? "That is the whole course."
+      ? "Course complete."
       : run?.finishReason === "time"
-        ? "Time. Nicely focused."
+        ? "Time is up."
         : run?.finishReason === "lives"
-          ? "Every miss teaches you."
+          ? "No lives remaining."
           : run?.finishReason === "error"
-            ? "This run hit a snag."
-            : "A little practice adds up.";
+            ? "Run stopped."
+            : "Run finished.";
 
   return (
     <section className="rush-layout" aria-label="Tactics Sprint">
@@ -200,7 +200,7 @@ export default function PuzzleRush({
           <span>
             {run
               ? `Position ${run.index + 1} of ${rushCourse.length}`
-              : `${rushCourse.length} positions. One progressive course.`}
+              : `${rushCourse.length} positions, ordered by difficulty.`}
           </span>
         </div>
         <div className="rush-player">
@@ -242,8 +242,8 @@ export default function PuzzleRush({
             <div className="rush-ready-cover">
               <span>
                 <Zap size={26} />
-                <strong>Trust your calculation.</strong>
-                <small>Choose your pace, then make your first move.</small>
+                <strong>Find the full line.</strong>
+                <small>Choose a mode to start the first position.</small>
               </span>
             </div>
           )}
@@ -313,20 +313,16 @@ export default function PuzzleRush({
       <aside className="rush-panel">
         {!run ? (
           <section className="card rush-setup">
-            <span className="soft-badge">A LITTLE FIRE FOR YOUR FOCUS</span>
+            <span className="soft-badge">TACTICS SPRINT</span>
             <div className="rush-hero-icon">
               <Flame size={34} />
             </div>
-            <h2>
-              Three lives.
-              <br />
-              One more move.
-            </h2>
+            <h2>How many can you solve?</h2>
             <p>
               Solve a sequence. Earn a point. The positions get harder as you
               go.
             </p>
-            <div className="rush-mode-label">CHOOSE YOUR PACE</div>
+            <div className="rush-mode-label">RUN MODE</div>
             <div className="rush-modes">
               {rushModes.map((item) => (
                 <button
@@ -369,8 +365,8 @@ export default function PuzzleRush({
               </span>
             </div>
             <p className="rush-footnote">
-              Practice the same progressive course and build pattern
-              recognition. Scores stay on this device.
+              The positions follow the same order each run. Use the recap to
+              retry any you missed.
             </p>
           </section>
         ) : (
@@ -412,10 +408,10 @@ export default function PuzzleRush({
                   <p>
                     {run.score > oldBest.current &&
                     run.score === bests[run.mode]
-                      ? "A new personal best. Keep that pattern recognition growing."
+                      ? "A new personal best."
                       : run.finishReason === "error"
                         ? "No points were awarded for the incomplete position. Start a fresh run to try again."
-                        : "Revisit a missed idea while it is fresh. That is where the next point comes from."}
+                        : "Open a missed position below and work through the full line."}
                   </p>
                   <div className="rush-result-stats">
                     <div>
@@ -498,9 +494,7 @@ export default function PuzzleRush({
             <section className="card rush-recap">
               <div className="panel-heading">
                 <h2>
-                  {run.phase === "finished"
-                    ? "Ideas to take with you"
-                    : "This run"}
+                  {run.phase === "finished" ? "Review this run" : "This run"}
                 </h2>
                 <span>{run.attempts.length}</span>
               </div>
@@ -553,7 +547,7 @@ export default function PuzzleRush({
               ) : (
                 <div className="rush-recap-empty">
                   <Trophy size={25} />
-                  <p>Your first point is one good idea away.</p>
+                  <p>Completed and missed positions will appear here.</p>
                 </div>
               )}
             </section>

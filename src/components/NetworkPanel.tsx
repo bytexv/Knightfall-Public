@@ -250,14 +250,10 @@ export default function NetworkPanel({ onGame }: NetworkPanelProps) {
         <span className="network-eyebrow">
           <Wifi size={15} /> SAME-WI-FI MULTIPLAYER
         </span>
-        <h1>
-          Good company.
-          <br />
-          <em>Great chess.</em>
-        </h1>
+        <h1>Play across the room.</h1>
         <p>
-          Turn your living room into a chess club. Two devices, one Wi-Fi
-          network, and a game that stays between you.
+          Host a game on your computer, then join from another device on the
+          same Wi-Fi. Share the address and six-character room code.
         </p>
       </div>
       <div className="network-layout">
@@ -521,7 +517,7 @@ export default function NetworkPanel({ onGame }: NetworkPanelProps) {
               <span>♟</span>
             </span>
           </div>
-          <h2>A little closer to over-the-board.</h2>
+          <h2>Connect two devices</h2>
           <ol>
             <li>
               <span>01</span>

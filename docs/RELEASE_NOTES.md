@@ -1,6 +1,13 @@
-# Knightfall 1.0
+# Knightfall 1.1
 
 An independent chess studio for web, Windows and Android. Local play, analysis and learning run on your device.
+
+## New in 1.1
+
+- A chess-club design with warm paper, walnut boards, charcoal navigation and copper accents.
+- More compact desktop and mobile layouts, with clearer clocks and control labels.
+- A board heading that uses your profile name and a recent-games sidebar for continuing or reviewing saved games.
+- Updated Windows and Android shell colors to match the board room.
 
 ## Included
 
@@ -14,9 +21,9 @@ Tactics Sprint offers 3-minute, 5-minute and untimed Survival modes with three l
 
 ## Install
 
-**Windows:** Run `Knightfall-1.0.0-Windows-x64.exe` on 64-bit Windows 10/11. It is a portable, unsigned development build; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
+**Windows:** Run `Knightfall-1.1.0-Windows-x64.exe` on 64-bit Windows 10/11. It is a portable, unsigned development build; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
 
-**Android:** Open `Knightfall-1.0.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
+**Android:** Open `Knightfall-1.1.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
 
 **Web:** Use the private web link supplied with the release. The hosting provider may require sign-in. Chrome/Edge can install the app from their menu; on iPhone, use Safari **Share → Add to Home Screen**. Keep the first online load open while offline assets finish caching.
 

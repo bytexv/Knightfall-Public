@@ -86,7 +86,7 @@ test('suspended interval cannot grant a late point after the absolute deadline',
   await move(rushCourse[0].solution[0]);
   assert.equal(score(), 0);
   assert.ok(host.textContent.includes('RUN COMPLETE'));
-  assert.ok(host.textContent.includes('Time. Nicely focused.'));
+  assert.ok(host.textContent.includes('Time is up.'));
   assert.equal(host.querySelector('[aria-label="Time remaining"]').textContent, '0:00');
   assert.equal(host.querySelectorAll('.rush-recap-icon.unfinished').length, 1);
 });
@@ -134,7 +134,7 @@ test('visibility resume finishes an expired run even without a move or interval 
   t.mock.timers.setTime(250000);
   await act(async () => document.dispatchEvent(new dom.window.Event('visibilitychange')));
   assert.ok(host.textContent.includes('RUN COMPLETE'));
-  assert.ok(host.textContent.includes('Time. Nicely focused.'));
+  assert.ok(host.textContent.includes('Time is up.'));
   assert.equal(score(), 0);
 });
 

@@ -1,10 +1,10 @@
 .learn-hub {
-  --lh-ink: #23332c;
-  --lh-muted: #5f6862;
-  --lh-border: #e1e6df;
-  --lh-green: #386047;
-  --lh-surface: #fff;
-  --lh-cream: #f7f8f3;
+  --lh-ink: #272a2d;
+  --lh-muted: #665f57;
+  --lh-border: #d6cec0;
+  --lh-accent: #934526;
+  --lh-surface: #faf8f4;
+  --lh-cream: #f0ebe2;
   max-width: 1320px;
   margin: 0 auto;
   padding: 4px 0 36px;
@@ -21,7 +21,7 @@
 .learn-hub button:focus-visible,
 .learn-hub input:focus-visible,
 .learn-hub select:focus-visible {
-  outline: 3px solid #426746;
+  outline: 3px solid #5b5147;
   outline-offset: 3px;
 }
 .lh-heading {
@@ -38,7 +38,7 @@
   font-size: 10px;
   letter-spacing: 1.8px;
   font-weight: 700;
-  color: var(--lh-green);
+  color: var(--lh-accent);
 }
 .lh-heading h1 {
   font-size: clamp(24px, 2.4vw, 34px);
@@ -60,13 +60,13 @@
   background: var(--lh-surface);
   border: 1px solid var(--lh-border);
   color: var(--lh-ink);
-  border-radius: 9px;
+  border-radius: 4px;
   padding: 12px 15px;
   font-size: 12px;
   font-weight: 650;
 }
 .lh-practice-button:hover {
-  background: #edf3ea;
+  background: #f0ebe2;
 }
 .lh-tabs {
   display: flex;
@@ -87,37 +87,37 @@
   position: relative;
 }
 .lh-tabs > button[aria-selected="true"] {
-  color: var(--lh-green);
+  color: var(--lh-accent);
 }
 .lh-tabs > button[aria-selected="true"]:after {
   content: "";
   position: absolute;
   height: 2px;
-  background: var(--lh-green);
+  background: var(--lh-accent);
   left: 0;
   right: 0;
   bottom: -1px;
 }
 .lh-tabs > button > span {
   font-size: 10px;
-  background: #e9ede5;
+  background: #f0ebe2;
   border-radius: 5px;
   padding: 2px 5px;
-  color: var(--lh-green);
+  color: var(--lh-accent);
 }
 .lh-feature {
-  background: #e9eee1;
-  min-height: 254px;
-  border-radius: 14px;
+  background: #f0ebe2;
+  min-height: 205px;
+  border-radius: 4px;
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
+  grid-template-columns: 1.5fr 1fr;
   overflow: hidden;
   position: relative;
-  border: 1px solid #dce4d4;
+  border: 1px solid #d6cec0;
   margin-bottom: 25px;
 }
 .lh-feature-copy {
-  padding: 29px 32px;
+  padding: 24px;
   z-index: 2;
 }
 .lh-feature-label {
@@ -127,22 +127,22 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  color: #576c45;
+  color: #655e56;
 }
 .lh-feature h2 {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 36px;
-  line-height: 1.08;
-  font-weight: 400;
-  letter-spacing: -0.8px;
-  margin: 14px 0 11px;
-  color: #254530;
+  font-family: "DM Sans", sans-serif;
+  font-size: 25px;
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.6px;
+  margin: 12px 0 9px;
+  color: #272a2d;
 }
 .lh-feature p {
   font-size: 12px;
   line-height: 1.7;
-  color: #5d6a54;
-  max-width: 370px;
+  color: #655e56;
+  max-width: 420px;
   margin: 0;
 }
 .lh-feature-copy > button {
@@ -151,15 +151,15 @@
   gap: 14px;
   margin-top: 18px;
   border: 0;
-  background: #31513b;
-  color: #fff;
-  border-radius: 7px;
+  background: #2b2e32;
+  color: #fcfaf6;
+  border-radius: 4px;
   padding: 10px 14px;
   font-size: 11px;
   font-weight: 650;
 }
 .lh-feature-copy > button:hover {
-  background: #203d2a;
+  background: #2b2e32;
 }
 .lh-feature-art {
   position: relative;
@@ -167,58 +167,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.lh-art-board {
-  position: absolute;
-  inset: -70px -60px;
-  background-image: conic-gradient(
-    #cbd5bc 25%,
-    transparent 0 50%,
-    #cbd5bc 0 75%,
-    transparent 0
-  );
-  background-size: 96px 96px;
-  transform: rotate(-24deg);
-  opacity: 0.27;
-  mask-image: linear-gradient(90deg, transparent, #000);
-}
-.lh-art-orbit {
-  position: absolute;
-  width: 270px;
-  height: 270px;
-  border: 1px solid #cbd6be;
-  border-radius: 50%;
-  top: 23px;
-  right: 40px;
-}
-.lh-art-orbit:after {
-  content: "";
-  position: absolute;
-  inset: 22px;
-  border: 1px solid #cbd6be;
-  border-radius: 50%;
+  gap: 18px;
+  border-left: 1px solid #d6cec0;
+  padding: 24px;
+  background: #e8dfd2;
 }
 .lh-art-knight {
-  position: relative;
-  width: 205px;
-  height: 205px;
-  transform: rotate(-8deg) translateY(-9px);
-  filter: drop-shadow(12px 17px 3px #18371b16);
-  opacity: 0.9;
+  width: 105px;
+  height: 105px;
+  flex-shrink: 0;
 }
 .lh-art-caption {
-  position: absolute;
-  right: 25px;
-  bottom: 23px;
-  font-family: monospace;
-  color: #5d6a51;
-  font-size: 11px;
-  line-height: 1.8;
-  transform: rotate(-4deg);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  color: #655e56;
+  font-size: 10px;
+  line-height: 2;
+  white-space: nowrap;
 }
 .lh-art-caption strong {
   font-size: 13px;
-  color: #36523b;
+  color: #272a2d;
   font-weight: 600;
 }
 .lh-filter-row {
@@ -240,17 +208,17 @@
   background: transparent;
   color: var(--lh-muted);
   padding: 8px 10px;
-  border-radius: 7px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 550;
 }
 .lh-filters > button:hover {
-  background: #e9eee6;
+  background: #f0ebe2;
 }
 .lh-filters > button.is-active {
-  color: #33573d;
-  background: #e8eee2;
-  border-color: #dce6d4;
+  color: #272a2d;
+  background: #f0ebe2;
+  border-color: #d6cec0;
 }
 .lh-filters > button > span {
   font-size: 9px;
@@ -262,8 +230,8 @@
   align-items: center;
   background: var(--lh-surface);
   border: 1px solid var(--lh-border);
-  border-radius: 8px;
-  color: #606660;
+  border-radius: 4px;
+  color: #655e56;
   padding: 9px 11px;
   min-width: 195px;
 }
@@ -277,7 +245,7 @@
   font-size: 11px;
 }
 .lh-search input::placeholder {
-  color: #616661;
+  color: #655e56;
 }
 .lh-results-row {
   display: flex;
@@ -298,7 +266,7 @@
 .lh-results-row select {
   background: transparent;
   border: 0;
-  color: #4a5e4d;
+  color: #272a2d;
   font-size: 11px;
   cursor: pointer;
   padding: 4px 2px;
@@ -310,22 +278,17 @@
 }
 .lh-opening-card {
   border: 1px solid var(--lh-border);
-  border-radius: 11px;
+  border-radius: 4px;
   background: var(--lh-surface);
   padding: 19px 19px 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  transition:
-    box-shadow 0.18s,
-    border-color 0.18s,
-    transform 0.18s;
+  transition: border-color 0.18s;
   animation: lh-enter 0.3s both;
 }
 .lh-opening-card:hover {
-  border-color: #becfba;
-  box-shadow: 0 5px 20px #21331e07;
-  transform: translateY(-2px);
+  border-color: #a99177;
 }
 .lh-card-top {
   display: flex;
@@ -338,8 +301,8 @@
   height: 40px;
   display: grid;
   place-items: center;
-  background: #eef2e7;
-  border-radius: 10px;
+  background: #f0ebe2;
+  border-radius: 4px;
   flex-shrink: 0;
 }
 .lh-piece-tile img {
@@ -347,40 +310,40 @@
   height: 32px;
 }
 .lh-category-creator .lh-piece-tile {
-  background: #eee9e0;
+  background: #f0ebe2;
 }
 .lh-category-offbeat .lh-piece-tile {
-  background: #e9edf2;
+  background: #ebe7df;
 }
 .lh-difficulty {
   font-size: 9px;
   padding: 4px 7px;
-  border: 1px solid #e4e8df;
+  border: 1px solid #d6cec0;
   border-radius: 5px;
   margin-left: auto;
-  color: #606858;
+  color: #655e56;
   white-space: nowrap;
 }
 .lh-difficulty-beginner {
-  color: #546c3e;
-  background: #f4f7f0;
+  color: #655e56;
+  background: #faf8f4;
 }
 .lh-difficulty-advanced {
   color: #7d6141;
-  background: #fbf7f0;
-  border-color: #eee7dd;
+  background: #faf8f4;
+  border-color: #d6cec0;
 }
 .lh-bookmark {
   background: transparent;
   border: 0;
-  color: #626660;
+  color: #655e56;
   padding: 4px;
   display: grid;
   place-items: center;
 }
 .lh-bookmark:hover,
 .lh-bookmark.is-saved {
-  color: #536e3e;
+  color: var(--lh-accent);
 }
 .lh-creator {
   display: flex;
@@ -393,7 +356,7 @@
   line-height: 1.4;
 }
 .lh-eco {
-  color: #60695a;
+  color: #655e56;
   font-size: 9px;
   letter-spacing: 0.35px;
 }
@@ -417,14 +380,14 @@
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 10px;
   background: var(--lh-cream);
-  border: 1px solid #edf0e8;
+  border: 1px solid #d6cec0;
   border-radius: 5px;
   padding: 9px 8px;
   margin: 0 0 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #60695a;
+  color: #655e56;
 }
 .lh-move-preview span {
   opacity: 1;
@@ -439,8 +402,8 @@
   font-size: 9px;
   padding: 3px 6px;
   border-radius: 4px;
-  background: #f3f5ef;
-  color: #606859;
+  background: #faf8f4;
+  color: #655e56;
 }
 .lh-open-button {
   display: flex;
@@ -449,41 +412,41 @@
   width: 100%;
   background: transparent;
   border: 0;
-  border-top: 1px solid #edf0e8;
+  border-top: 1px solid #d6cec0;
   padding: 13px 0;
-  color: #506e3e;
+  color: #655e56;
   font-size: 11px;
   font-weight: 650;
 }
 .lh-open-button:hover {
-  color: #213e2b;
+  color: #272a2d;
 }
 .lh-show-more {
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid #dce4d5;
+  border: 1px solid #d6cec0;
   background: transparent;
-  border-radius: 7px;
+  border-radius: 4px;
   padding: 11px 15px;
   margin: 24px auto 0;
-  color: #4e6f3d;
+  color: #655e56;
   font-size: 11px;
   font-weight: 600;
 }
 .lh-show-more span {
   font-size: 10px;
   font-weight: 400;
-  color: #62685c;
+  color: #655e56;
   padding-left: 4px;
 }
 .lh-show-more:hover {
-  background: #eaf0e3;
+  background: #f0ebe2;
 }
 .lh-attribution {
   font-size: 10px;
   line-height: 1.7;
-  color: #63685d;
+  color: #655e56;
   display: flex;
   align-items: flex-start;
   gap: 7px;
@@ -496,9 +459,9 @@
 .lh-empty {
   text-align: center;
   padding: 50px 20px;
-  border: 1px dashed #d7e1d1;
-  border-radius: 10px;
-  color: #5e6856;
+  border: 1px dashed #d6cec0;
+  border-radius: 4px;
+  color: #655e56;
 }
 .lh-empty > svg {
   margin: 0 auto 8px;
@@ -506,7 +469,7 @@
 }
 .lh-empty h3 {
   font-size: 18px;
-  color: #465d3b;
+  color: #272a2d;
   margin: 9px 0;
 }
 .lh-empty p {
@@ -518,10 +481,10 @@
   gap: 8px;
   align-items: center;
   border: 0;
-  background: #e8efdf;
-  border-radius: 6px;
+  background: #f0ebe2;
+  border-radius: 4px;
   padding: 10px 14px;
-  color: #4b7038;
+  color: #272a2d;
   font-size: 11px;
 }
 .lh-lessons-intro {
@@ -532,7 +495,7 @@
   padding: 8px 0 27px;
 }
 .lh-lessons-intro h2 {
-  font-size: 25px;
+  font-size: 23px;
   letter-spacing: -0.7px;
   font-weight: 600;
   line-height: 1.25;
@@ -549,35 +512,35 @@
   border: 1px solid var(--lh-border);
   background: var(--lh-surface);
   padding: 18px;
-  border-radius: 10px;
+  border-radius: 4px;
 }
 .lh-progress > span {
   font-size: 28px;
   font-weight: 600;
-  color: #4c6f3a;
+  color: #272a2d;
   letter-spacing: -1px;
 }
 .lh-progress small {
   font-size: 15px;
   font-weight: 400;
-  color: #63685e;
+  color: #655e56;
   letter-spacing: 0;
 }
 .lh-progress > p {
   font-size: 10px;
-  color: #616858;
+  color: #655e56;
   margin: 5px 0 10px;
 }
 .lh-progress > div {
   height: 4px;
-  background: #edf1e8;
+  background: #f0ebe2;
   border-radius: 3px;
   overflow: hidden;
 }
 .lh-progress i {
   display: block;
   height: 100%;
-  background: #7c9a5d;
+  background: #a65a34;
   transition: width 0.3s;
 }
 .lh-lesson-grid {
@@ -590,18 +553,15 @@
   min-width: 0;
   border: 1px solid var(--lh-border);
   background: var(--lh-surface);
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 20px;
   color: var(--lh-ink);
   display: flex;
   flex-direction: column;
-  transition:
-    border-color 0.15s,
-    transform 0.15s;
+  transition: border-color 0.15s;
 }
 .lh-lesson-card:hover {
-  border-color: #adc29e;
-  transform: translateY(-2px);
+  border-color: #b99b7b;
 }
 .lh-lesson-card-top {
   display: flex;
@@ -611,23 +571,23 @@
   margin-bottom: 24px;
 }
 .lh-lesson-index {
-  font-family: Georgia, serif;
-  font-size: 29px;
-  color: #61675c;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 22px;
+  color: #655e56;
 }
 .lh-lesson-card-top > span:last-child {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #616859;
+  color: #655e56;
   font-size: 10px;
 }
 .lh-lesson-card.is-read .lh-lesson-card-top > span:last-child {
-  color: #566d42;
+  color: #655e56;
 }
 .lh-lesson-level {
   font-size: 9px;
-  color: #5e6955;
+  color: #655e56;
   letter-spacing: 1.1px;
   text-transform: uppercase;
 }
@@ -648,7 +608,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #546d3f;
+  color: #655e56;
   font-size: 11px;
   font-weight: 600;
   margin-top: auto;
@@ -657,22 +617,22 @@
   display: flex;
   align-items: center;
   gap: 19px;
-  background: #eaf0e2;
-  border-radius: 10px;
+  background: #f0ebe2;
+  border-radius: 4px;
   padding: 24px;
   margin-top: 25px;
-  color: #526d41;
+  color: #655e56;
 }
 .lh-practice-callout h3 {
   font-size: 17px;
   font-weight: 600;
-  color: #3d5b2f;
+  color: #272a2d;
   letter-spacing: -0.3px;
   margin: 0 0 6px;
 }
 .lh-practice-callout p {
   font-size: 11px;
-  color: #5e6954;
+  color: #655e56;
   margin: 0;
 }
 .lh-practice-callout button {
@@ -680,18 +640,18 @@
   align-items: center;
   gap: 12px;
   margin-left: auto;
-  border: 1px solid #c8d5ba;
+  border: 1px solid #d6cec0;
   background: transparent;
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 10px 12px;
   font-size: 11px;
-  color: #506e3a;
+  color: #655e56;
   white-space: nowrap;
 }
 .lh-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: #142016a6;
+  background: #23262aa6;
   backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
@@ -704,12 +664,12 @@
   max-width: 660px;
   max-height: 88dvh;
   overflow-y: auto;
-  border-radius: 16px;
-  background: #fafbf6;
+  border-radius: 4px;
+  background: #faf8f4;
   padding: 29px 34px 32px;
-  box-shadow: 0 25px 90px #12260b40;
+  box-shadow: 0 25px 90px #21232640;
   outline: none;
-  color: #283d2d;
+  color: #272a2d;
 }
 .lh-dialog-top {
   display: flex;
@@ -717,17 +677,17 @@
   justify-content: space-between;
 }
 .lh-close {
-  background: #edf1e7;
+  background: #f0ebe2;
   border: 0;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 4px;
   width: 32px;
   height: 32px;
-  color: #5c6a50;
+  color: #655e56;
 }
 .lh-lesson-dialog h2 {
-  font-size: 30px;
+  font-size: 25px;
   line-height: 1.2;
   letter-spacing: -1px;
   font-weight: 600;
@@ -735,7 +695,7 @@
 }
 .lh-dialog-summary {
   font-size: 13px;
-  color: #5e6855;
+  color: #655e56;
   line-height: 1.7;
   margin: 0 0 12px;
 }
@@ -744,7 +704,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #61685a;
+  color: #655e56;
 }
 .lh-lesson-body {
   margin: 28px 0;
@@ -756,18 +716,18 @@
 }
 .lh-section-number {
   font-size: 12px;
-  color: #5e6854;
+  color: #655e56;
   line-height: 24px;
 }
 .lh-lesson-body h3 {
   font-size: 15px;
   font-weight: 650;
   margin: 0 0 8px;
-  color: #405a35;
+  color: #272a2d;
 }
 .lh-lesson-body p {
   font-size: 13px;
-  color: #5d6a54;
+  color: #655e56;
   line-height: 1.85;
   margin: 0;
 }
@@ -776,9 +736,9 @@
   align-items: flex-start;
   gap: 13px;
   padding: 18px;
-  border-radius: 9px;
-  background: #eaf0e0;
-  color: #566c43;
+  border-radius: 4px;
+  background: #f0ebe2;
+  color: #655e56;
   margin-bottom: 23px;
 }
 .lh-challenge > svg {
@@ -788,13 +748,13 @@
 .lh-challenge strong {
   font-size: 12px;
   font-weight: 650;
-  color: #4c6c36;
+  color: #272a2d;
 }
 .lh-challenge p {
   font-size: 12px;
   line-height: 1.8;
   margin: 6px 0 0;
-  color: #5c6b4f;
+  color: #655e56;
 }
 .lh-complete-button {
   width: 100%;
@@ -802,18 +762,18 @@
   align-items: center;
   justify-content: center;
   gap: 9px;
-  background: #38593e;
-  border: 1px solid #38593e;
-  border-radius: 7px;
+  background: #7f452d;
+  border: 1px solid #5b5147;
+  border-radius: 4px;
   padding: 13px;
-  color: #fff;
+  color: #fcfaf6;
   font-size: 12px;
   font-weight: 600;
 }
 .lh-complete-button.is-complete {
-  background: #ecf2e6;
-  color: #556d3f;
-  border-color: #d8e3cb;
+  background: #f0ebe2;
+  color: #655e56;
+  border-color: #d6cec0;
 }
 @keyframes lh-enter {
   from {
@@ -845,12 +805,14 @@
   }
   .lh-feature-art {
     min-width: 200px;
+    flex-direction: column;
+    gap: 10px;
   }
   .lh-feature-copy {
-    padding: 27px;
+    padding: 24px;
   }
   .lh-feature h2 {
-    font-size: 33px;
+    font-size: 25px;
   }
   .lh-heading {
     gap: 15px;
@@ -883,7 +845,7 @@
   }
   .lh-feature {
     grid-template-columns: 1.3fr 0.7fr;
-    min-height: 245px;
+    min-height: 205px;
   }
   .lh-feature-copy {
     padding: 24px 20px;
@@ -893,7 +855,7 @@
     letter-spacing: 1px;
   }
   .lh-feature h2 {
-    font-size: 31px;
+    font-size: 23px;
   }
   .lh-feature p {
     font-size: 11px;
@@ -901,25 +863,14 @@
   }
   .lh-feature-art {
     min-width: 90px;
-    overflow: visible;
+    padding: 12px;
   }
   .lh-art-knight {
-    width: 160px;
-    height: 160px;
-    transform: rotate(-8deg) translate(18px, -10px);
-    opacity: 0.7;
+    width: 85px;
+    height: 85px;
   }
   .lh-art-caption {
     display: none;
-  }
-  .lh-art-orbit {
-    width: 210px;
-    height: 210px;
-    right: -62px;
-    top: 53px;
-  }
-  .lh-art-board {
-    inset: -20px -100px -10px -80px;
   }
   .lh-filters {
     gap: 3px;
@@ -1013,7 +964,7 @@
     max-height: 92dvh;
   }
   .lh-lesson-dialog h2 {
-    font-size: 26px;
+    font-size: 23px;
   }
   .lh-lesson-body section {
     gap: 12px;
@@ -1068,9 +1019,9 @@
 .learn-hub .lh-results-row,
 .learn-hub .lh-attribution,
 .learn-hub .lh-move-preview {
-  color: #596a52;
+  color: #655e56;
 }
 .learn-hub .lh-search input::placeholder {
-  color: #5e6b61;
+  color: #655e56;
   opacity: 1;
 }

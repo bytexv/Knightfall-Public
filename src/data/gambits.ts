@@ -20,7 +20,7 @@ export const gambits: Gambit[] = [
   {
     id: "stafford",
     name: "Stafford Gambit",
-    subtitle: "One pawn. Endless complications.",
+    subtitle: "Black trades a pawn for quick development.",
     category: "creator",
     difficulty: "Intermediate",
     eco: "C42",
@@ -47,7 +47,7 @@ export const gambits: Gambit[] = [
   {
     id: "vienna",
     name: "Vienna Gambit",
-    subtitle: "Build a center. Start a conversation.",
+    subtitle: "Use Nc3 and f4 to challenge Black’s center.",
     category: "creator",
     difficulty: "Beginner",
     eco: "C29",
@@ -63,7 +63,7 @@ export const gambits: Gambit[] = [
   {
     id: "botez",
     name: "The “Botez Gambit”",
-    subtitle: "The queen sacrifice you didn’t plan.",
+    subtitle: "A queen-blunder exercise from a chess meme.",
     category: "creator",
     difficulty: "Beginner",
     moves: ["e4", "e5", "Qh5", "Nc6", "Qxe5+", "Nxe5"],
@@ -78,7 +78,7 @@ export const gambits: Gambit[] = [
   {
     id: "bongcloud",
     name: "Bongcloud Attack",
-    subtitle: "Maximum personality. Minimum king safety.",
+    subtitle: "2.Ke2 gives up castling and blocks development.",
     category: "creator",
     difficulty: "Advanced",
     moves: ["e4", "e5", "Ke2", "Nf6", "Nc3", "Nc6"],
@@ -92,7 +92,7 @@ export const gambits: Gambit[] = [
   {
     id: "cow",
     name: "The Cow Opening",
-    subtitle: "A patient setup with a famous name.",
+    subtitle: "d3, e3, and knight routes to b3 and g3.",
     category: "creator",
     difficulty: "Beginner",
     moves: [
@@ -119,7 +119,7 @@ export const gambits: Gambit[] = [
   {
     id: "queens",
     name: "Queen’s Gambit",
-    subtitle: "The classic invitation.",
+    subtitle: "Challenge the d5 pawn with 2.c4.",
     category: "classic",
     difficulty: "Beginner",
     eco: "D30",
@@ -133,7 +133,7 @@ export const gambits: Gambit[] = [
   {
     id: "kings",
     name: "King’s Gambit",
-    subtitle: "The romantic era, one move away.",
+    subtitle: "Offer the f-pawn for a center and open lines.",
     category: "classic",
     difficulty: "Advanced",
     eco: "C37",
@@ -147,7 +147,7 @@ export const gambits: Gambit[] = [
   {
     id: "evans",
     name: "Evans Gambit",
-    subtitle: "A wing pawn buys the center.",
+    subtitle: "4.b4 gains time to build a center with c3 and d4.",
     category: "classic",
     difficulty: "Intermediate",
     eco: "C51",
@@ -173,7 +173,7 @@ export const gambits: Gambit[] = [
   {
     id: "danish",
     name: "Danish Gambit",
-    subtitle: "Two bishops. Open highways.",
+    subtitle: "Offer two pawns to activate both bishops.",
     category: "classic",
     difficulty: "Beginner",
     eco: "C21",
@@ -187,7 +187,7 @@ export const gambits: Gambit[] = [
   {
     id: "smith-morra",
     name: "Smith–Morra Gambit",
-    subtitle: "Meet the Sicilian on your terms.",
+    subtitle: "A pawn for development against the Sicilian.",
     category: "classic",
     difficulty: "Intermediate",
     eco: "B21",
@@ -213,7 +213,7 @@ export const gambits: Gambit[] = [
   {
     id: "benko",
     name: "Benko Gambit",
-    subtitle: "A pawn for lasting pressure.",
+    subtitle: "Open the a- and b-files for queenside pressure.",
     category: "classic",
     difficulty: "Advanced",
     eco: "A58",
@@ -240,7 +240,7 @@ export const gambits: Gambit[] = [
   {
     id: "budapest",
     name: "Budapest Gambit",
-    subtitle: "A central challenge from move two.",
+    subtitle: "2...e5 attacks White’s center after 1.d4 Nf6.",
     category: "classic",
     difficulty: "Intermediate",
     eco: "A52",
@@ -266,7 +266,7 @@ export const gambits: Gambit[] = [
   {
     id: "scotch",
     name: "Scotch Gambit",
-    subtitle: "Development with a little bite.",
+    subtitle: "Develop Bc4 before recovering the d-pawn.",
     category: "classic",
     difficulty: "Beginner",
     eco: "C44",
@@ -280,7 +280,7 @@ export const gambits: Gambit[] = [
   {
     id: "goring",
     name: "Göring Gambit",
-    subtitle: "Clear the center. Free the pieces.",
+    subtitle: "Offer c3 to open central lines in the Scotch.",
     category: "classic",
     difficulty: "Intermediate",
     eco: "C44",
@@ -305,7 +305,7 @@ export const gambits: Gambit[] = [
   {
     id: "blackmar-diemer",
     name: "Blackmar–Diemer Gambit",
-    subtitle: "Open the f-file. Find the initiative.",
+    subtitle: "Use f3 to develop and open the f-file.",
     category: "offbeat",
     difficulty: "Intermediate",
     eco: "D00",
@@ -319,7 +319,7 @@ export const gambits: Gambit[] = [
   {
     id: "albin",
     name: "Albin Countergambit",
-    subtitle: "A wedge in the center.",
+    subtitle: "Black sacrifices a pawn to establish ...d4.",
     category: "offbeat",
     difficulty: "Intermediate",
     eco: "D08",
@@ -333,7 +333,7 @@ export const gambits: Gambit[] = [
   {
     id: "englund",
     name: "Englund Gambit",
-    subtitle: "An early detour against 1.d4.",
+    subtitle: "1...e5 seeks quick activity against 1.d4.",
     category: "creator",
     difficulty: "Intermediate",
     eco: "A40",
@@ -360,7 +360,7 @@ export const gambits: Gambit[] = [
   {
     id: "halloween",
     name: "Halloween Gambit",
-    subtitle: "A knight for a haunted center.",
+    subtitle: "Sacrifice a knight to advance central pawns.",
     category: "offbeat",
     difficulty: "Advanced",
     eco: "C46",
@@ -388,7 +388,7 @@ export const gambits: Gambit[] = [
   {
     id: "latvian",
     name: "Latvian Gambit",
-    subtitle: "A sharp reply, with sharp edges.",
+    subtitle: "2...f5 attacks e4 and exposes Black’s king.",
     category: "offbeat",
     difficulty: "Advanced",
     eco: "C40",
@@ -402,7 +402,7 @@ export const gambits: Gambit[] = [
   {
     id: "elephant",
     name: "Elephant Gambit",
-    subtitle: "Challenge the center immediately.",
+    subtitle: "2...d5 opens the center before development.",
     category: "offbeat",
     difficulty: "Advanced",
     eco: "C40",
@@ -416,7 +416,7 @@ export const gambits: Gambit[] = [
   {
     id: "from",
     name: "From’s Gambit",
-    subtitle: "A direct answer to the Bird.",
+    subtitle: "Meet 1.f4 with ...e5 and kingside threats.",
     category: "offbeat",
     difficulty: "Advanced",
     eco: "A02",
@@ -430,7 +430,7 @@ export const gambits: Gambit[] = [
   {
     id: "wing",
     name: "Sicilian Wing Gambit",
-    subtitle: "Pull the c-pawn out of the way.",
+    subtitle: "Offer b4 to draw the Sicilian c-pawn away.",
     category: "offbeat",
     difficulty: "Intermediate",
     eco: "B20",
@@ -444,7 +444,7 @@ export const gambits: Gambit[] = [
   {
     id: "tennison",
     name: "Tennison Gambit",
-    subtitle: "A knight jump with a plan.",
+    subtitle: "Offer e4, then use Ng5 to pressure f7.",
     category: "offbeat",
     difficulty: "Intermediate",
     eco: "A06",
@@ -458,7 +458,7 @@ export const gambits: Gambit[] = [
   {
     id: "jerome",
     name: "Jerome Gambit",
-    subtitle: "An attack at almost any price.",
+    subtitle: "Two minor pieces for an exposed black king.",
     category: "offbeat",
     difficulty: "Advanced",
     eco: "C50",
@@ -484,7 +484,7 @@ export const gambits: Gambit[] = [
   {
     id: "nakhmanson",
     name: "Nakhmanson Gambit",
-    subtitle: "A quiet knight move. A wild position.",
+    subtitle: "Offer Nc3 to begin a forcing king attack.",
     category: "offbeat",
     difficulty: "Advanced",
     eco: "C56",
@@ -513,7 +513,7 @@ export const gambits: Gambit[] = [
   {
     id: "staunton",
     name: "Staunton Gambit",
-    subtitle: "Question the Dutch before it settles.",
+    subtitle: "2.e4 challenges the Dutch Defense immediately.",
     category: "classic",
     difficulty: "Intermediate",
     eco: "A82",
@@ -527,7 +527,7 @@ export const gambits: Gambit[] = [
   {
     id: "fried-liver",
     name: "Fried Liver Attack",
-    subtitle: "Pull the king into the spotlight.",
+    subtitle: "Sacrifice on f7 to expose Black’s king.",
     category: "classic",
     difficulty: "Intermediate",
     eco: "C57",

@@ -87,9 +87,9 @@ export function ImportDialog({
   const [error, setError] = useState("");
   const input = useRef<HTMLInputElement>(null);
   return (
-    <Modal title="Bring your game." onClose={onClose}>
+    <Modal title="Import a game or position" onClose={onClose}>
       <p className="muted">
-        Paste a game or position to explore it with local analysis.
+        Paste PGN moves or a FEN position, or open a file.
       </p>
       <div className="segmented">
         <button
