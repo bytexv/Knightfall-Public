@@ -8,6 +8,8 @@
 - Engine: local Stockfish JavaScript/WASM files prepared by `scripts/prepare-engine.mjs`.
 - App artwork: the original Knightfall knight in `public/icon.svg`; the PNG and ICO variants derive from that SVG.
 
+The Vite plugin in `scripts/pgn-compat.ts` explicitly defaults two optional chess.js parser offsets before integer conversion. This handles an observed Chromium 83 Android x86 emulator defect where `undefined | 0` produces `2147483647`, which otherwise stalls PGN parsing. The guard is limited to the bundled chess.js parser, is covered by production-bundle tests, and fails the build if the upstream expressions change.
+
 `package.json` contains the application version. Increase it before shipping an update. Keep the native Android versionCode monotonic when publishing to an app store.
 
 ## Web and offline PWA
