@@ -1,3 +1,4 @@
+import { LearningModes } from "./LearningModes";
 import { useCallback, useState } from "react";
 import {
   ArrowRight,
@@ -44,6 +45,7 @@ export function BeginnerCourse({
   const next = beginnerExercises.findIndex((e) => !done.includes(e.id));
   return (
     <>
+      <LearningModes onBasics={() => open(Math.max(0, next))} />
       <section className="beginner-path" aria-label="Your learning path">
         <div className="beginner-intro">
           <span className="lh-eyebrow">
@@ -62,7 +64,7 @@ export function BeginnerCourse({
               ? next < 0
                 ? "Practice the basics again"
                 : "Continue learning"
-              : "Learn to play"}{" "}
+              : "Start basics"}{" "}
             <ArrowRight size={16} />
           </button>
           <span className="beginner-progress">

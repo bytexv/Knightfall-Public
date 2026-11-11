@@ -11,7 +11,7 @@ class FakeUpdater extends EventEmitter {
   setFeedURL(value) { this.feed = value; }
   async checkForUpdates() { this.checks++; }
   async downloadUpdate() { this.downloads++; }
-  quitAndInstall() { this.installs++; }
+  quitAndInstall(silent, restart) { assert.equal(silent, true); assert.equal(restart, true); this.installs++; }
 }
 function setup(extra = {}) { const updater = new FakeUpdater(); const manager = createAutomaticUpdateManager({ updater, config, currentVersion: '1.3.0', ...extra }); return { updater, manager }; }
 

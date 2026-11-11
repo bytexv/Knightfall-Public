@@ -24,7 +24,7 @@ export const gambits: Gambit[] = [
     idea: "After Nxf7 and ...Kxf7, develop quickly, open lines and look for checks against the exposed king. Practice the position from both sides.",
     risk: "The sacrifice is risky and is not a forced win. Accurate defense can leave Black with a material advantage; do not assume the king must walk into a trap.",
     creator: "Popularized by Wittythealien", tags: ["White", "Caro–Kann", "King attack"],
-    trap: "Nxf7 is the signature sacrifice. In Knightfall, playing this sequence unlocks alien pieces for that game; switch the Easter egg off in Settings if you prefer ordinary pieces.",
+    trap: "Nxf7 is the signature sacrifice. In Knightfall, playing this sequence unlocks alien eyes on the normal pieces for that game; switch the Easter egg off in Settings if you prefer ordinary pieces.",
   },
   {
     id: "stafford",

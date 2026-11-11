@@ -73,7 +73,7 @@ function createAutomaticUpdateManager({ updater, config, currentVersion, onStatu
   }
   function install() {
     if (state.status !== 'ready' || !pending) return false;
-    updater.quitAndInstall(false, true);
+    updater.quitAndInstall(true, true);
     return true;
   }
   return Object.freeze({ getStatus, check, install, getOpenUrl: () => releaseUrl });

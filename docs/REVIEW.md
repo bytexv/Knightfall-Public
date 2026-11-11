@@ -29,15 +29,17 @@ Per-color quality uses independent, sufficiently searched decisions. Book moves,
 
 A preliminary precision band needs at least 8 eligible moves. Its 0–100 range is a deliberately broad display allowance, not a statistical confidence interval. Fewer decisions show the available review results without inventing a performance band.
 
-An **Estimated performance** Elo-style range is available only for the human side against a known local bot difficulty, with at least 12 eligible moves. Imported games and unknown opponents do not get a guessed Elo number. The transparent, uncalibrated mapping is:
+An **Estimated performance Elo** range requires a finished standard-start game, a complete review, and at least 12 eligible decisions for that side. Both pre-game ratings must be known: a recorded local-rated game uses its historical ledger entry (never the viewer's current rating), while an imported PGN can supply `WhiteElo` and `BlackElo`. Unknown ratings, assistance, fallback-engine play, clock-expiry results and custom starting positions withhold the estimate. PGN ratings are user-supplied and not externally verified.
 
-1. Start with the local bot's catalog difficulty estimate.
-2. Add `12 × (quality − 75)`, capped to ±300.
-3. Apply a quality ceiling of `100 + 28 × quality`. This prevents poor play against a very strong bot from automatically receiving an expert estimate.
-4. Round the center to 25 points and bound it to 100–3200.
-5. Show a broad ±300 range, clipped to the same bounds.
+The calculation is a conservative, result-based local estimate; move quality is **not converted to Elo**:
 
-This range is a local training estimate, **not an official rating**, not a prediction of online performance, and not an update to the separate local rating ledger. Bot catalog numbers themselves are training estimates. Opponent strength, search depth, sample size, and game complexity limit how much can be inferred from a single game.
+1. Compute expected score `p0 = 1 / (1 + 10^((opponent − own) / 400))` from pre-game references.
+2. Let `w = eligible_decisions / (eligible_decisions + 24)` and observed score `s` be 0, 0.5 or 1.
+3. Shrink the single result toward that prior: `p = (4 × p0 + w × s) / (4 + w)`.
+4. Convert to `opponent + 400 × log10(p / (1 − p))`, cap the movement to ±200 from the own reference, round to 25, and bound to 100–3200.
+5. Display a broad ±550 allowance while provisional or imported, ±350 after 20 prior local-rated games. These are heuristic allowances, **not calibrated confidence intervals**.
+
+Easy perfect moves cannot create a master rating; losing to the strongest bot cannot raise a beginner to its level. Both sides use the same calculation with their own references and scores. This does not measure playing strength independently of the rating history, change the Local Elo ledger, or predict Chess.com/FIDE ratings. Bot difficulty numbers remain uncalibrated training estimates. Empirical calibration against a rated game corpus is still needed before claiming accuracy on any external rating scale.
 
 ## Validation
 
@@ -47,4 +49,4 @@ The unit fixtures in `tests/fixtures/review-stockfish.json` record the actual bu
 
 The completed review opens an interactive summary with Move totals and Early · middle · late views. Each phase shows both sides' classification totals and move quality, and a link to its largest evaluated loss when at least 50 centipawns. Phases advance monotonically: opening until move 10, middlegame afterward or with reduced material (phase weight ≤16), endgame at phase weight ≤8. Weights are knight/bishop 1, rook 2, queen 4 across both armies; kings and pawns contribute zero. Imported endgames therefore start in the endgame phase. These are practical teaching boundaries, not a universal definition of game phases.
 
-Both sides use the same uncalibrated training mapping: round `(100 + 26 × quality)` to 25 Elo, with a broad ±450 interval bounded to 100–3200. At least 12 independent decisions are needed for each side; book, forced, shallow, forced-mate, and already decisive positions are excluded. This is not a measured Elo prediction, official rating, or change to the persistent Local Elo ledger. Small samples display Not enough moves.
+Since 1.5, both sides use the context-aware method above. Small or unreliable samples show “Not enough evidence”; sufficient samples without eligible rating context show “Rating unavailable.” Move-quality percentages and classification totals remain available independently of Elo.

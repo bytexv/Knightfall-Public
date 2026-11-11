@@ -69,6 +69,8 @@ export interface GameSession {
   initialComment?: string;
   whiteName?: string;
   blackName?: string;
+  whiteElo?: number;
+  blackElo?: number;
   rating?: GameRatingMetadata;
   alienGambit?: boolean;
 }
@@ -283,7 +285,12 @@ export function sessionPgn(session: GameSession): string {
           : "1/2-1/2"
       : "*",
   );
+  if (validPgnElo(session.whiteElo)) c.header("WhiteElo", String(session.whiteElo));
+  if (validPgnElo(session.blackElo)) c.header("BlackElo", String(session.blackElo));
   return c.pgn();
+}
+export function validPgnElo(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 100 && value <= 3200;
 }
 export function importPgn(pgn: string): GameSession {
   if (pgn.length > MAX_PGN_LENGTH)
@@ -324,6 +331,8 @@ export function importPgn(pgn: string): GameSession {
     ...(initialComment ? { initialComment } : {}),
     ...(whiteName && whiteName !== "?" ? { whiteName } : {}),
     ...(blackName && blackName !== "?" ? { blackName } : {}),
+    ...(validPgnElo(Number(chess.getHeaders().WhiteElo)) ? { whiteElo: Number(chess.getHeaders().WhiteElo) } : {}),
+    ...(validPgnElo(Number(chess.getHeaders().BlackElo)) ? { blackElo: Number(chess.getHeaders().BlackElo) } : {}),
     started: true,
     result:
       resultFor(chess) ||

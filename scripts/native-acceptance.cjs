@@ -265,7 +265,7 @@ async function runAcceptance({ window, app, outputDir }) {
   };
   const step = async (name, action) => {
     if (process.argv.includes("--updates-only") && name !== "native-update-notifications-and-controls") return;
-    if (process.argv.includes("--learning-only") && !["guided-beginner-course", "alien-gambit-pieces-audio-and-settings"].includes(name)) return;
+    if (process.argv.includes("--learning-only") && !["guided-beginner-course", "guided-game-and-coach-practice", "alien-gambit-pieces-audio-and-settings"].includes(name)) return;
     currentStep = name;
     const started = Date.now();
     const detail = await action();
@@ -652,6 +652,45 @@ async function runAcceptance({ window, app, outputDir }) {
       await captureResponsive("beginner-checkmate");
       await click('[aria-label="Close dialog"]');
       return {completed:10,wrongMoveFeedback:true,hints:true};
+    });
+
+    await step("guided-game-and-coach-practice", async () => {
+      await navigate("Learn chess");
+      await captureResponsive("learning-modes");
+      await clickText("Start guided game");
+      await boardMove("d2", "d4");
+      check(await evaluate("document.querySelector('.coach-feedback').textContent.includes('For this lesson')"), "Wrong lesson move needs guidance");
+      await clickText("Pause replies");
+      await boardMove("e2", "e4");
+      await wait(850);
+      check(await evaluate("document.querySelector('.coach-score').children.length===1"), "Paused bot moved");
+      await clickText("Take back a turn");
+      await clickText("Resume bot");
+      await wait(850);
+      check(await evaluate("document.querySelector('.coach-score').children.length===0"), "Stale bot reply survived takeback");
+      const lesson=[['e2','e4'],['g1','f3'],['f1','c4'],['d2','d3'],['e1','g1'],['b1','c3']];
+      for(let i=0;i<lesson.length;i++) {
+        await boardMove(...lesson[i]);
+        await poll(`document.querySelector('.coach-score').children.length===${(i+1)*2}`, "Teaching bot reply");
+      }
+      await captureResponsive("guided-game-complete");
+      check(await evaluate("localStorage.getItem('knightfall:guided-opening')==='complete'"), "Guided completion did not persist");
+      await clickText("Keep playing with coach");
+      await boardMove("a2", "a3");
+      await poll("document.querySelector('.coach-score').children.length===14", "Live local bot reply",30000);
+      await clickText("Show a hint");
+      await poll("document.querySelector('.coach-feedback').textContent.includes('Try ')","Coach hint",30000);
+      await captureResponsive("coach-practice");
+      await clickText("Take back a turn");
+      check(await evaluate("document.querySelector('.coach-score').children.length===12"), "Coach undo must remove both moves");
+      await click('[aria-label="Close dialog"]');
+      await clickText("Play with coach");
+      await boardMove("e2", "e4");
+      await clickText("New practice game");
+      await wait(1200);
+      check(await evaluate("document.querySelector('.coach-score').children.length===0"), "Old bot reply leaked into new game");
+      await click('[aria-label="Close dialog"]');
+      return {sixGuidedTurns:true,realBotReply:true,hint:true,pausedUndo:true,newGameCancelsOldReply:true};
     });
 
     await step("opening-replay-and-rehearsal", async () => {

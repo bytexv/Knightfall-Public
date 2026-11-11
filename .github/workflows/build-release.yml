@@ -260,7 +260,7 @@ jobs:
               with (root / name).open('rb') as stream:
                   lines.append(f"{hashlib.file_digest(stream, 'sha256').hexdigest()}  {name}\n")
           (root / 'SHA256SUMS.txt').write_text(''.join(lines))
-          pathlib.Path('release-notes.md').write_text(f'Knightfall {version}\n\nUse Windows-Setup.exe for automatic background updates, or Windows-x64.exe for portable use. The Windows app is unsigned. An Android APK is included only when stable signing secrets are configured; otherwise use an earlier Android release until a signed APK is available.\n\nSource, web assets, licenses and build instructions are included. Verify downloaded files against SHA256SUMS.txt. The installed Windows app validates and downloads stable updates automatically, then installs on normal exit or a confirmed restart. Portable and Android installation remains manual.\n')
+          pathlib.Path('release-notes.md').write_text(f'Knightfall {version}\n\nUse Windows-Setup.exe for automatic background updates, or Windows-x64.exe for portable use. The Windows app is unsigned. An Android APK is included only when stable signing secrets are configured; otherwise use an earlier Android release until a signed APK is available.\n\nSource, web assets, licenses and build instructions are included. Verify downloaded files against SHA256SUMS.txt. The installed Windows app validates and downloads stable updates automatically, then installs on normal exit or a confirmed restart. Portable updates require a new download. Android 1.5+ can download a compatible signed APK in-app and asks for system approval to update in place.\n')
           PY
       - name: Publish the stable release
         run: |

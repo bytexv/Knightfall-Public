@@ -1,3 +1,4 @@
+import { performanceContext } from "./lib/performance-context";
 import { version as appVersion } from "../package.json";
 import { AlienAudio } from "./components/AlienAudio";
 import { playedAlienGambit } from "./lib/alien-gambit";
@@ -2329,6 +2330,7 @@ export default function App() {
                       searchTime={settings.analysisTime}
                       fen={position}
                       game={game}
+                      ratingContext={performanceContext(game, ratings)}
                       activeIndex={historyIndex}
                       onActiveReview={setActiveReview}
                       onPreviewLine={previewLine}
@@ -2773,8 +2775,8 @@ export default function App() {
                   Alien Gambit Easter egg
                 </label>
                 <p className="review-estimate-note">
-                  Playing Wittythealien’s Alien Gambit turns the pieces into
-                  alien tokens for the rest of that game. Turn this off for
+                  Playing Wittythealien’s Alien Gambit gives the pieces alien
+                  eyes for the rest of that game. Turn this off for
                   ordinary pieces and no Easter egg sound.
                 </p>
                 <label className="alien-setting">

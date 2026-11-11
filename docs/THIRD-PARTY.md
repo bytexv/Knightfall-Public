@@ -16,5 +16,5 @@ Knightfall application source is distributed under GNU GPL version 3 or later; s
 
 Creator names in opening lessons describe public chess culture and educational associations. They do not imply sponsorship, endorsement, or official bots. The Botez Gambit and Bongcloud are identified as memes; the Cow Opening is a system rather than a gambit.
 
-- **Alien tokens**: original Knightfall SVG artwork, covered by the application license. Piece letters distinguish the token roles.
+- **Alien eyes**: adaptations of Colin M. L. Burnett’s (Cburnett) chess pieces, adding green almond-shaped eyes. Licensed CC BY-SA 3.0 like the base artwork; see `public/pieces/ATTRIBUTION.txt`.
 - **Alien Gambit celebration audio**: the nine-second TikTok clip specifically supplied by the project owner, “original sound” credited to Krooz. Source and attribution are in `public/audio/SOURCE.txt`. This third-party recording is separate from the GPL-licensed application code; the application license does not grant rights to that recording.

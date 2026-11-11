@@ -1,3 +1,4 @@
+import { validPgnElo } from "./game";
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { puzzles } from "../data/puzzles";
 import { validatedPosition } from "./engine-position";
@@ -214,6 +215,8 @@ export function validateSavedGame(value: unknown): GameSession | null {
         ? { blackName: sanitizePlayerName(value.blackName) }
         : {}),
     };
+    if (validPgnElo(value.whiteElo)) game.whiteElo = value.whiteElo;
+    if (validPgnElo(value.blackElo)) game.blackElo = value.blackElo;
     const rating = sanitizeGameRating(value.rating, game);
     if (rating) game.rating = rating;
     return game;

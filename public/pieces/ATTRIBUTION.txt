@@ -3,4 +3,4 @@ Source: https://github.com/lichess-org/lila/tree/master/public/piece/cburnett
 Original artwork: https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces
 Licensed under Creative Commons Attribution-ShareAlike 3.0 (CC BY-SA 3.0).
 License: https://creativecommons.org/licenses/by-sa/3.0/
-The SVG artwork is redistributed without alteration. No endorsement implied.
+Base SVG artwork is redistributed without alteration. Files in alien/ adapt these pieces with small green almond-shaped eyes; the shapes and piece colors are retained. These derivatives are also CC BY-SA 3.0. No endorsement implied.

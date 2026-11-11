@@ -492,72 +492,26 @@ test("summaries separate colors, expose all category counts and bound training q
   assert.equal(summarizeReview([]).quality, null);
 });
 
-test("performance needs enough independent reliable moves, and an Elo range needs known opponent context", () => {
-  assert.equal(summarizeReview(sample(7)).w.performance, null);
-  assert.ok(summarizeReview(sample(8)).w.performance);
-  assert.equal(
-    summarizeReview(sample(11), { opponentElo: 1200, playerColor: "w" }).w
-      .performanceElo,
-    null,
-  );
-  const full = summarizeReview(sample(12), {
-    opponentElo: 1200,
-    playerColor: "w",
-  });
-  assert.ok(full.w.performanceElo);
-  assert.equal(full.w.performanceElo.sampleSize, 12);
-  assert.equal(
-    full.w.performanceElo.range[1] - full.w.performanceElo.range[0],
-    600,
-  );
-  assert.match(full.w.performanceElo.basis, /uncalibrated/);
-  assert.equal(full.b.performanceElo, null);
-  for (const patch of [
-    { label: "Book" },
-    { forced: true },
-    { confidence: "limited" },
-    {
-      before: {
-        score: 10000,
-        mate: 4,
-        depth: 18,
-        engine: "Stockfish 17.1 Lite",
-      },
-    },
-  ]) {
-    const skipped = summarizeReview(
-      sample(20).map((move) => ({ ...move, ...patch })),
-      { opponentElo: 1200, playerColor: "w" },
-    );
-    assert.equal(skipped.w.evaluatedMoves, 0);
-    assert.equal(skipped.w.performanceElo, null);
-  }
-  for (const opponentElo of [undefined, NaN, Infinity, -1, 5000])
-    assert.equal(
-      summarizeReview(sample(20), { opponentElo, playerColor: "w" }).w
-        .performanceElo,
-      null,
-    );
-  assert.equal(
-    summarizeReview(sample(20), { opponentElo: 1200, playerColor: "b" }).w
-      .performanceElo,
-    null,
-  );
+const ratingContext = { ratings: {w:800,b:1200}, result:{winner:'w'}, eligible:true, priorGames:0 };
+test("performance needs a completed eligible game, rating context and reliable decisions",()=>{
+ assert.equal(summarizeReview(sample(11),ratingContext).w.performanceElo,null);
+ const estimate=summarizeReview(sample(12),ratingContext).w.performanceElo;
+ assert.ok(estimate);assert.equal(estimate.sampleSize,12);assert.match(estimate.basis,/uncalibrated/);
+ for(const context of [{},{...ratingContext,result:null},{...ratingContext,eligible:false},{...ratingContext,ratings:{w:800}},{...ratingContext,ratings:{w:NaN,b:1200}}])
+  assert.equal(summarizeReview(sample(20),context).w.performanceElo,null);
+ for(const patch of [{label:'Book'},{forced:true},{confidence:'limited'},{before:{score:10000,mate:4,depth:18,engine:'Stockfish'}}])
+  assert.equal(summarizeReview(sample(20).map(m=>({...m,...patch})),ratingContext).w.performanceElo,null);
 });
-
-test("poor play against the strongest bot cannot produce an expert performance estimate", () => {
-  const poor = summarizeReview(sample(15, "w", 320), {
-    opponentElo: 3000,
-    playerColor: "w",
-  });
-  assert.equal(poor.w.quality, 20);
-  assert.equal(poor.w.performanceElo.estimate, 650);
-  assert.deepEqual(poor.w.performanceElo.range, [350, 950]);
-  const strong = summarizeReview(sample(15, "w", 20), {
-    opponentElo: 1200,
-    playerColor: "w",
-  });
-  assert.equal(strong.w.performanceElo.estimate, 1375);
+test("easy perfect play and choosing a master bot cannot manufacture master Elo",()=>{
+ const easy=summarizeReview(sample(30,'w',0),{...ratingContext,ratings:{w:800,b:400}}).w.performanceElo;
+ assert.ok(easy.estimate>=800&&easy.estimate<=850);
+ const loss=summarizeReview(sample(30,'w',320),{...ratingContext,ratings:{w:800,b:3000},result:{winner:'b'}}).w.performanceElo;
+ assert.ok(loss.estimate<=800);
+ const upset=summarizeReview(sample(30,'w',0),{...ratingContext,ratings:{w:800,b:3000}}).w.performanceElo;
+ assert.ok(upset.estimate<=1000);
+ const stable=summarizeReview(sample(30),{...ratingContext,priorGames:40}).w.performanceElo;
+ const provisional=summarizeReview(sample(30),ratingContext).w.performanceElo;
+ assert.ok(stable.range[1]-stable.range[0]<provisional.range[1]-provisional.range[0]);
 });
 
 test("moves in already hopeless or overwhelming positions cannot inflate performance samples", () => {
@@ -584,14 +538,15 @@ test("moves in already hopeless or overwhelming positions cannot inflate perform
   }
 });
 
-test('performance Elo is available symmetrically only with enough independent decisions', async()=>{
+test('both colors use their own pre-game reference and popup shares sidebar estimate',async()=>{
  const {estimatePerformanceElo}=await import('../src/lib/review.ts');
- const summary=summarizeReview([...sample(12,'w',20),...sample(12,'b',120)]);
- const white=estimatePerformanceElo(summary.w),black=estimatePerformanceElo(summary.b);
- assert.ok(white && black);assert.ok(white.estimate>black.estimate);
- assert.equal(estimatePerformanceElo(summarizeReview(sample(11)).w),null);
- assert.equal(estimatePerformanceElo(summarizeReview(sample(15).map(m=>({...m,label:'Book'}))).w),null);
- assert.ok(white.range[0]>=100 && white.range[1]<=3200);
+ const reviews=[...sample(24,'w',20),...sample(24,'b',120)];
+ const summary=summarizeReview(reviews,ratingContext);
+ assert.ok(summary.w.performanceElo.estimate>=800);
+ assert.ok(summary.b.performanceElo.estimate<=1200);
+ assert.deepEqual(estimatePerformanceElo(summary.w),summary.w.performanceElo);
+ const reversed=summarizeReview(reviews.map(m=>({...m,color:m.color==='w'?'b':'w'})),{...ratingContext,ratings:{w:1200,b:800},result:{winner:'b'}});
+ assert.equal(summary.w.performanceElo.estimate,reversed.b.performanceElo.estimate);
 });
 test('phase summaries handle early imported endgames and never count a move twice', async()=>{
  const {summarizeGamePhases}=await import('../src/lib/review.ts');

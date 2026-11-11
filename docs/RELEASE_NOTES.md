@@ -1,6 +1,14 @@
-# Knightfall 1.4.1
+# Knightfall 1.5.0
 
 An independent chess studio for web, Windows and Android. Local play, analysis and learning run on your device.
+
+## New in 1.5.0
+
+- Three learning modes: ten single-move challenges, a six-turn guided Italian opening with a teaching bot, and open-ended practice against a real local beginner bot. Coach practice includes hints, turn takebacks, pause/resume, move explanations and a visible new-game button. Sessions are untimed and unrated; guided completion is remembered.
+- The Alien Gambit now adds small green alien eyes to the ordinary chess pieces, preserving their silhouettes and white/black colors. The Easter egg settings and once-per-game audio remain.
+- Performance Elo uses historical pre-game ratings and the finished result instead of an arbitrary quality-to-Elo conversion. Short, assisted, custom-position or unknown-rating games withhold unsupported numbers. PGN WhiteElo/BlackElo tags are retained. See `docs/REVIEW.md` for the transparent, still-uncalibrated calculation.
+- Windows Setup updates apply silently after a confirmed restart, or on normal exit. The portable edition still needs Setup once to enable automatic updates.
+- Android downloads compatible releases inside the app and opens the system's in-place update confirmation, retaining saved games and settings. Android may ask once to allow updates from Knightfall. Signed APKs must be published to GitHub for discovery; repository signing credentials remain unconfigured in this session.
 
 ## New in 1.4.1
 
@@ -59,9 +67,9 @@ Tactics Sprint offers 3-minute, 5-minute and untimed Survival modes with three l
 
 ## Install
 
-**Windows:** Install `Knightfall-1.4.1-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.4.1-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
+**Windows:** Install `Knightfall-1.5.0-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.5.0-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
 
-**Android:** Open `Knightfall-1.4.1-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
+**Android:** Open `Knightfall-1.5.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
 
 **Web:** Use the private web link supplied with the release. The hosting provider may require sign-in. Chrome/Edge can install the app from their menu; on iPhone, use Safari **Share → Add to Home Screen**. Keep the first online load open while offline assets finish caching.
 
@@ -90,7 +98,7 @@ npm run lan
 
 Games, Local Elo and settings stay in the current browser/app profile. Use PGN export and **Settings → Download a backup** before clearing app data. The JSON backup includes games, the rating ledger, settings and unassisted puzzle progress; separate learning markers and Sprint bests are not included. Native packages bundle the engine; offline web use depends on successful caching and retained browser storage.
 
-There is no public matchmaking, cloud account system, public rated ladder, cloud synchronization or app-store publication. Bot levels, Local Elo and review quality are local training estimates, not calibrated online ratings or official accuracy scores. A review's estimated-performance range needs enough eligible decisions against a known local bot; it is separate from the result-based Local Elo ledger. The hosted web deployment is private by default; the packaged apps and local-network games need no Knightfall account.
+There is no public matchmaking, cloud account system, public rated ladder, cloud synchronization or app-store publication. Bot levels, Local Elo and review quality are local training estimates, not calibrated online ratings or official accuracy scores. A review's estimated-performance range needs enough eligible decisions, a finished eligible game, and both pre-game ratings; it is separate from the Local Elo ledger. The hosted web deployment is private by default; the packaged apps and local-network games need no Knightfall account.
 
 ## Verification boundaries
 

@@ -49,7 +49,11 @@ export default function UpdateCard() {
           onClick={() => void applyAppUpdate()}
         >
           <RefreshCw size={15} />
-          {state.web ? "Reload to update" : "Restart and update"}
+          {state.web
+            ? "Reload to update"
+            : state.android
+              ? "Install update"
+              : "Restart and update"}
         </button>
       ) : state.status === "available" ? (
         <button
@@ -81,7 +85,9 @@ export default function UpdateCard() {
           ? "Automatic downloads · installs on exit · games and settings stay on this device."
           : state.web
             ? "Updates never reload a live game automatically."
-            : "Portable and Android downloads open on GitHub. Android asks you to approve installation."}
+            : state.android
+              ? "Updates replace the app in place. Android requires installation approval; no uninstall needed."
+              : "Use the Windows Setup edition for automatic updates. Portable downloads open on GitHub."}
       </small>
       {state.releaseUrl && (
         <a

@@ -8,7 +8,7 @@ Knightfall has its own branding and interface. It is not affiliated with Chess.c
 
 ## Downloads and updates
 
-Get the latest apps from [GitHub Releases](https://github.com/bytexv/Knightfall-Public/releases/latest). Choose **Windows-Setup.exe** for automatic background downloads and installation on exit, or **Windows-x64.exe** for portable use. Android checks for newer APKs and asks you to install them. The web app offers **Reload to update**. See [GitHub release setup](docs/GITHUB.md) for automation and Android signing requirements.
+Get the latest apps from [GitHub Releases](https://github.com/bytexv/Knightfall-Public/releases/latest). Choose **Windows-Setup.exe** for automatic background downloads and installation on exit, or **Windows-x64.exe** for portable use. Android checks for newer compatible APKs, downloads them in-app, and opens Android’s in-place update confirmation. Saved games and settings stay; GitHub needs the matching signed APK. The web app offers **Reload to update**. See [GitHub release setup](docs/GITHUB.md) for automation and Android signing requirements.
 
 ## Start playing
 
@@ -60,7 +60,7 @@ More details: [Same-Wi-Fi play](docs/LAN.md).
 - **Local Elo:** a persistent practice rating, result history and trend graph for eligible completed games against local bots. It starts at 800 and stays provisional for the first 20 rated games. Games using hints, takebacks or live analysis while in progress are unrated, as are custom starting positions and fallback-engine play. Reviewing an already completed game does not change its recorded result. This device-local estimate is separate from online or official ratings and from a single game's review performance estimate.
 - **Learning:** 60 curated tactics from the Lichess CC0 puzzle database; Tactics Sprint with 3-minute, 5-minute and untimed Survival modes; 28 opening primers (including Wittythealien’s Alien Gambit); ten interactive beginner challenges, nine short lessons; and 15 endgame drills, including four draw-defense exercises.
 - **Study tools:** a position editor, custom-position bot/shared-screen play, PGN/FEN import, PGN export with plain-text position notes, a searchable local game archive with resume controls, and JSON backup/restore.
-- **Personalization:** An Alien Gambit Easter egg switches to labeled alien tokens and plays the supplied short celebration once; disable the Easter egg or its sound independently in Settings. Sage, Walnut and Ocean boards; sound, coordinates and legal-move hints; a local display name; keyboard and touch controls. Piece movement, captures, castling and promotions animate while leaving move input responsive; reduced-motion preferences disable automatic piece travel and fades.
+- **Personalization:** An Alien Gambit Easter egg adds small alien eyes to the regular pieces and plays the supplied short celebration once; disable the Easter egg or its sound independently in Settings. Sage, Walnut and Ocean boards; sound, coordinates and legal-move hints; a local display name; keyboard and touch controls. Piece movement, captures, castling and promotions animate while leaving move input responsive; reduced-motion preferences disable automatic piece travel and fades.
 
 Bot difficulty descriptions are training estimates, not calibrated online ratings. Sprout and Scout combine local engine suggestions with beginner-oriented move policies; higher levels use the engine's chosen move. Opening creator references are educational, not official celebrity bots. The Botez Gambit and Bongcloud are explicitly identified as memes; the Cow Opening is a system rather than a gambit.
 
@@ -202,3 +202,9 @@ PGN support is for a single main-line game with plain-text comments. Analysis ex
 The application source is **GPL-3.0-or-later**; see [LICENSE](LICENSE). Stockfish's matching source, license and neural-network data are included under `public/engine/`. Distribute the corresponding application/engine source and notices with binaries as required by their licenses.
 
 See [Third-party notices](docs/THIRD-PARTY.md) for Stockfish, chess.js, React, Electron, Capacitor, Lucide, the Cburnett pieces, locally bundled fonts and Lichess CC0 puzzle data. [Engine details](docs/ENGINE.md) document the exact engine build and its local fallback.
+
+### Learning modes (1.5)
+
+Learn chess offers single-move basics, a step-by-step Italian opening with teaching-bot replies, and free practice against a local beginner bot. Pause replies, request hints, take back a turn, or start again. These sessions are untimed and unrated.
+
+Performance Elo is now conservative and rating-context aware; it is withheld where the game cannot support a number. See [review methodology](docs/REVIEW.md).

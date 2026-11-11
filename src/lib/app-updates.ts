@@ -1,4 +1,8 @@
-import { Capacitor } from "@capacitor/core";
+import {
+  Capacitor,
+  registerPlugin,
+  type PluginListenerHandle,
+} from "@capacitor/core";
 import { version } from "../../package.json";
 
 export type UpdateStatus = {
@@ -20,7 +24,25 @@ export type UpdateStatus = {
   automatic?: boolean;
   progress?: number;
   web?: boolean;
+  android?: boolean;
 };
+type NativeStatus = Pick<
+  UpdateStatus,
+  "status" | "latestVersion" | "progress" | "message"
+>;
+const androidUpdates = registerPlugin<{
+  getStatus: () => Promise<NativeStatus>;
+  download: (options: {
+    url: string;
+    version: string;
+  }) => Promise<NativeStatus>;
+  install: () => Promise<NativeStatus>;
+  addListener: (
+    event: "status",
+    listener: (status: NativeStatus) => void,
+  ) => Promise<PluginListenerHandle>;
+}>("KnightfallUpdates");
+let nativeUpdater = false;
 type Bridge = {
   getUpdateStatus: () => Promise<UpdateStatus>;
   checkForUpdates: () => Promise<UpdateStatus>;
@@ -123,6 +145,7 @@ export async function fetchAndroidRelease(
         )
           throw new Error("Invalid release");
         const base = {
+          android: true,
           currentVersion: current,
           latestVersion: latest,
           releaseUrl,
@@ -152,7 +175,8 @@ export async function fetchAndroidRelease(
           ...base,
           status: "available",
           downloadUrl: matches[0].browser_download_url,
-          message: `Version ${latest} is available. Download the APK, then approve its installation in Android.`,
+          message: `Version ${latest} is available. Download it here, then approve Android’s in-place update. Your games and settings stay.`,
+          android: true,
         };
       })(),
     ]);
@@ -256,6 +280,20 @@ async function initialize() {
       }
     }
   } else {
+    publish({ ...state, android: true });
+    nativeUpdater = Capacitor.isPluginAvailable("KnightfallUpdates");
+    if (nativeUpdater) {
+      try {
+        await androidUpdates.addListener("status", (value) =>
+          publish({ ...state, ...value, android: true }),
+        );
+        const cached = await androidUpdates.getStatus();
+        if (["ready", "downloading"].includes(cached.status))
+          publish({ ...state, ...cached, android: true });
+      } catch {
+        nativeUpdater = false;
+      }
+    }
     try {
       const response = await fetch(
         new URL("update-config.json", document.baseURI),
@@ -348,6 +386,27 @@ export async function checkAppUpdates() {
   return inFlight;
 }
 export async function openAppUpdate() {
+  if (nativeUpdater && state.downloadUrl && state.latestVersion) {
+    const url = state.downloadUrl,
+      latest = state.latestVersion;
+    publish({
+      ...state,
+      status: "downloading",
+      android: true,
+      progress: 0,
+      message: "Starting update download…",
+    });
+    try {
+      await androidUpdates.download({ url, version: latest });
+    } catch {
+      publish({
+        ...state,
+        status: "available",
+        message: "Could not start the download. Tap Download to retry.",
+      });
+    }
+    return;
+  }
   if (bridge) {
     try {
       return await bridge.openUpdate();
@@ -366,6 +425,25 @@ export async function openAppUpdate() {
   );
 }
 export async function applyAppUpdate() {
+  if (nativeUpdater && state.status === "ready") {
+    if (
+      !window.confirm(
+        "Install the update now? Finish any live game first. Android will confirm the update; your saved games and settings stay.",
+      )
+    )
+      return;
+    try {
+      await androidUpdates.install();
+    } catch {
+      publish({
+        ...state,
+        status: "unavailable",
+        message:
+          "Could not open this update. Check for updates and download it again.",
+      });
+    }
+    return;
+  }
   if (bridge) {
     try {
       return await bridge.installUpdate?.();

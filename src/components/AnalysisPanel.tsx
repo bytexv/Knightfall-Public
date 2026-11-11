@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LocalEngine, type EngineResult } from "../lib/engine";
-import { bots, uciToSan, type GameSession } from "../lib/game";
+import { uciToSan, type GameSession } from "../lib/game";
 import {
   evaluationSummary,
   estimatePerformanceElo,
@@ -23,6 +23,7 @@ import {
   reviewMove,
   summarizeReview,
   type MoveReview,
+  type ReviewSummaryContext,
 } from "../lib/review";
 import "./AnalysisPanel.css";
 import { Modal } from "./Dialogs";
@@ -34,6 +35,7 @@ export type AnalysisPanelProps = {
   searchTime?: number;
   fen: string;
   game: GameSession;
+  ratingContext?: ReviewSummaryContext;
   /** Index of the last played main-line move; -1 is the starting position. */
   activeIndex?: number;
   onEvaluation: (value: number) => void;
@@ -107,6 +109,7 @@ function QualityBadge({
 }
 
 export default function AnalysisPanel({
+  ratingContext,
   engineMode = "lite",
   engineThreads = 2,
   searchTime,
@@ -196,19 +199,9 @@ export default function AnalysisPanel({
     () =>
       summarizeReview(
         reviews,
-        game.rating
-          ? {
-              opponentElo: game.rating.opponentRating,
-              playerColor: game.rating.playerColor,
-            }
-          : game.mode === "bot"
-            ? {
-                opponentElo: bots.find((bot) => bot.id === game.botId)?.elo,
-                playerColor: game.playerColor,
-              }
-            : undefined,
+        currentReview.status === "complete" ? ratingContext : undefined,
       ),
-    [reviews, game.rating, game.mode, game.botId, game.playerColor],
+    [reviews, ratingContext, currentReview.status],
   );
 
   function saveReview(next: ReviewState) {
@@ -462,7 +455,9 @@ export default function AnalysisPanel({
                         <b>
                           {estimate
                             ? `${estimate.range[0]}–${estimate.range[1]}`
-                            : "Not enough moves"}
+                            : summary[color].evaluatedMoves < 12
+                              ? "Not enough evidence"
+                              : "Rating unavailable"}
                         </b>
                         <small>estimated performance Elo</small>
                       </p>
@@ -572,11 +567,13 @@ export default function AnalysisPanel({
               ))}
             </section>
             <p className="review-estimate-note">
-              Performance Elo is a broad, uncalibrated training estimate from
-              move quality, not your rating. At least 12 independent decisions
-              per side are required. Book moves, forced replies, shallow
-              searches and already decisive positions are excluded. Phases use
-              move number and remaining material.
+              Performance Elo uses the finished result and both pre-game
+              ratings, with a broad uncertainty range. It is a local practice
+              estimate, not an official rating or a conversion of move quality
+              to Elo. It requires a complete review and at least 12 reliable
+              decisions per side. Unrated, assisted, timed-out, and
+              custom-position games may have no estimate. Phases use move number
+              and remaining material.
             </p>
             <button
               className="button primary full"
@@ -1014,9 +1011,9 @@ export default function AnalysisPanel({
                     Brilliant and Great require stronger evidence; short
                     searches can miss tactics. Book moves are excluded from
                     quality estimates. Training Elo, when shown, is an
-                    uncalibrated range using the selected bot’s level and
-                    sufficient reviewed moves. It is not a rated-game result or
-                    a Chess.com rating.
+                    uncalibrated range using pre-game ratings and the finished
+                    result, gated by sufficient reliable decisions. It is not a
+                    rated-game result or a Chess.com rating.
                   </p>
                 </details>
               </>

@@ -52,6 +52,10 @@ export interface ReviewContext {
 export interface ReviewSummaryContext {
   opponentElo?: number;
   playerColor?: Color;
+  ratings?: Partial<Record<Color, number>>;
+  priorGames?: number;
+  result?: { winner: Color | null } | null;
+  eligible?: boolean;
 }
 export interface ColorReviewSummary {
   color: Color;
@@ -444,32 +448,47 @@ export function summarizeReview(
           }
         : null;
     let performanceElo: ColorReviewSummary["performanceElo"] = null;
+    const own = context.ratings?.[color];
+    const opponent = context.ratings?.[color === "w" ? "b" : "w"];
+    const validRating = (value: number | undefined): value is number =>
+      Number.isFinite(value) && value! >= 100 && value! <= 3200;
     if (
-      color === context.playerColor &&
-      Number.isFinite(context.opponentElo) &&
-      context.opponentElo! >= 100 &&
-      context.opponentElo! <= 3200 &&
+      context.eligible &&
+      context.result &&
+      validRating(own) &&
+      validRating(opponent) &&
       evaluated.length >= 12 &&
       quality !== null
     ) {
-      // Deliberately transparent, uncalibrated mapping: the known local bot's
-      // difficulty estimate, adjusted by 12 points per quality point from 75,
-      // capped at +/-300. A separate quality ceiling prevents poor play against
-      // the strongest bot from automatically producing an expert estimate.
-      // This is NOT a rating update or an Elo prediction.
-      const botAnchored =
-        context.opponentElo! + clamp((quality - 75) * 12, -300, 300);
-      const qualityCeiling = 100 + 28 * quality;
+      // One game cannot calibrate strength. Shrink its result toward the rating
+      // before this game. Move quality gates the sample; it is NOT converted
+      // to Elo. In particular, perfect easy/book moves do not imply master play.
+      const expected = 1 / (1 + 10 ** ((opponent - own) / 400));
+      const score =
+        context.result.winner === null
+          ? 0.5
+          : context.result.winner === color
+            ? 1
+            : 0;
+      const weight = evaluated.length / (evaluated.length + 24);
+      const smoothed = (4 * expected + weight * score) / (4 + weight);
+      const raw = opponent + 400 * Math.log10(smoothed / (1 - smoothed));
       const estimate = clamp(
-        Math.round(Math.min(botAnchored, qualityCeiling) / 25) * 25,
+        Math.round(clamp(raw, own - 200, own + 200) / 25) * 25,
         100,
         3200,
       );
+      // A heuristic uncertainty band, not a statistically calibrated interval.
+      const spread = (context.priorGames ?? 0) >= 20 ? 350 : 550;
       performanceElo = {
         estimate,
-        range: [Math.max(100, estimate - 300), Math.min(3200, estimate + 300)],
+        range: [
+          Math.max(100, estimate - spread),
+          Math.min(3200, estimate + spread),
+        ],
         sampleSize: evaluated.length,
-        basis: "uncalibrated local bot training estimate",
+        basis:
+          "result and pre-game ratings; uncalibrated local practice estimate",
       };
     }
     return {
@@ -497,18 +516,9 @@ export function summarizeReview(
   };
 }
 
-/** A broad, uncalibrated training range, never a rating update. */
+/** Use the same context-aware estimate in the popup and sidebar. */
 export function estimatePerformanceElo(side: ColorReviewSummary) {
-  if (side.evaluatedMoves < 12 || side.quality === null) return null;
-  const estimate = Math.round((100 + 26 * side.quality) / 25) * 25;
-  return {
-    estimate,
-    range: [Math.max(100, estimate - 450), Math.min(3200, estimate + 450)] as [
-      number,
-      number,
-    ],
-    sampleSize: side.evaluatedMoves,
-  };
+  return side.performanceElo;
 }
 
 /** Material and full-move number define phases, including imported endgames. */
