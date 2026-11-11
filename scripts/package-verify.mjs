@@ -15,7 +15,8 @@ const packageJson = JSON.parse(await readFile(path.join(root,'package.json'),'ut
 const windowsDir = path.resolve(root, process.argv[2] || 'artifacts/windows');
 const unpacked = path.join(windowsDir,'win-unpacked');
 const archive = path.join(unpacked,'resources','app.asar');
-const entries = new Set(asar.listPackage(archive));
+// ASAR listings use the host's path separator; compare portable archive paths.
+const entries = new Set(asar.listPackage(archive).map(entry => entry.replaceAll('\\', '/')));
 assert.equal(JSON.parse(asar.extractFile(archive,'package.json')).version,packageJson.version,'Packaged app version is stale');
 const essentials = ['/LICENSE','/docs/THIRD-PARTY.md','/dist/licenses/SOFTWARE-NOTICES.txt','/dist/licenses/KNIGHTFALL-GPL-3.0.txt','/desktop/main.cjs','/desktop/preload.cjs','/desktop/update.cjs','/desktop/auto-update.cjs','/node_modules/electron-updater/package.json','/desktop/smoke.cjs','/server/index.mjs','/dist/index.html','/dist/sw.js','/dist/sw-manifest.js','/dist/manifest.webmanifest','/dist/update-config.json','/dist/engine/stockfish-source.tgz','/dist/engine/COPYING.txt','/dist/engine/SOURCE.txt','/node_modules/ws/package.json','/node_modules/chess.js/package.json'];
 for (const entry of essentials) assert.ok(entries.has(entry), `Missing packaged file ${entry}`);
