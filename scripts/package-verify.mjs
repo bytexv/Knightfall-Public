@@ -17,9 +17,9 @@ const unpacked = path.join(windowsDir,'win-unpacked');
 const archive = path.join(unpacked,'resources','app.asar');
 const entries = new Set(asar.listPackage(archive));
 assert.equal(JSON.parse(asar.extractFile(archive,'package.json')).version,packageJson.version,'Packaged app version is stale');
-const essentials = ['/LICENSE','/docs/THIRD-PARTY.md','/dist/licenses/SOFTWARE-NOTICES.txt','/dist/licenses/KNIGHTFALL-GPL-3.0.txt','/desktop/main.cjs','/desktop/preload.cjs','/desktop/update.cjs','/desktop/smoke.cjs','/server/index.mjs','/dist/index.html','/dist/sw.js','/dist/sw-manifest.js','/dist/manifest.webmanifest','/dist/update-config.json','/dist/engine/stockfish-source.tgz','/dist/engine/COPYING.txt','/dist/engine/SOURCE.txt','/node_modules/ws/package.json','/node_modules/chess.js/package.json'];
+const essentials = ['/LICENSE','/docs/THIRD-PARTY.md','/dist/licenses/SOFTWARE-NOTICES.txt','/dist/licenses/KNIGHTFALL-GPL-3.0.txt','/desktop/main.cjs','/desktop/preload.cjs','/desktop/update.cjs','/desktop/auto-update.cjs','/node_modules/electron-updater/package.json','/desktop/smoke.cjs','/server/index.mjs','/dist/index.html','/dist/sw.js','/dist/sw-manifest.js','/dist/manifest.webmanifest','/dist/update-config.json','/dist/engine/stockfish-source.tgz','/dist/engine/COPYING.txt','/dist/engine/SOURCE.txt','/node_modules/ws/package.json','/node_modules/chess.js/package.json'];
 for (const entry of essentials) assert.ok(entries.has(entry), `Missing packaged file ${entry}`);
-for (const relative of ['desktop/main.cjs','desktop/preload.cjs','desktop/update.cjs','desktop/smoke.cjs','server/index.mjs']) {
+for (const relative of ['desktop/main.cjs','desktop/preload.cjs','desktop/update.cjs','desktop/auto-update.cjs','desktop/smoke.cjs','server/index.mjs']) {
   assert.ok(asar.extractFile(archive,relative).equals(await readFile(path.join(root,relative))),`Stale packaged runtime ${relative}`);
 }
 for (const entry of entries) assert.ok(!/(^|\/)\.env($|\.)|local\.properties$|\.keystore$|\.jks$/.test(entry), `Unexpected private build file ${entry}`);
@@ -35,6 +35,21 @@ for(const key of ['EnableEmbeddedAsarIntegrityValidation','OnlyLoadAppFromAsar']
 const portable = `Knightfall-${packageJson.version}-Windows-x64.exe`;
 assert.ok((await readdir(windowsDir)).includes(portable),'Missing current-version portable .exe');
 assert.ok((await stat(path.join(windowsDir,portable))).size > 30_000_000,'Portable .exe unexpectedly small');
+
+const setupName = `Knightfall-${packageJson.version}-Windows-Setup.exe`;
+const setupBytes = await readFile(path.join(windowsDir, setupName));
+assert.ok(setupBytes.length > 30_000_000, 'Missing Windows setup installer');
+const latest = require('js-yaml').load(await readFile(path.join(windowsDir, 'latest.yml'), 'utf8'));
+assert.equal(latest.version, packageJson.version);
+assert.equal(latest.files.length, 1);
+assert.equal(latest.files[0].url, setupName);
+assert.equal(latest.files[0].size, setupBytes.length);
+const { createHash } = await import('node:crypto');
+assert.equal(latest.files[0].sha512, createHash('sha512').update(setupBytes).digest('base64'), 'Updater checksum differs from setup installer');
+const updateConfig = require('js-yaml').load(await readFile(path.join(unpacked, 'resources', 'app-update.yml'), 'utf8'));
+assert.equal(updateConfig.owner, 'bytexv');
+assert.equal(updateConfig.repo, 'Knightfall-Public');
+console.log('Windows installer, pinned release source and latest.yml SHA-512 verified.');
 
 const temp = await mkdtemp(path.join(tmpdir(),'knightfall-package-check-'));
 let server;

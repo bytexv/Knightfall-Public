@@ -10,7 +10,7 @@
 
 The Vite plugin in `scripts/pgn-compat.ts` explicitly defaults two optional chess.js parser offsets before integer conversion. This handles an observed Chromium 83 Android x86 emulator defect where `undefined | 0` produces `2147483647`, which otherwise stalls PGN parsing. The guard is limited to the bundled chess.js parser, is covered by production-bundle tests, and fails the build if the upstream expressions change.
 
-`package.json` contains the application version. Increase it before shipping an update and keep the lockfile's root version in sync. Version 1.2.0 uses Android `versionName` 1.2.0 / `versionCode` 3 and iOS marketing version 1.2.0 / build 3. Keep native build numbers monotonic for updates.
+`package.json` contains the application version. Increase it before shipping an update and keep the lockfile's root version in sync. Version 1.3.0 uses Android `versionName` 1.3.0 / `versionCode` 3 and iOS marketing version 1.3.0 / build 3. Keep native build numbers monotonic for updates.
 
 ## Web and offline PWA
 
@@ -24,13 +24,15 @@ The postbuild command runs `scripts/package-pwa.mjs`. It enumerates built assets
 
 Run `node --test tests/pwa.test.mjs` for offline fetch, cache lifecycle, multiplayer exclusion, and interrupted-download behavior.
 
-## Windows portable EXE
+## Windows installer and portable EXE
 
 ```sh
 node scripts/package-windows.mjs
 ```
 
-The script requires an existing web build. Output is under `artifacts/windows/`; the distributable is `Knightfall-1.2.0-Windows-x64.exe`. It packages the app into ASAR and wraps the 64-bit runtime as a portable executable. No Node.js install is required on the recipient's computer.
+The script requires an existing web build. Output is under `artifacts/windows/`; the distributables are `Knightfall-1.3.0-Windows-Setup.exe` and the optional portable `Knightfall-1.3.0-Windows-x64.exe`. `latest.yml` and the Setup blockmap must accompany GitHub releases. It packages the app into ASAR and wraps the 64-bit runtime as a portable executable. No Node.js install is required on the recipient's computer.
+
+The unsigned per-user NSIS installer uses `desktop/installer.nsi`; its uninstaller is generated on the target PC. A build hook records the exact packaged file inventory, so uninstall removes those files and keeps app profiles and unrelated files. It waits for a running app to close and never kills a live game.
 
 The Windows package uses maximum compression and includes the English Chromium locale packs. Runtime DLLs, the app, engine, corresponding source and license notices remain bundled.
 
@@ -51,7 +53,7 @@ The Android development artifact is signed with a debug key. A production APK/AA
 `package-windows.mjs` writes `artifacts/windows/SHA256SUMS.txt`. To verify a Windows download in PowerShell:
 
 ```powershell
-Get-FileHash .\Knightfall-1.2.0-Windows-x64.exe -Algorithm SHA256
+Get-FileHash .\Knightfall-1.3.0-Windows-x64.exe -Algorithm SHA256
 ```
 
 Compare the hexadecimal value with the checksum file distributed with the build. The checksum detects changed bytes; it does not replace code signing or authenticate a publisher by itself.
@@ -66,7 +68,7 @@ The GitHub Actions workflow in `.github/workflows/build-release.yml` builds rele
 
 ## Desktop update checks
 
-`public/update-config.json` selects the GitHub repository used for stable-release checks. A configured public repository is checked at desktop startup and on a manual Settings request. An empty configuration makes no startup request; a private repository uses manual signed-in release-page guidance. No access token is embedded in the app. The update bridge validates the repository, version and download URLs before opening a release link. It does not execute or install an update. See [GITHUB.md](./GITHUB.md) for setup.
+`public/update-config.json` selects the GitHub repository used for stable-release checks. A configured public repository is checked at desktop startup and on a manual Settings request. An empty configuration makes no startup request; a private repository uses manual signed-in release-page guidance. No access token is embedded in the app. The update bridge validates the repository, version and download URLs before opening a release link. The Setup edition downloads verified updates and installs on exit or a confirmed restart; portable downloads remain manual. See [GITHUB.md](./GITHUB.md) for setup.
 
 ## Native desktop smoke check
 

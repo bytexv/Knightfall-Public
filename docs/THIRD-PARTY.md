@@ -10,6 +10,7 @@ Knightfall application source is distributed under GNU GPL version 3 or later; s
 - **DM Sans** and **Libre Caslon Display**: SIL Open Font License 1.1. License files are bundled in `public/licenses`. Fonts are served locally and do not contact Google at runtime.
 - **Lichess puzzle positions**: CC0 1.0, from the [open puzzle database](https://database.lichess.org/#puzzles). Ratings are a snapshot, not a player-rating estimate. Source puzzle URLs accompany each puzzle. Teaching titles and explanations were written for Knightfall. No affiliation or endorsement is implied.
 - **Electron**: MIT, with Chromium third-party notices included by its distribution. [Source](https://github.com/electron/electron).
+- **electron-updater**: MIT; automatic installer downloads and SHA-512 verification. License bundled at `public/licenses/ELECTRON-UPDATER.txt`. [Source](https://github.com/electron-userland/electron-builder).
 - **Capacitor**: MIT. [Source](https://github.com/ionic-team/capacitor).
 - **ws**: MIT. [Source](https://github.com/websockets/ws).
 

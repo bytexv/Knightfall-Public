@@ -2,7 +2,7 @@
 
 The public source repository is [bytexv/Knightfall-Public](https://github.com/bytexv/Knightfall-Public). The source includes CI, a tagged release workflow and a desktop update checker. Publishing source does not publish app downloads automatically.
 
-`public/update-config.json` points to this public repository. Newly built apps can check its latest stable release without signing in. Previously distributed 1.2.0 binaries retain their original blank configuration and need a new build to gain this connection. Update downloads remain manual; the app does not install or execute replacements automatically.
+`public/update-config.json` points to this public repository. Newly built apps can check its latest stable release without signing in. Previously distributed 1.2.0 binaries retain their original blank configuration and need a new build to gain this connection. Version 1.3 adds a Windows Setup edition that downloads updates automatically and installs on normal exit or a confirmed restart. Portable Windows and Android installs remain manual.
 
 ## Connect the repository
 
@@ -15,18 +15,18 @@ git push github main
 
 If the `github` remote already exists, inspect it with `git remote -v`. Use your normal GitHub sign-in or credential helper; credentials do not belong in application files.
 
-Before the first automated Android release, configure the signing secrets described below. No signing keys or passwords are supplied by this source push. Until a stable release is published, update checks report that no release is available.
+The connected GitHub integration currently cannot manage repository signing secrets. The 1.3 Android APK is built locally with the existing development key. Configure the five signing secrets below before automating Android releases. Without them, the workflow still publishes Windows/source/web assets, explicitly omitting Android. No key or password is in the source repository.
 
 ## What the workflows do
 
 `Check source` runs on main/master pushes, pull requests, or a manual run. It installs the locked dependencies with Node.js 24, prepares the bundled engine, runs the tests, builds the web app, and checks that committed engine files match their preparation script.
 
-`Build and publish release` runs when a `v*` tag is pushed, or manually for an existing tag. It requires a stable version such as `v1.2.0`, matching `package.json` and Android's `versionName`. It builds the web app once and gives both native jobs the same assets and tested source commit.
+`Build and publish release` runs when a `v*` tag is pushed, or manually for an existing tag. It requires a stable version such as `v1.3.0`, matching `package.json` and Android's `versionName`. It builds the web app once and gives both native jobs the same assets and tested source commit.
 
 The release contains:
 
-- The full Windows x64 portable EXE; no split download is needed on GitHub.
-- An Android APK signed with the explicitly configured stable certificate.
+- The Windows x64 Setup installer, its blockmap and `latest.yml` updater feed, plus the portable EXE. GitHub supports these full files without splitting.
+- An Android APK signed with the configured stable certificate, when all five signing secrets are present.
 - Web and source ZIPs, including licenses and the bundled Stockfish corresponding source.
 - Release instructions and `SHA256SUMS.txt` covering all download files.
 
@@ -63,7 +63,7 @@ Copy the certificate's SHA-256 fingerprint into `ANDROID_CERT_SHA256`. On Window
 [Convert]::ToBase64String([IO.File]::ReadAllBytes('C:\private\knightfall-release.jks')) | Set-Clipboard
 ```
 
-Only the signing step receives these secrets. It writes the keystore to the runner's temporary directory, supplies passwords through environment variables, verifies the resulting certificate against the expected fingerprint, and removes temporary signing material. If a secret is absent or the certificate differs, Android release publication fails. No new development key is substituted.
+Only the signing step receives these secrets. It writes the keystore to the runner's temporary directory, supplies passwords through environment variables, verifies the resulting certificate against the expected fingerprint, and removes temporary signing material. If a secret is absent, the Android APK is omitted with a workflow notice. If a configured certificate differs or signing fails, publication fails. No new development key is substituted.
 
 Before signing secrets are configured, a maintainer can publish locally verified binaries through GitHub's release interface. That is separate from running this automated release workflow. Keep every keystore and password out of Git commits, source ZIPs, release attachments and logs.
 
@@ -74,12 +74,16 @@ Before signing secrets are configured, a maintainer can publish locally verified
 3. Create and push the matching stable tag. For example:
 
 ```sh
-git tag v1.2.0
-git push github v1.2.0
+git tag v1.3.0
+git push github v1.3.0
 ```
 
-Alternatively, choose **Actions → Build and publish release → Run workflow** and enter an existing stable tag. The workflow checks out `refs/tags/<tag>` and pins both native jobs to the commit that passed the source checks. A failed or incomplete build does not publish a release. Use a new version for changed binaries instead of replacing an already released version's files.
+Alternatively, choose **Actions → Build and publish release → Run workflow** and enter an existing stable tag. The workflow checks out `refs/tags/<tag>` and pins both native jobs to the commit that passed the source checks. A failed Windows/source build or failed configured Android signing does not publish a release. An unconfigured Android signing identity omits only the APK. Existing releases are retained without replacing their files. Use a new version for changed binaries.
 
-The desktop app checks the configured repository's latest published stable release at launch and can check again from Settings. It compares versions, validates repository-specific HTTPS links, and never offers a downgrade. Opening the download requires a user action. The app does not install or execute the unsigned replacement automatically: close the old portable app and open the downloaded version yourself. Local analysis continues to use the bundled engine.
+The Windows Setup edition checks this repository's `releases/latest/download/latest.yml` at startup and every four hours. It accepts only a newer stable version, the exact versioned Setup filename, a bounded installer size and a SHA-512 digest. electron-updater verifies the downloaded installer before it can install. The app downloads in the background and installs on normal exit; **Restart and update** asks for confirmation first. The unsigned build relies on HTTPS, repository ownership and SHA-512 integrity, not a verified Windows publisher certificate. Protect repository write/release access.
 
-GitHub API rate limits, offline connections, missing releases and private repositories can make a check unavailable. They do not prevent local chess play. Automatic installation and Windows code signing are separate future release work.
+The portable edition uses the bounded GitHub release API checker and opens the exact portable download after a click. Android performs startup/resume checks and opens the validated APK; Android's installer verifies package signing and asks the user to approve installation. Neither can silently replace its executable. Native iOS requires a separately signed build.
+
+Web updates use the existing service worker. New assets download in the background, and Settings can activate the waiting worker and reload after confirmation. Active games are never automatically reloaded. Native desktop/Capacitor builds do not register a service worker, preventing old web caches from hiding bundled native updates.
+
+Offline connections, missing releases and rate limits do not prevent local chess. Windows code signing and physical-device acceptance remain separate release work.

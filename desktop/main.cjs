@@ -4,7 +4,8 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const fs = require('node:fs/promises');
 const os = require('node:os');
-const { createUpdateManager } = require('./update.cjs');
+const { createUpdateManager, normalizeConfig } = require('./update.cjs');
+const { createAutomaticUpdateManager } = require('./auto-update.cjs');
 const acceptanceTest = process.argv.includes('--acceptance-test');
 const accessibilityTest = process.argv.includes('--a11y-test');
 const smokeTest = process.argv.includes('--smoke-test') || acceptanceTest || accessibilityTest;
@@ -45,13 +46,17 @@ async function start() {
     const configText = await fs.readFile(path.join(staticDir, 'update-config.json'), 'utf8');
     if (Buffer.byteLength(configText) <= 4096) updateConfig = JSON.parse(configText);
   } catch { /* Unconfigured builds keep local play available without network checks. */ }
-  const updates = createUpdateManager({
+  const updateOptions = {
     config: updateConfig, currentVersion: app.getVersion(), platform: process.platform,
     fetchImpl: (url, options) => net.fetch(url, options),
     onStatus: status => {
       if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('knightfall:update-status-changed', status);
     },
-  });
+  };
+  const installedWindows = process.platform === 'win32' && app.isPackaged && !process.env.PORTABLE_EXECUTABLE_FILE && !smokeTest && normalizeConfig(updateConfig)?.visibility === 'public';
+  const updates = installedWindows
+    ? createAutomaticUpdateManager({ ...updateOptions, updater: new (require('electron-updater').NsisUpdater)() })
+    : createUpdateManager(updateOptions);
   // Keep a stable origin so local games and preferences survive relaunches.
   const portFile = path.join(app.getPath('userData'), 'local-port.json');
   let preferredPort = 8786;
@@ -111,6 +116,14 @@ async function start() {
     return true;
   });
 
+  ipcMain.handle('knightfall:install-update', async event => {
+    if (!trustedSender(event)) throw new Error('Untrusted application origin');
+    if (updates.getStatus().status !== 'ready' || !updates.install) return false;
+    const answer = await dialog.showMessageBox(mainWindow, { type: 'question', buttons: ['Keep playing', 'Restart and update'], defaultId: 0, cancelId: 0, title: 'Restart Knightfall?', message: 'Restart to install the downloaded update?', detail: 'Your saved games and settings stay on this device. Restarting closes this window and any Wi-Fi room you are hosting.' });
+    if (answer.response !== 1) return false;
+    return updates.install();
+  });
+
   mainWindow = new BrowserWindow({
     width: smokeViewport?.width || 1440, height: smokeViewport?.height || 980, minWidth: Math.min(smokeViewport?.width || 880,880), minHeight: Math.min(smokeViewport?.height || 660,660),
     backgroundColor: '#24272b', title: 'Knightfall',
@@ -145,7 +158,12 @@ async function start() {
   });
   mainWindow.once('ready-to-show', () => { if (!smokeTest) mainWindow.show(); });
   await mainWindow.loadURL(localOrigin);
-  if (!smokeTest) void updates.check();
+  if (!smokeTest) {
+    void updates.check();
+    const timer = setInterval(() => void updates.check(), 4 * 60 * 60 * 1000);
+    timer.unref();
+    app.once('before-quit', () => clearInterval(timer));
+  }
   if (smokeTest) {
     const report = await require('./smoke.cjs').runSmoke(mainWindow);
     console.log('KNIGHTFALL_DESKTOP_SMOKE ' + JSON.stringify(report));

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing stable version tag, for example v1.2.0
+        description: Existing stable version tag, for example v1.3.0
         required: true
         type: string
 
@@ -107,15 +107,22 @@ jobs:
           path: dist
       - run: node scripts/package-windows.mjs
       - run: node scripts/package-verify.mjs
+      - run: node scripts/verify-windows-smoke.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: Knightfall-Windows-x64
-          path: artifacts/windows/Knightfall-${{ needs.source.outputs.version }}-Windows-x64.exe
+          path: |
+            artifacts/windows/Knightfall-${{ needs.source.outputs.version }}-Windows-x64.exe
+            artifacts/windows/Knightfall-${{ needs.source.outputs.version }}-Windows-Setup.exe
+            artifacts/windows/Knightfall-${{ needs.source.outputs.version }}-Windows-Setup.exe.blockmap
+            artifacts/windows/latest.yml
           if-no-files-found: error
           retention-days: 7
 
   android:
     needs: source
+    outputs:
+      signed: ${{ steps.signing.outputs.available }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -145,6 +152,7 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon --max-workers=2 testDebugUnitTest assembleRelease
       - name: Sign with the configured stable Android identity
+        id: signing
         env:
           VERSION: ${{ needs.source.outputs.version }}
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -157,8 +165,9 @@ jobs:
           umask 077
           for variable in ANDROID_KEYSTORE_BASE64 ANDROID_KEY_ALIAS ANDROID_STORE_PASSWORD ANDROID_KEY_PASSWORD ANDROID_CERT_SHA256; do
             if [ -z "${!variable:-}" ]; then
-              echo "Missing required signing secret: $variable. No release APK will be published."
-              exit 1
+              echo "Signing secret $variable is not configured. Android APK is omitted; Windows and source publication can continue."
+              echo "available=false" >> "$GITHUB_OUTPUT"
+              exit 0
             fi
           done
           python3 - <<'PY'
@@ -190,6 +199,7 @@ jobs:
                       raise SystemExit(f'APK web asset mismatch: {asset}')
           print('Android signature, stable certificate, WebView configuration and bundled web assets verified.')
           PY
+          echo "available=true" >> "$GITHUB_OUTPUT"
       - name: Remove temporary signing material
         if: always()
         run: |
@@ -199,6 +209,7 @@ jobs:
               pathlib.Path(os.environ['RUNNER_TEMP'], name).unlink(missing_ok=True)
           PY
       - uses: actions/upload-artifact@v4
+        if: steps.signing.outputs.available == 'true'
         with:
           name: Knightfall-Android
           path: artifacts/Knightfall-${{ needs.source.outputs.version }}-Android.apk
@@ -216,6 +227,7 @@ jobs:
       RELEASE_TAG: ${{ needs.source.outputs.tag }}
       SOURCE_COMMIT: ${{ needs.source.outputs.commit }}
       GH_TOKEN: ${{ github.token }}
+      ANDROID_INCLUDED: ${{ needs.android.outputs.signed }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -228,7 +240,9 @@ jobs:
           import hashlib, os, pathlib
           root = pathlib.Path('release-assets')
           version = os.environ['VERSION']
-          expected = {f'Knightfall-{version}-{suffix}' for suffix in ('Windows-x64.exe', 'Android.apk', 'source.zip', 'web.zip', 'Readme.md')}
+          expected = {f'Knightfall-{version}-{suffix}' for suffix in ('Windows-x64.exe', 'Windows-Setup.exe', 'Windows-Setup.exe.blockmap', 'source.zip', 'web.zip', 'Readme.md')}
+          expected.add('latest.yml')
+          if os.environ.get('ANDROID_INCLUDED') == 'true': expected.add(f'Knightfall-{version}-Android.apk')
           actual = {path.name for path in root.iterdir() if path.is_file()}
           if actual != expected: raise SystemExit('Release artifact inventory is incomplete or contains unexpected files.')
           lines = []
@@ -236,7 +250,7 @@ jobs:
               with (root / name).open('rb') as stream:
                   lines.append(f"{hashlib.file_digest(stream, 'sha256').hexdigest()}  {name}\n")
           (root / 'SHA256SUMS.txt').write_text(''.join(lines))
-          pathlib.Path('release-notes.md').write_text(f'Knightfall {version}\n\nDownload the full Windows portable EXE or the Android APK below. The Windows app is unsigned. Android uses the configured stable signing certificate; a different certificate cannot update an existing installation in place.\n\nSource, web assets, licenses and build instructions are included. Verify downloaded files against SHA256SUMS.txt. The desktop app can check this stable GitHub release and open its download after you choose; it does not execute or install an update automatically.\n')
+          pathlib.Path('release-notes.md').write_text(f'Knightfall {version}\n\nUse Windows-Setup.exe for automatic background updates, or Windows-x64.exe for portable use. The Windows app is unsigned. An Android APK is included only when stable signing secrets are configured; otherwise use an earlier Android release until a signed APK is available.\n\nSource, web assets, licenses and build instructions are included. Verify downloaded files against SHA256SUMS.txt. The installed Windows app validates and downloads stable updates automatically, then installs on normal exit or a confirmed restart. Portable and Android installation remains manual.\n')
           PY
       - name: Publish the stable release
         run: |
@@ -248,5 +262,9 @@ jobs:
           if [ "$object_type" != commit ] || [ "$object_sha" != "$SOURCE_COMMIT" ]; then
             echo 'Release tag no longer identifies the tested source commit.'
             exit 1
+          fi
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo 'An existing release is retained. No download files were replaced.'
+            exit 0
           fi
           gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "Knightfall $VERSION" --notes-file release-notes.md release-assets/*

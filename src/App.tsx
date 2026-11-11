@@ -53,7 +53,7 @@ import LearnHub from "./components/LearnHub";
 import NetworkPanel from "./components/NetworkPanel";
 import PuzzleRush from "./components/PuzzleRush";
 import RatingCard from "./components/RatingCard";
-import UpdateCard from "./components/UpdateCard";
+import UpdateCard, { UpdateIndicator } from "./components/UpdateCard";
 import {
   explorePosition,
   explorationFen,
@@ -1349,7 +1349,7 @@ export default function App() {
             <span>How to play</span>
           </button>
           <div className="sidebar-footer">
-            <span>Knightfall v1.2</span>
+            <span>Knightfall v1.3</span>
             <Heart size={12} />
           </div>
         </div>
@@ -1380,6 +1380,7 @@ export default function App() {
             </strong>
           </div>
           <div className="topbar-right">
+            <UpdateIndicator onOpen={() => navigate("settings")} />
             <span className="on-device">
               <span className="status-dot" /> Local play
             </span>
@@ -2770,7 +2771,7 @@ export default function App() {
                     <Download size={16} /> Install Knightfall
                   </button>
                   <p className="fine-print">
-                    Knightfall v1.2 · GPL-3.0-or-later. Chess rules by chess.js.
+                    Knightfall v1.3 · GPL-3.0-or-later. Chess rules by chess.js.
                     Pieces by Colin M. L. Burnett, CC BY-SA 3.0. Stockfish is
                     GPLv3. Creator mentions are educational; no endorsement or
                     affiliation is implied.

@@ -1,65 +1,15 @@
-# Install Knightfall
+# Install Knightfall 1.3
 
-Knightfall is an original chess studio for web, Windows, and Android. The game rules, analysis engine, bot, library, and puzzles run on your device. No account is needed for the local apps. The hosted website may use its hosting provider's access gate.
+Download from https://github.com/bytexv/Knightfall-Public/releases/latest.
 
-## Windows portable app
+**Windows:** Choose `Knightfall-1.3.0-Windows-Setup.exe` for the installed edition. Updates download automatically and install when you close the app; Settings also offers a confirmed restart. The app never restarts a live game automatically. Earlier portable versions need this one-time installation to gain automatic updates. Existing games and settings use the same local app profile. Keep the default user installation for consistent profile access.
 
-1. Download `Knightfall-1.2.0-Windows-x64.exe` from the release artifacts.
-2. Run it on a 64-bit Windows 10/11 computer. The portable app does not need administrator rights.
-3. Games and preferences are kept in the current Windows user's app-data directory. Export important games as PGN before moving to a different computer.
+The optional `Knightfall-1.3.0-Windows-x64.exe` runs without installation and updates through manual downloads. Both Windows editions are unsigned; no verified publisher certificate is claimed.
 
-The build is unsigned. Windows may show an unknown-publisher or SmartScreen prompt. The SHA256SUMS file lets you compare a downloaded artifact to the produced build. Code signing requires the publisher's certificate and is not included in this development build.
+**Android:** Install `Knightfall-1.3.0-Android.apk` over the previous APK. Version code 4 and the same development signing key support an in-place update. The app checks GitHub for newer APKs; Android asks you to approve installation. This is a development APK, not an app-store release. Export your backup before uninstalling or changing signing identities.
 
-The desktop renderer is sandboxed with Node integration disabled. A loopback HTTP server serves the bundled app, and a LAN listener starts only when you choose to host a Wi-Fi game.
+**Web / iPhone:** Open the supplied hosted web app. On iPhone, Safari's Share → Add to Home Screen installs the web app. Web updates download in the background and appear in Settings; choose Reload to update after finishing your game. A signed native iOS IPA is not included.
 
-When a public GitHub release repository is configured, the app checks for a newer stable version at startup and from Settings. Choose its download action to open the release in your browser, then install the downloaded app yourself. Updates never run automatically. Unconfigured builds show that update checks are unavailable; private repositories require the manual signed-in GitHub release page. See [GitHub releases and updates](./GITHUB.md).
+**Source:** Unzip the source archive, install Node.js 24, run `npm ci`, `node scripts/prepare-engine.mjs`, then `npm run build`. Use `npm run lan` to serve a local Wi-Fi host. More details: [README](../README.md), [Packaging](PACKAGING.md), [Mobile](MOBILE.md), [GitHub](GITHUB.md).
 
-## Android
-
-See [MOBILE.md](./MOBILE.md) for the Android APK, installation, development builds, and iOS project details. A development APK is signed with a debug key, not a Play Store release key.
-
-## Install the website on a phone or computer
-
-Open the hosted HTTPS website. On Android Chrome or desktop Chrome/Edge, use **Install app** or **Add to home screen** from the browser menu. In iPhone/iPad Safari, use **Share → Add to Home Screen**.
-
-Keep the page open for the first load while its offline assets download. After that, normal local play and Stockfish analysis work without internet. Storage eviction, private browsing, or clearing browser data can remove offline assets and saved games; revisit online to cache the app again. Same-Wi-Fi multiplayer still needs a running host and a network connection.
-
-On iOS, backgrounding a web app can pause JavaScript and disconnect active multiplayer sessions. Keep the app in the foreground while playing timed games.
-
-## Play over the same Wi-Fi
-
-1. Connect both devices to the same normal Wi-Fi network.
-2. On Windows, open Knightfall and select **Play with friends → Create a room → Create Wi-Fi room**. Alternatively, a computer with Node.js can run the standalone server below.
-3. Share the local address shown by the host, for example `http://192.168.1.42:8787`. Open that address in the second device's browser. In the Android app, enter the host's local address in the Wi-Fi screen.
-4. The host creates a room and shares the six-character room code. The second player joins it.
-5. Keep the host app open until the game finishes. If Windows Firewall asks, allow access on your private network.
-
-Guest Wi-Fi, campus networks, access-point isolation, VPNs, and host firewalls can prevent devices from reaching one another. Use a trusted private network. Rooms are kept in the host's memory, so closing or restarting the host ends those rooms. Normal local analysis does not need a Wi-Fi server.
-
-The hosted HTTPS app cannot connect to an insecure `ws://` server in many browsers. Open the host's `http://` address for LAN play; this serves the same app directly from the host. Internet multiplayer and matchmaking are not hosted by this local-network server.
-
-## Run from source
-
-Requirements: Node.js 24 LTS (recommended), or Node.js 22.15 or newer, and npm.
-
-```sh
-npm ci
-node scripts/prepare-engine.mjs
-npm run build
-npm run lan
-```
-
-The server prints the local addresses available to other devices. Default LAN port: `8787`. For development UI work, use `npm run dev`.
-
-Windows packaging:
-
-```sh
-npm run build
-node scripts/package-windows.mjs
-```
-
-Android packaging is documented in [MOBILE.md](./MOBILE.md). `.github/workflows/build-release.yml` prepares GitHub releases with Windows and Android artifacts; publishing Android requires a configured stable signing certificate. Local Android builds remain debug-signed. Native iOS distribution requires macOS, Xcode, and an Apple signing identity.
-
-## Licensing and distribution
-
-The bundled Stockfish engine is GPLv3. See its local engine license/provenance files and the repository's third-party notices. Distribute corresponding source and notices alongside binaries, as the licenses require. Creator-named gambit explanations describe public chess culture; they do not imply an endorsement or affiliation.
+Games, Local Elo and settings stay in the current app/browser profile. Settings → Download a backup exports games, ratings, settings and supported puzzle progress. Clearing app data or uninstalling can remove local data.

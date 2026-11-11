@@ -7,6 +7,7 @@ compression: maximum
 copyright: Copyright © 2026 Knightfall contributors
 asar: true
 npmRebuild: false
+afterPack: desktop/after-pack.cjs
 electronFuses:
   runAsNode: false
   enableCookieEncryption: true
@@ -23,6 +24,7 @@ files:
   - desktop/main.cjs
   - desktop/preload.cjs
   - desktop/update.cjs
+  - desktop/auto-update.cjs
   - desktop/smoke.cjs
   - server/**/*
   - public/icons/icon-512.png
@@ -37,11 +39,26 @@ files:
   - '!**/node_modules/react-dom/**/*'
 win:
   target:
+    - target: nsis
+      arch: [x64]
     - target: portable
       arch: [x64]
   icon: public/icons/icon.ico
   signAndEditExecutable: false
   artifactName: Knightfall-${version}-Windows-x64.${ext}
+publish:
+  provider: github
+  owner: bytexv
+  repo: Knightfall-Public
+  releaseType: release
+nsis:
+  script: desktop/installer.nsi
+  artifactName: Knightfall-${version}-Windows-Setup.${ext}
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+  createDesktopShortcut: true
 portable:
   requestExecutionLevel: user
   unicode: true

@@ -4,7 +4,7 @@ Knightfall uses the same local React chess application in a Capacitor native she
 
 ## Install Android
 
-Use the included `Knightfall-1.2.0-android-debug.apk` on Android 6.0 or newer. Open the APK on your phone and allow installation from that download/file app when Android prompts. This is a development build signed with a debug key, not a Play Store release. No Google account, server login or subscription is required for local play. PGN and text exports use Android’s system Save dialog, so you can choose a destination without granting broad storage permissions.
+Use the included `Knightfall-1.3.0-android-debug.apk` on Android 6.0 or newer. Open the APK on your phone and allow installation from that download/file app when Android prompts. This is a development build signed with a debug key, not a Play Store release. No Google account, server login or subscription is required for local play. PGN and text exports use Android’s system Save dialog, so you can choose a destination without granting broad storage permissions.
 
 For same-Wi-Fi multiplayer, start **Host a room** on the Windows app or run `npm run lan` on a computer. Connect the phone to the same Wi-Fi, enter the displayed host URL in Knightfall's Wi-Fi page, and join the room code. The Android app permits cleartext HTTP/WebSocket traffic for this local feature. The host computer must stay awake and permit the app through its private-network firewall. Guest/public Wi-Fi may isolate devices from each other.
 

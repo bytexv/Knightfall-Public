@@ -1,14 +1,26 @@
-# Knightfall 1.2
+# Knightfall 1.3
 
 An independent chess studio for web, Windows and Android. Local play, analysis and learning run on your device.
 
-## New in 1.2
+## New in 1.3
+
+- Public source and app downloads: https://github.com/bytexv/Knightfall-Public.
+- A Windows Setup installer with automatic background update checks and downloads. SHA-512 is verified before the downloaded installer is marked ready. Updates install on normal app exit, or after confirming **Restart and update**. The app does not restart a live game automatically.
+- Android checks for newer APKs at startup and when returning to the app after four hours. An update indicator opens Settings; the APK download requires Android installation approval.
+- Web updates download through the service worker and show **Reload to update** when ready. Reload is your choice.
+- The portable Windows edition remains available, with manual download/install.
+
+Install the new Setup edition once to enable automatic Windows updates. Earlier 1.2 apps shipped without a repository connection and cannot discover this first connected release automatically. Keep the existing app profile; saved games and Local Elo use the same application identity.
+
+GitHub Actions builds and publishes Windows/source/web releases from stable version tags. Signed Android builds join that release only when the five repository signing secrets described in `docs/GITHUB.md` are configured. GitHub denied this session access to those secrets, so this release's compatible APK was built and signed locally instead. No keystore was uploaded.
+
+## Included from 1.2
 
 - Guided game review with move badges, an interactive evaluation graph, per-side summaries and filters for important decisions. The ten classifications run from Brilliant and Great through Book, Mistake, Miss and Blunder; their rules are documented in `docs/REVIEW.md`.
 - Suggested-line previews and move retries that leave the original game intact. Switch to **Live analysis** for current engine lines.
 - A persistent Local Elo counter, rating history and trend graph for eligible completed bot games. Games using hints, takebacks or live analysis while in progress do not count; custom positions and fallback-engine games are also unrated. Ratings are included in JSON backup/restore.
 - Animated moves, captures, castling and promotions, with responsive dragging and support for reduced-motion preferences.
-- A desktop update panel for configured GitHub releases. Public repositories can be checked at startup or manually; downloads open only after you choose, and installation remains manual. Unconfigured and private repositories show the appropriate availability guidance.
+- A desktop update panel for configured GitHub releases. The portable edition can check public repositories at startup or manually; its downloads open only after you choose. The installed Windows edition now supports automatic updates. Unconfigured and private repositories show the appropriate availability guidance.
 
 The warm paper, walnut and charcoal club design, personalized board heading and recent-games sidebar introduced in 1.1 remain part of the app.
 
@@ -24,9 +36,9 @@ Tactics Sprint offers 3-minute, 5-minute and untimed Survival modes with three l
 
 ## Install
 
-**Windows:** Run `Knightfall-1.2.0-Windows-x64.exe` on 64-bit Windows 10/11. It is a portable, unsigned development build; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
+**Windows:** Install `Knightfall-1.3.0-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.3.0-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
 
-**Android:** Open `Knightfall-1.2.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
+**Android:** Open `Knightfall-1.3.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
 
 **Web:** Use the private web link supplied with the release. The hosting provider may require sign-in. Chrome/Edge can install the app from their menu; on iPhone, use Safari **Share → Add to Home Screen**. Keep the first online load open while offline assets finish caching.
 

@@ -264,6 +264,7 @@ async function runAcceptance({ window, app, outputDir }) {
     return { pgn, chess, path: download.path };
   };
   const step = async (name, action) => {
+    if (process.argv.includes("--updates-only") && name !== "native-update-notifications-and-controls") return;
     currentStep = name;
     const started = Date.now();
     const detail = await action();
@@ -1075,6 +1076,37 @@ async function runAcceptance({ window, app, outputDir }) {
         archiveAfter,
         realEngineAfterReload: true,
       };
+    });
+
+    await step("native-update-notifications-and-controls", async () => {
+      window.showInactive();
+      await wait(400);
+      await navigate("Settings");
+      const send = status => window.webContents.send('knightfall:update-status-changed', {
+        currentVersion: app.getVersion(), automatic: true, releaseUrl: 'https://github.com/bytexv/Knightfall-Public/releases', ...status,
+      });
+      send({ status: 'downloading', latestVersion: '1.4.0', progress: 37, message: 'Downloading version 1.4.0… 37%' });
+      await poll("document.querySelector('.update-card progress')?.value===37", "native download progress");
+      check(await evaluate("document.querySelector('.update-card button').disabled"), 'Download must not offer an install before verification');
+      check(await evaluate("!!document.querySelector('.update-indicator')"), 'Missing global update indicator');
+      send({ status: 'ready', latestVersion: '1.4.0', progress: 100, message: 'Version 1.4.0 is ready. It installs when you close the app, or you can restart now.' });
+      await poll("document.querySelector('.update-card button')?.textContent.includes('Restart and update')", "restart action");
+      for (const [width,height] of [[1440,980],[390,844]]) {
+        window.setMinimumSize(320,280); window.setContentSize(width,height); await wait(400);
+        await evaluate("document.querySelector('.nav-scrim')?.click()");
+        await wait(300);
+        await evaluate("document.querySelector('.update-card').scrollIntoView({block:'center'})"); await wait(150);
+        const geometry = await inspectLayout();
+        const screenshot = path.join(outputDir, `update-ready-${width}.png`);
+        await fs.writeFile(screenshot, (await window.webContents.capturePage()).toPNG());
+        report.screenshots.push({page:'update-ready',width,height,screenshot,geometry});
+      }
+      // Main-process state is idle in this fixture. A forged renderer-ready state
+      // must not authorize an actual installation or close the application.
+      check(await evaluate("window.knightfall.installUpdate()") === false, 'Idle main process accepted a renderer-only install request');
+      send({ status: 'up-to-date', message: 'You have the latest stable version.' });
+      await poll("!document.querySelector('.update-indicator')", "indicator dismissal");
+      return {progressRendered:true,readyControl:true,rendererCannotAuthorizeInstallation:true,screenshots:2};
     });
 
     report.finishedAt = new Date().toISOString();

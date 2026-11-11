@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('knightfall', Object.freeze({
   version: () => ipcRenderer.invoke('knightfall:version'),
   getUpdateStatus: () => ipcRenderer.invoke('knightfall:update-status'),
   checkForUpdates: () => ipcRenderer.invoke('knightfall:check-updates'),
+  installUpdate: () => ipcRenderer.invoke('knightfall:install-update'),
   openUpdate: () => ipcRenderer.invoke('knightfall:open-update'),
   onUpdateStatus: (callback) => {
     if (typeof callback !== 'function') throw new TypeError('Expected an update status callback');
