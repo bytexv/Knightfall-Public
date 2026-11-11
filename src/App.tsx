@@ -1,3 +1,4 @@
+import { version as appVersion } from "../package.json";
 import { AlienAudio } from "./components/AlienAudio";
 import { playedAlienGambit } from "./lib/alien-gambit";
 import { Chess, type Color } from "chess.js";
@@ -1384,7 +1385,7 @@ export default function App() {
             <span>How to play</span>
           </button>
           <div className="sidebar-footer">
-            <span>Knightfall v1.3</span>
+            <span>Knightfall v{appVersion}</span>
             <Heart size={12} />
           </div>
         </div>
@@ -2989,7 +2990,7 @@ export default function App() {
                     <Download size={16} /> Install Knightfall
                   </button>
                   <p className="fine-print">
-                    Knightfall v1.3 · GPL-3.0-or-later. Chess rules by chess.js.
+                    Knightfall v{appVersion} · GPL-3.0-or-later. Chess rules by chess.js.
                     Pieces by Colin M. L. Burnett, CC BY-SA 3.0. Stockfish is
                     GPLv3. Creator mentions are educational; no endorsement or
                     affiliation is implied.
