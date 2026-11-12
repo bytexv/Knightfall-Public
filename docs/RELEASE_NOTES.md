@@ -1,8 +1,15 @@
-# Knightfall 1.5.2
+# Knightfall 1.6.0
 
 An independent chess studio for web, Windows and Android. Local play, analysis and learning run on your device.
 
-## Fixed in 1.5.2
+## New in 1.6.0
+
+- Expanded from 6 to 30 offline bots, with estimated ratings from 100–3000 in 100-point steps. Original opponents and saved-game identities remain available.
+- Five strength groups, name/Elo search, practice topics and a Match my Elo shortcut keep choosing an opponent simple on desktop and mobile.
+- Gentler beginner policies and Stockfish strength controls give the new opponents distinct difficulty settings. Maximum-strength play remains unrestricted, and game difficulty never limits analysis.
+- All platform downloads continue through the verified update pipeline. Android retains its signing identity for updates in place.
+
+## Previously fixed in 1.5.2
 
 - Android releases now require a verified, compatible APK before publication.
 - Update checks can find the newest available Android APK even when a newer release contains only desktop files. Missing APKs and GitHub rate limits no longer appear as a generic connection error.
@@ -79,9 +86,9 @@ Tactics Sprint offers 3-minute, 5-minute and untimed Survival modes with three l
 
 ## Install
 
-**Windows:** Install `Knightfall-1.5.2-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.5.2-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
+**Windows:** Install `Knightfall-1.6.0-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.6.0-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
 
-**Android:** Open `Knightfall-1.5.2-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
+**Android:** Open `Knightfall-1.6.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
 
 **Web:** Use the private web link supplied with the release. The hosting provider may require sign-in. Chrome/Edge can install the app from their menu; on iPhone, use Safari **Share → Add to Home Screen**. Keep the first online load open while offline assets finish caching.
 

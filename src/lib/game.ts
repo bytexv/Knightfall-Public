@@ -1,3 +1,4 @@
+import { bots } from "./bots";
 import { Chess, type Color, type Square } from "chess.js";
 import { playedAlienGambit } from "./alien-gambit";
 import { validatedPosition } from "./engine-position";
@@ -31,12 +32,7 @@ export function sanitizePlayerName(value: unknown): string {
     .trimEnd();
 }
 export type GameMode =
-  | "bot"
-  | "local"
-  | "analysis"
-  | "gambit"
-  | "puzzle"
-  | "lan";
+  "bot" | "local" | "analysis" | "gambit" | "puzzle" | "lan";
 export interface MoveRecord {
   from: string;
   to: string;
@@ -74,79 +70,7 @@ export interface GameSession {
   rating?: GameRatingMetadata;
   alienGambit?: boolean;
 }
-export const bots = [
-  {
-    id: "sprout",
-    name: "Sprout",
-    rating: "Beginner",
-    elo: 400,
-    skill: 0,
-    time: 160,
-    icon: "🌱",
-    color: "#e4ecd5",
-    description:
-      "A friendly first opponent. Finds simple moves and leaves you room to learn.",
-  },
-  {
-    id: "scout",
-    name: "Scout",
-    rating: "Casual",
-    elo: 800,
-    skill: 3,
-    time: 250,
-    icon: "🦊",
-    color: "#f5e3cd",
-    description:
-      "Curious and a little tricky. Watch your pieces and take your chances.",
-  },
-  {
-    id: "sage",
-    name: "Sage",
-    rating: "Club",
-    elo: 1200,
-    skill: 7,
-    time: 400,
-    icon: "🦉",
-    color: "#e5dff0",
-    description:
-      "Patient development and tactical ideas. A thoughtful training partner.",
-  },
-  {
-    id: "rook",
-    name: "Rook",
-    rating: "Advanced",
-    elo: 1600,
-    skill: 12,
-    time: 650,
-    icon: "♜",
-    color: "#d6e6e9",
-    description: "Strong calculation, few free pieces. Bring your best plan.",
-  },
-  {
-    id: "nova",
-    name: "Nova",
-    rating: "Expert",
-    elo: 2000,
-    skill: 17,
-    time: 950,
-    icon: "✦",
-    color: "#e8e0ce",
-    description:
-      "Sharp tactics and precise endgames. A serious local challenge.",
-  },
-  {
-    id: "stockfish",
-    name: "Stockfish",
-    rating: "Maximum",
-    elo: 3000,
-    skill: 20,
-    time: 1500,
-    icon: "⌘",
-    color: "#d8e3de",
-    description:
-      "The strongest setting available on your device. No cloud connection needed.",
-  },
-] as const;
+export { bots } from "./bots";
 export const timeControls = [
   { label: "1 min", base: 60, increment: 0, kind: "Bullet" },
   { label: "3 + 2", base: 180, increment: 2, kind: "Blitz" },
@@ -285,12 +209,19 @@ export function sessionPgn(session: GameSession): string {
           : "1/2-1/2"
       : "*",
   );
-  if (validPgnElo(session.whiteElo)) c.header("WhiteElo", String(session.whiteElo));
-  if (validPgnElo(session.blackElo)) c.header("BlackElo", String(session.blackElo));
+  if (validPgnElo(session.whiteElo))
+    c.header("WhiteElo", String(session.whiteElo));
+  if (validPgnElo(session.blackElo))
+    c.header("BlackElo", String(session.blackElo));
   return c.pgn();
 }
 export function validPgnElo(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 100 && value <= 3200;
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 100 &&
+    value <= 3200
+  );
 }
 export function importPgn(pgn: string): GameSession {
   if (pgn.length > MAX_PGN_LENGTH)
@@ -331,8 +262,12 @@ export function importPgn(pgn: string): GameSession {
     ...(initialComment ? { initialComment } : {}),
     ...(whiteName && whiteName !== "?" ? { whiteName } : {}),
     ...(blackName && blackName !== "?" ? { blackName } : {}),
-    ...(validPgnElo(Number(chess.getHeaders().WhiteElo)) ? { whiteElo: Number(chess.getHeaders().WhiteElo) } : {}),
-    ...(validPgnElo(Number(chess.getHeaders().BlackElo)) ? { blackElo: Number(chess.getHeaders().BlackElo) } : {}),
+    ...(validPgnElo(Number(chess.getHeaders().WhiteElo))
+      ? { whiteElo: Number(chess.getHeaders().WhiteElo) }
+      : {}),
+    ...(validPgnElo(Number(chess.getHeaders().BlackElo))
+      ? { blackElo: Number(chess.getHeaders().BlackElo) }
+      : {}),
     started: true,
     result:
       resultFor(chess) ||

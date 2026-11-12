@@ -1,3 +1,4 @@
+import { defaultBot, botSearchOptions } from "./lib/bots";
 import OpeningCoachDialog from "./components/OpeningCoachDialog";
 import { performanceContext } from "./lib/performance-context";
 import { version as appVersion } from "../package.json";
@@ -302,7 +303,7 @@ export default function App() {
   const position = preview ? explorationFen(preview) : mainPosition;
   const chess = new Chess(position);
   const atLatest = historyIndex === game.moves.length - 1;
-  const currentBot = bots.find((b) => b.id === game.botId) || bots[1];
+  const currentBot = bots.find((b) => b.id === game.botId) || defaultBot;
   const ratingEntry = ratings.history.find((entry) => entry.gameId === game.id);
   const ratingEligible =
     !!game.rating &&
@@ -483,14 +484,10 @@ export default function App() {
     let active = true;
     const fen = game.fen;
     setThinking(true);
-    const bot = bots.find((b) => b.id === game.botId) || bots[1];
+    const bot = bots.find((b) => b.id === game.botId) || defaultBot;
     const timer = setTimeout(() => {
       void botEngine.current
-        ?.analyze(fen, {
-          movetime: bot.id === "stockfish" ? settings.botTime : bot.time,
-          skill: bot.skill,
-          depth: bot.id === "stockfish" ? 30 : 20,
-        })
+        ?.analyze(fen, botSearchOptions(bot, settings.botTime))
         .then((r) => {
           if (
             !active ||
@@ -1218,6 +1215,7 @@ export default function App() {
         <div
           className={`player-avatar ${bot ? "bot" : ""}`}
           data-bot={bot ? currentBot.id : undefined}
+          style={bot ? { backgroundColor: currentBot.color } : undefined}
         >
           {bot ? (
             currentBot.name.slice(0, 2).toUpperCase()
@@ -2084,6 +2082,7 @@ export default function App() {
                 {page === "play" &&
                   (showSetup && !isLan ? (
                     <NewGamePanel
+                      playerRating={ratings.rating}
                       onStart={startGame}
                       onWifi={() => navigate("multiplayer")}
                       initialBot={game.botId}
@@ -2286,7 +2285,12 @@ export default function App() {
                         <h4>Keep in mind</h4>
                         <p>{selectedGambit.risk}</p>
                         <div className="opening-detail-actions">
-                          <button className="button primary" onClick={() => setOpeningCoach(selectedGambit)}><Play size={15}/> Train with bot</button>
+                          <button
+                            className="button primary"
+                            onClick={() => setOpeningCoach(selectedGambit)}
+                          >
+                            <Play size={15} /> Train with bot
+                          </button>
                           <button
                             className="button secondary"
                             onClick={() => {
@@ -2782,8 +2786,8 @@ export default function App() {
                 </label>
                 <p className="review-estimate-note">
                   Playing Wittythealien’s Alien Gambit gives the pieces alien
-                  eyes for the rest of that game. Turn this off for
-                  ordinary pieces and no Easter egg sound.
+                  eyes for the rest of that game. Turn this off for ordinary
+                  pieces and no Easter egg sound.
                 </p>
                 <label className="alien-setting">
                   <input
@@ -2998,10 +3002,10 @@ export default function App() {
                     <Download size={16} /> Install Knightfall
                   </button>
                   <p className="fine-print">
-                    Knightfall v{appVersion} · GPL-3.0-or-later. Chess rules by chess.js.
-                    Pieces by Colin M. L. Burnett, CC BY-SA 3.0. Stockfish is
-                    GPLv3. Creator mentions are educational; no endorsement or
-                    affiliation is implied.
+                    Knightfall v{appVersion} · GPL-3.0-or-later. Chess rules by
+                    chess.js. Pieces by Colin M. L. Burnett, CC BY-SA 3.0.
+                    Stockfish is GPLv3. Creator mentions are educational; no
+                    endorsement or affiliation is implied.
                   </p>
                 </section>
                 <section className="card backup-card">
@@ -3147,6 +3151,7 @@ export default function App() {
       {modal === "practice" && (
         <Modal title="Play this position." onClose={closeModal}>
           <NewGamePanel
+            playerRating={ratings.rating}
             onStart={(options) => startGame({ ...options, startFen: position })}
             onWifi={() => {
               setModal(null);
@@ -3160,6 +3165,7 @@ export default function App() {
       {modal === "new" && (
         <Modal title="A fresh board. A fresh start." onClose={closeModal}>
           <NewGamePanel
+            playerRating={ratings.rating}
             onStart={startGame}
             onWifi={() => {
               setModal(null);
@@ -3258,7 +3264,14 @@ export default function App() {
           </div>
         </Modal>
       )}
-      {openingCoach && <OpeningCoachDialog gambit={openingCoach} onClose={closeOpeningCoach} alienEnabled={settings.alienEasterEgg} alienAudioEnabled={settings.sound && settings.alienAudio} />}
+      {openingCoach && (
+        <OpeningCoachDialog
+          gambit={openingCoach}
+          onClose={closeOpeningCoach}
+          alienEnabled={settings.alienEasterEgg}
+          alienAudioEnabled={settings.sound && settings.alienAudio}
+        />
+      )}
       {modal === "help" && (
         <Modal title="Welcome to your chess space." onClose={closeModal}>
           <div className="help-list">

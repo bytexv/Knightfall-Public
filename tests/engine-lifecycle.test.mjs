@@ -141,3 +141,22 @@ test('full engine uses single-thread NNUE without isolation and bounded multi-co
   }
  }finally{if(original)Object.defineProperty(globalThis,'crossOriginIsolated',original);else delete globalThis.crossOriginIsolated;}
 });
+
+test('bot Elo limits reset between jobs so analysis and maximum strength remain unrestricted', async () => {
+  const { factory, workers } = mockFactory();
+  const engine=new LocalEngine({workerFactory:factory});
+  try {
+    await engine.analyze(START,{elo:1700,skill:20});
+    const before=workers[0].commands.length;
+    assert.ok(workers[0].commands.includes('setoption name UCI_LimitStrength value true'));
+    assert.ok(workers[0].commands.includes('setoption name UCI_Elo value 1700'));
+    await engine.analyze(START);
+    const after=workers[0].commands.slice(before);
+    assert.ok(after.includes('setoption name UCI_LimitStrength value false'));
+    assert.ok(!after.some(c=>c.startsWith('setoption name UCI_Elo')));
+    await engine.analyze(START,{elo:9000});
+    assert.ok(workers[0].commands.includes('setoption name UCI_Elo value 3190'));
+    await engine.analyze(START,{elo:100});
+    assert.ok(workers[0].commands.includes('setoption name UCI_Elo value 1320'));
+  } finally {engine.destroy();}
+});

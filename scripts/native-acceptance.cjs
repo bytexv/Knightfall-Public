@@ -267,6 +267,7 @@ async function runAcceptance({ window, app, outputDir }) {
   const step = async (name, action) => {
     if (process.argv.includes("--updates-only") && name !== "native-update-notifications-and-controls") return;
     if (process.argv.includes("--learning-only") && !["guided-beginner-course", "guided-game-and-coach-practice", "opening-coach-both-sides-and-alien-eyes", "alien-gambit-pieces-audio-and-settings"].includes(name)) return;
+    if (process.argv.includes("--bots-only") && name !== "expanded-bot-roster-and-real-replies") return;
     currentStep = name;
     const started = Date.now();
     const detail = await action();
@@ -1219,6 +1220,53 @@ async function runAcceptance({ window, app, outputDir }) {
         archiveAfter,
         realEngineAfterReload: true,
       };
+    });
+
+    await step("expanded-bot-roster-and-real-replies", async () => {
+      window.showInactive();
+      await wait(400);
+      await navigate("Play chess");
+      await clickText("New game", ".page-heading button");
+      await fill('[role="dialog"] [aria-label="Bot strength group"]', "all");
+      check(await evaluate("document.querySelectorAll('[role=dialog] .bot-choice').length===30"), "Expanded roster is incomplete");
+      await fill('[role="dialog"] [aria-label="Search bots by name or Elo"]', "1500");
+      check(await evaluate("document.querySelectorAll('[role=dialog] .bot-choice').length===1"), "Elo search did not narrow the roster");
+      await click('[role="dialog"] [data-bot-choice="flint"]');
+      await fill('[role="dialog"] [aria-label="Search bots by name or Elo"]', "nobody");
+      check(await evaluate("!!document.querySelector('.bot-empty')"), "Search needs an empty state");
+      await click('.bot-empty button');
+      await fill('[role="dialog"] [aria-label="Bot strength group"]', "master");
+      await click('[role="dialog"] [data-bot-choice="nemesis"]');
+      for (const [width,height] of [[1440,980],[390,844],[320,720]]) {
+        window.setMinimumSize(320,280); window.setContentSize(width,height); await wait(300);
+        await evaluate("document.querySelector('.bot-filters').scrollIntoView({block:'start'})"); await wait(150);
+        const geometry = await inspectLayout();
+        const screenshot = path.join(outputDir, `bot-roster-${width}.png`);
+        await fs.writeFile(screenshot, (await window.webContents.capturePage()).toPNG());
+        report.screenshots.push({page:'bot-roster',width,height,screenshot,geometry});
+        check(await evaluate("(() => {const el=document.querySelector('.bot-roster');return el.scrollWidth<=el.clientWidth+1;})()"), "Bot roster overflows on small screens");
+        await evaluate("document.querySelector('[role=dialog] .start-game').scrollIntoView({block:'center'})");
+        check(await evaluate("(() => {const r=document.querySelector('[role=dialog] .start-game').getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;})()"), "Start button is unreachable");
+      }
+      await click('[role="dialog"] [aria-label="Play black"]');
+      await evaluate("[...document.querySelectorAll('[role=dialog] .time-picker button')].find(b=>b.textContent.includes('∞')).click()");
+      await clickText("Play with Nemesis", '[role="dialog"] button');
+      await poll("JSON.parse(localStorage.getItem('knightfall:current')||'null')?.moves.length===1", "new master bot first move", 25000);
+      const strong = await game();
+      check(strong.botId === 'nemesis' && strong.playerColor === 'b' && strong.rating?.engine === 'stockfish' && strong.rating.opponentRating === 2900, "Wrong master opponent, rating or engine");
+      await reloadLocalApp();
+      check((await game()).botId === 'nemesis', "New opponent identity did not persist");
+      await navigate("Play chess");
+      await clickText("New game", ".page-heading button");
+      await fill('[role="dialog"] [aria-label="Bot strength group"]', "beginner");
+      await click('[role="dialog"] [data-bot-choice="pebble"]');
+      await clickText("Play with Pebble", '[role="dialog"] button');
+      await boardMove("e2", "e4");
+      await poll("JSON.parse(localStorage.getItem('knightfall:current')||'null')?.moves.length===2", "new beginner bot reply", 25000);
+      const beginner=await game();
+      check(beginner.botId==='pebble' && beginner.rating?.engine==='stockfish' && beginner.rating.opponentRating===100, "Beginner bot did not use its own rated identity");
+      window.setContentSize(1440,980);
+      return {bots:30,search:true,emptyState:true,masterReply:strong.moves[0].san,beginnerReply:beginner.moves[1].san,persistence:true,screenshots:3};
     });
 
     await step("native-update-notifications-and-controls", async () => {

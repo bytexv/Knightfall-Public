@@ -157,6 +157,11 @@ test("shared-screen game validates moves, records history and supports undo", as
 
 test("bot makes legal response and stale result from replaced game cannot move new board", async () => {
   await render();
+  await act(async () => {
+    const select = host.querySelector('[aria-label="Bot strength group"]');
+    Object.getOwnPropertyDescriptor(dom.window.HTMLSelectElement.prototype, 'value').set.call(select, 'master');
+    select.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+  });
   await clickText("Stockfish");
   await clickText("Play with Stockfish");
   await move("e2", "e4");
@@ -293,6 +298,11 @@ test("analysis hint result is ignored after replay changes position", async () =
 
 test("clock ticks preserve a completed bot move while React delays committing the render", async () => {
   await render();
+  await act(async () => {
+    const select = host.querySelector('[aria-label="Bot strength group"]');
+    Object.getOwnPropertyDescriptor(dom.window.HTMLSelectElement.prototype, 'value').set.call(select, 'master');
+    select.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+  });
   await clickText("Stockfish");
   await clickText("Play with Stockfish");
   await move("e2", "e4");
@@ -325,6 +335,11 @@ test("clock ticks preserve a completed bot move while React delays committing th
 
 test("a queued bot result cannot resume a game paused by navigation", async () => {
   await render();
+  await act(async () => {
+    const select = host.querySelector('[aria-label="Bot strength group"]');
+    Object.getOwnPropertyDescriptor(dom.window.HTMLSelectElement.prototype, 'value').set.call(select, 'master');
+    select.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+  });
   await clickText("Stockfish");
   await clickText("Play with Stockfish");
   await move("e2", "e4");

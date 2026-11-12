@@ -6,7 +6,7 @@ This inventory describes the implemented application and distinguishes its local
 
 | Feature | Behavior |
 | --- | --- |
-| Local bots | Sprout, Scout, Sage, Rook, Nova and Stockfish; six training difficulty settings |
+| Local bots | 30 local opponents from estimated 100–3000 Elo; strength groups, search and Match my Elo; original opponents retained |
 | Beginner behavior | Sprout and Scout mix engine choices with legal, beginner-oriented positional and exploratory moves |
 | Shared-screen chess | Two players alternate on one board with independent clocks |
 | Custom-position play | Start a bot or shared-screen game from the current Analysis FEN; untimed is the default |

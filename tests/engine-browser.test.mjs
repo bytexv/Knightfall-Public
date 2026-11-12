@@ -60,3 +60,19 @@ test('the engine resolves WASM under subdirectories and Capacitor custom origins
     } finally { engine.destroy(); }
   }
 });
+
+test('all 30 production bot profiles reply legally through the real local Stockfish worker', { timeout: 90000 }, async () => {
+  const { bots, botSearchOptions }=await import('../src/lib/bots.ts');
+  const { chooseBotMove, seededBotRandom }=await import('../src/lib/bot-policy.ts');
+  const engine=new LocalEngine({workerUrl:'https://knightfall.test/engine/stockfish.js',workerFactory:browserWorker});
+  try {
+    for(const [index,bot] of bots.entries()) {
+      const game=new Chess();if(index%2)game.move('e4');
+      const result=await engine.analyze(game.fen(),botSearchOptions(bot));
+      assert.equal(result.engine,'Stockfish 17.1 Lite',`${bot.name} silently fell back`);
+      const move=chooseBotMove(game.fen(),bot.id,result,seededBotRandom(724+index));
+      assert.ok(move,`${bot.name} did not reply`);
+      assert.ok(game.move({from:move.slice(0,2),to:move.slice(2,4),promotion:move[4]}),`${bot.name} returned an illegal move`);
+    }
+  } finally {engine.destroy();}
+});

@@ -12,7 +12,7 @@ Get the latest apps from [GitHub Releases](https://github.com/bytexv/Knightfall-
 
 ## Start playing
 
-1. Open **Play chess**. Choose one of six local bots, or **Pass & play** for two people sharing a screen. Pick a side and time control, then start.
+1. Open **Play chess**. Choose one of 30 local bots (estimated 100–3000 Elo), or **Pass & play** for two people sharing a screen. Pick a side and time control, then start.
 2. Click or drag a piece to a legal destination. Choose a queen, rook, bishop or knight when a pawn promotes.
 3. Open **Analysis** for a guided game review, move classifications, an evaluation graph and per-side summaries. Switch to **Live analysis** for current engine suggestions. Explore a suggested line or retry a move without changing the original game. **Set up** opens the board editor; **Save game** keeps an imported or edited study, and **Play position** starts practice from the current board.
 4. Explore **Puzzles**, **Tactics Sprint**, **Learn chess**, and **Endgame school** for guided practice.
@@ -55,7 +55,7 @@ More details: [Same-Wi-Fi play](docs/LAN.md).
 
 ## What runs locally
 
-- **Play:** six adjustable bot personalities, a shared-screen mode, clocks with increment, legal-move enforcement, promotion choice, takebacks in local play, hints, replay and results.
+- **Play:** 30 local bot opponents in 100-point steps, strength groups, name/Elo search and a Match my Elo shortcut, a shared-screen mode, clocks with increment, legal-move enforcement, promotion choice, takebacks in local play, hints, replay and results.
 - **Analysis:** Stockfish 17.1 Lite or optional Full NNUE in local workers, up to three principal variations, configurable depth limits, an evaluation bar and cancelable guided review. Review includes ten move classifications, early/middle/late-game summaries, both-side performance Elo ranges, an interactive evaluation graph, suggested-line previews and move retries. A clearly labeled lightweight JavaScript engine is available if Stockfish cannot load.
 - **Local Elo:** a persistent practice rating, result history and trend graph for eligible completed games against local bots. It starts at 800 and stays provisional for the first 20 rated games. Games using hints, takebacks or live analysis while in progress are unrated, as are custom starting positions and fallback-engine play. Reviewing an already completed game does not change its recorded result. This device-local estimate is separate from online or official ratings and from a single game's review performance estimate.
 - **Learning:** 60 curated tactics from the Lichess CC0 puzzle database; Tactics Sprint with 3-minute, 5-minute and untimed Survival modes; 28 opening primers (including Wittythealien’s Alien Gambit); ten interactive beginner challenges, nine short lessons; and 15 endgame drills, including four draw-defense exercises.

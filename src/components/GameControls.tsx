@@ -16,11 +16,20 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { bots, timeControls, type GameSession } from "../lib/game";
+import {
+  botBands,
+  botBand,
+  defaultBot,
+  matchingBots,
+  recommendedBot,
+} from "../lib/bots";
+
 export function NewGamePanel({
   onStart,
   onWifi,
   initialBot = "scout",
   initialTimeIndex = 3,
+  playerRating = 800,
 }: {
   onStart: (settings: {
     mode: "bot" | "local";
@@ -31,12 +40,19 @@ export function NewGamePanel({
   onWifi: () => void;
   initialBot?: string;
   initialTimeIndex?: number;
+  playerRating?: number;
 }) {
   const [mode, setMode] = useState<"bot" | "local">("bot");
-  const [botId, setBotId] = useState(initialBot);
+  const initialOpponent =
+    bots.find((bot) => bot.id === initialBot) || defaultBot;
+  const [botId, setBotId] = useState(initialOpponent.id);
+  const [band, setBand] = useState<string>(() => botBand(initialOpponent));
+  const [query, setQuery] = useState("");
   const [timeIndex, setTimeIndex] = useState(initialTimeIndex);
   const [color, setColor] = useState<"w" | "b" | "random">("w");
-  const bot = bots.find((b) => b.id === botId) || bots[1];
+  const bot = bots.find((b) => b.id === botId) || defaultBot;
+  const visibleBots = matchingBots(band, query);
+  const suggested = recommendedBot(playerRating);
   return (
     <section className="card new-game-card">
       <div className="panel-heading">
@@ -65,18 +81,74 @@ export function NewGamePanel({
       {mode === "bot" ? (
         <>
           <div className="field-label">
-            YOUR OPPONENT <span>6 levels</span>
+            YOUR OPPONENT <span>{bots.length} local bots · ≈ 100–3000</span>
           </div>
-          <div className="bot-picker">
-            {bots.map((b) => (
+          <div className="bot-filters">
+            <label>
+              <span>Strength</span>
+              <select
+                aria-label="Bot strength group"
+                value={band}
+                onChange={(event) => {
+                  setBand(event.target.value);
+                  setQuery("");
+                }}
+              >
+                {botBands.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.label} · {group.min}–{group.max}
+                  </option>
+                ))}
+                <option value="all">All 30 bots</option>
+              </select>
+            </label>
+            <label>
+              <span>Find an opponent</span>
+              <input
+                type="search"
+                aria-label="Search bots by name or Elo"
+                placeholder="Name or Elo"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                maxLength={80}
+              />
+            </label>
+          </div>
+          <div className="bot-match-row">
+            <span role="status">
+              {visibleBots.length}{" "}
+              {visibleBots.length === 1 ? "opponent" : "opponents"}
+              {query.trim() ? " found across all levels" : " in this group"}
+            </span>
+            <button
+              className="text-button"
+              type="button"
+              title={`Choose ${suggested.name}, approximately ${suggested.elo} Elo`}
+              onClick={() => {
+                setBotId(suggested.id);
+                setBand(botBand(suggested));
+                setQuery("");
+              }}
+            >
+              Match my Elo
+            </button>
+          </div>
+          <div className="bot-picker bot-roster" aria-label="Choose a bot">
+            {visibleBots.map((b) => (
               <button
                 key={b.id}
+                data-bot-choice={b.id}
                 className={`bot-choice ${botId === b.id ? "selected" : ""}`}
                 onClick={() => setBotId(b.id)}
                 aria-label={`${b.name}, approximately ${b.elo} Elo, ${b.rating}`}
                 aria-pressed={botId === b.id}
               >
-                <span className="bot-avatar" aria-hidden="true" data-bot={b.id}>
+                <span
+                  className="bot-avatar"
+                  aria-hidden="true"
+                  data-bot={b.id}
+                  style={{ backgroundColor: b.color }}
+                >
                   {b.name.slice(0, 2).toUpperCase()}
                 </span>
                 <strong>{b.name}</strong>
@@ -89,8 +161,30 @@ export function NewGamePanel({
               </button>
             ))}
           </div>
-          <div className="bot-description">
-            <div className="bot-avatar" aria-hidden="true" data-bot={bot.id}>
+          {visibleBots.length === 0 && (
+            <div className="bot-empty">
+              <p>
+                No opponent matches “{query}”. Try a name or rating such as
+                1500.
+              </p>
+              <button
+                className="text-button"
+                onClick={() => {
+                  setQuery("");
+                  setBand("all");
+                }}
+              >
+                Show all bots
+              </button>
+            </div>
+          )}
+          <div className="bot-description" aria-live="polite">
+            <div
+              className="bot-avatar"
+              aria-hidden="true"
+              data-bot={bot.id}
+              style={{ backgroundColor: bot.color }}
+            >
               {bot.name.slice(0, 2).toUpperCase()}
             </div>
             <div>
@@ -100,12 +194,14 @@ export function NewGamePanel({
                   · ≈ {bot.elo} Elo · {bot.rating}
                 </span>
               </strong>
+              <span className="bot-focus">Practice: {bot.focus}</span>
               <p>{bot.description}</p>
             </div>
           </div>
           <p className="elo-explainer">
-            <strong>Estimated bot strength.</strong> Finish a normal game
-            without hints or takebacks to update your Local Elo.
+            <strong>Practice estimates, not official ratings.</strong> Strength
+            varies with your device and engine. Finish a normal game without
+            hints or takebacks to update your Local Elo.
           </p>
         </>
       ) : (

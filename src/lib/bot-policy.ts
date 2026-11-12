@@ -3,21 +3,57 @@ import { type EngineResult } from "./engine";
 import { evaluatePosition, moveToUci } from "./engine-fallback";
 import { validatedPosition } from "./engine-position";
 
-/** Descriptive training personalities, not calibrated Elo levels. */
-const policies = {
-  sprout: {
+import { bots } from "./bots";
+
+// Anchor the original Sprout/Scout behavior; interpolate gentler and tougher learners.
+const learningAnchors = [
+  {
+    elo: 100,
+    engineChance: 0.02,
+    explorationChance: 0.65,
+    temperature: 240,
+    plausibleLoss: 650,
+  },
+  {
+    elo: 400,
     engineChance: 0.18,
     explorationChance: 0.22,
     temperature: 145,
     plausibleLoss: 320,
   },
-  scout: {
+  {
+    elo: 800,
     engineChance: 0.6,
     explorationChance: 0.06,
     temperature: 75,
     plausibleLoss: 180,
   },
-} as const;
+  {
+    elo: 1100,
+    engineChance: 0.9,
+    explorationChance: 0.01,
+    temperature: 35,
+    plausibleLoss: 100,
+  },
+];
+function learningPolicy(botId: string) {
+  const bot = bots.find((bot) => bot.id === botId);
+  if (!bot || bot.elo >= 1200) return null;
+  const upper = learningAnchors.findIndex((anchor) => anchor.elo >= bot.elo);
+  const high = learningAnchors[upper],
+    low = learningAnchors[Math.max(0, upper - 1)];
+  const fraction =
+    high.elo === low.elo ? 0 : (bot.elo - low.elo) / (high.elo - low.elo);
+  const blend = (
+    key: "engineChance" | "explorationChance" | "temperature" | "plausibleLoss",
+  ) => low[key] + fraction * (high[key] - low[key]);
+  return {
+    engineChance: blend("engineChance"),
+    explorationChance: blend("explorationChance"),
+    temperature: blend("temperature"),
+    plausibleLoss: blend("plausibleLoss"),
+  };
+}
 const values: Record<PieceSymbol, number> = {
   p: 100,
   n: 320,
@@ -48,7 +84,7 @@ function randomUnit(rng: () => number): number {
 
 /**
  * Apply deliberate, bounded beginner variety AFTER a legal engine search.
- * Stronger bots keep the engine's choice. Sprout and Scout mix that choice with
+ * Stronger bots keep the strength-limited engine choice. Learners mix it with
  * one-ply positional ideas and occasional exploration. Every candidate comes
  * from chess.js legal move generation, so weakness never means breaking rules.
  */
@@ -67,8 +103,7 @@ export function chooseBotMove(
   if (position.isGameOver()) return null;
   const legal = position.moves({ verbose: true });
   const engineMove = legal.find((move) => moveToUci(move) === result.bestMove);
-  const policy =
-    botId === "sprout" || botId === "scout" ? policies[botId] : null;
+  const policy = learningPolicy(botId);
   if (!policy) return engineMove ? moveToUci(engineMove) : null;
   // Spot a finished mating pattern at every level. Everything else is a choice.
   const immediateMates = legal.filter((move) => move.san.endsWith("#"));
@@ -95,8 +130,10 @@ export function chooseBotMove(
       const defended = position.isAttacked(move.to, color);
       score -= values[movingType] * (defended ? 0.18 : 0.5);
     }
-    if (move.san.endsWith("+")) score += 24;
-    if (move.isKingsideCastle() || move.isQueensideCastle()) score += 35;
+    if (move.san.endsWith("+"))
+      score += ["robin", "dash", "ember"].includes(botId) ? 42 : 24;
+    if (move.isKingsideCastle() || move.isQueensideCastle())
+      score += botId === "hazel" ? 60 : 35;
     if (position.isStalemate()) score = -before;
     position.undo();
     ranked.push({ move, score });

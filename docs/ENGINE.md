@@ -118,15 +118,15 @@ reported approximately 174, 174, and 190 MiB total RSS respectively, including N
 itself. Those process figures are diagnostic measurements, not device RAM
 requirements; the exact common WASM linear-memory size remained 128 MiB.
 
-Difficulty uses Stockfish's local `Skill Level` setting from 0 to 20. It deliberately
-selects weaker moves at low levels. Sprout and Scout additionally apply
-`chooseBotMove`: they blend the engine choice with shallow positional ideas and
-occasional exploratory moves, so the beginner levels make understandable mistakes
-instead of relying on a still-strong low Stockfish setting alone. All choices come
-from legal move generation. They recognize mate-in-one and never ignore check by
-playing an illegal move. Higher levels preserve the engine move unchanged.
-Displayed difficulty descriptions are approximate; no internet rating calibration
-is implied. `seededBotRandom` can make the policy reproducible for tests.
+## Expanded bot roster (1.6)
+
+Thirty opponents cover estimated 100–3000 Elo in 100-point steps. Original IDs and ratings remain stable for saved games and Local Elo records. These are practice estimates, not independently calibrated human ratings; engine mode, hardware and time budgets affect strength.
+
+Below 1400, opponents use Stockfish's `Skill Level` plus different thinking budgets. The eleven learners from 100–1100 additionally blend legal engine choices with shallow positional ideas and exploratory moves. Higher learners trust the engine more often and narrow their mistakes. Sprout and Scout retain their previous policy anchors. All candidates come from legal move generation, including check evasions, castling and promotions; learners recognize mate in one.
+
+Opponents from 1400–2900 use Stockfish's `UCI_LimitStrength` and `UCI_Elo` controls. The engine's supported minimum is 1320, so lower levels do not pretend to request unsupported Elo values. Stockfish at the top of the roster runs unrestricted, with the configured maximum-bot thinking time. Every engine job explicitly resets the strength limit, preventing a previous bot game's restriction from affecting analysis. All bots also work offline with the fallback engine, but fallback games remain excluded from Local Elo.
+
+The picker groups opponents by strength, searches names/ratings/practice topics across every group, and recommends the closest estimated opponent to the player's Local Elo. Practice topics describe what to work on, not an independently calibrated playing style.
 
 ## Fallback and failures
 

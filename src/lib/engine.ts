@@ -9,13 +9,9 @@ import { validatedPosition } from "./engine-position";
 
 export type EngineLine = SearchLine;
 export type EngineResult = SearchResult;
-export type EngineOptions = SearchOptions;
+export type EngineOptions = SearchOptions & { elo?: number };
 export type EngineStatus =
-  | "idle"
-  | "loading"
-  | "ready"
-  | "fallback"
-  | "destroyed";
+  "idle" | "loading" | "ready" | "fallback" | "destroyed";
 
 interface EngineWorker {
   postMessage(message: unknown): void;
@@ -226,6 +222,9 @@ export class LocalEngine {
       movetime: clamp(options.movetime, 50, 30_000, 900),
       multiPV: clamp(options.multiPV, 1, 5, 1),
       skill: clamp(options.skill, 0, 20, 20),
+      elo: Number.isFinite(options.elo)
+        ? clamp(options.elo, 1320, 3190, 1320)
+        : undefined,
     };
     const result = new Promise<EngineResult>((resolve, reject) => {
       this.queue.push({
@@ -473,6 +472,12 @@ export class LocalEngine {
     const send = (message: string) => this.worker?.postMessage(message);
     send(`setoption name MultiPV value ${job.options.multiPV}`);
     send(`setoption name Skill Level value ${job.options.skill}`);
+    // Reset the limit for every job; game strength must never weaken analysis.
+    send(
+      `setoption name UCI_LimitStrength value ${job.options.elo !== undefined}`,
+    );
+    if (job.options.elo !== undefined)
+      send(`setoption name UCI_Elo value ${job.options.elo}`);
     send(`position fen ${job.fen}`);
     send(`go depth ${job.options.depth} movetime ${job.options.movetime}`);
     job.watchdog = setTimeout(
