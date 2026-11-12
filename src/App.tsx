@@ -1,3 +1,6 @@
+import ReviewLibrary from "./components/ReviewLibrary";
+import QuizHub from "./components/QuizHub";
+import { removeStoredReview } from "./lib/review-store";
 import { defaultBot, botSearchOptions } from "./lib/bots";
 import OpeningCoachDialog from "./components/OpeningCoachDialog";
 import { performanceContext } from "./lib/performance-context";
@@ -117,18 +120,31 @@ type Page =
   | "multiplayer"
   | "settings"
   | "endgames"
-  | "challenge";
+  | "challenge"
+  | "quiz";
 const pages = [
-  { id: "play", label: "Play chess", icon: Play },
-  { id: "analysis", label: "Analysis", icon: Activity },
-  { id: "puzzles", label: "Puzzles", icon: Puzzle },
-  { id: "challenge", label: "Tactics Sprint", icon: Target },
-  { id: "openings", label: "Learn chess", icon: BookOpen },
-  { id: "endgames", label: "Endgame school", icon: GraduationCap },
-  { id: "games", label: "My games", icon: FolderHeart },
-  { id: "multiplayer", label: "Play with friends", icon: Wifi },
+  { id: "play", label: "Play chess", icon: Play, group: "Play" },
+  { id: "multiplayer", label: "Play with friends", icon: Wifi, group: "Play" },
+  { id: "games", label: "Game Review", icon: Activity, group: "Improve" },
+  { id: "analysis", label: "Analysis", icon: Cpu, group: "Improve" },
+  { id: "puzzles", label: "Puzzles", icon: Puzzle, group: "Improve" },
+  { id: "quiz", label: "Chess Quiz", icon: CircleHelp, group: "Improve" },
+  { id: "openings", label: "Learn chess", icon: BookOpen, group: "Improve" },
+  { id: "challenge", label: "Tactics Sprint", icon: Target, group: "Practice" },
+  {
+    id: "endgames",
+    label: "Endgame school",
+    icon: GraduationCap,
+    group: "Practice",
+  },
 ] as const;
+const validPage = (value: string): value is Page =>
+  value === "settings" || pages.some((page) => page.id === value);
 const pageTitles: Record<Page, { title: string; subtitle: string }> = {
+  quiz: {
+    title: "Chess Quiz",
+    subtitle: "Test an idea. Learn the answer. Take it to the board.",
+  },
   challenge: {
     title: "Tactics Sprint",
     subtitle: "Three lives. Calculate the full line. Beat your own score.",
@@ -156,8 +172,9 @@ const pageTitles: Record<Page, { title: string; subtitle: string }> = {
       "Learn the basics, practice useful habits, and explore famous openings.",
   },
   games: {
-    title: "Your games",
-    subtitle: "Resume a game, replay it, or find the move you missed.",
+    title: "Game Review",
+    subtitle:
+      "Your game history, accuracy and next lessons — all in one place.",
   },
   multiplayer: {
     title: "Play with friends",
@@ -192,9 +209,36 @@ function loadCurrent() {
 }
 export default function App() {
   const [game, setGameState] = useState<GameSession>(loadCurrent);
-  const [page, setPage] = useState<Page>(() =>
-    ["analysis", "gambit"].includes(game.mode) ? "analysis" : "play",
-  );
+  const [page, setPage] = useState<Page>(() => {
+    const route = window.location.hash.slice(1);
+    return validPage(route)
+      ? route
+      : ["analysis", "gambit"].includes(game.mode)
+        ? "analysis"
+        : "play";
+  });
+  const routeInitialized = useRef(false);
+  const navigation = useRef<(page: Page) => void>(() => {});
+  navigation.current = (next) => navigate(next);
+  useEffect(() => {
+    const hash = `#${page}`;
+    if (!routeInitialized.current) {
+      window.history.replaceState(null, "", hash);
+      routeInitialized.current = true;
+    } else if (window.location.hash !== hash)
+      window.history.pushState(null, "", hash);
+  }, [page]);
+  useEffect(() => {
+    const back = () => {
+      const target = window.location.hash.slice(1) || "play";
+      if (validPage(target)) navigation.current(target);
+    };
+    window.addEventListener("popstate", back);
+    navigation.current(page);
+    return () => {
+      window.removeEventListener("popstate", back);
+    };
+  }, []);
   const gameRef = useRef(game);
   // Clocks and workers can settle before React commits a render. Keep their
   // authoritative snapshot synchronized with every state transition.
@@ -255,7 +299,7 @@ export default function App() {
   pageRef.current = page;
   const mainRef = useRef<HTMLElement | null>(null);
   const [archive, setArchive] = useState<GameSession[]>(savedGames);
-  const [gameSearch, setGameSearch] = useState("");
+  const [reviewRequest, setReviewRequest] = useState<string | null>(null);
   const [selectedGambit, setSelectedGambit] = useState<Gambit | null>(null);
   const [selectedDrill, setSelectedDrill] = useState<EndgameDrill | null>(null);
   const [gambitPractice, setGambitPractice] = useState(false);
@@ -278,6 +322,49 @@ export default function App() {
   const timeoutEpoch = useRef(0);
   const pendingAction = useRef<(() => void) | null>(null);
   const closeModal = useCallback(() => setModal(null), []);
+  useEffect(() => {
+    if (!mobileNav) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const drawer = document.getElementById("primary-navigation");
+    const focusable = () =>
+      Array.from(
+        drawer?.querySelectorAll<HTMLElement>(
+          "a[href], button:not([disabled])",
+        ) || [],
+      ).filter((el) => el.getClientRects().length > 0);
+    focusable()[0]?.focus();
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMobileNav(false);
+      }
+      if (event.key === "Tab") {
+        const nodes = focusable(),
+          first = nodes[0],
+          last = nodes.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    const resize = () => {
+      if (window.innerWidth > 900) setMobileNav(false);
+    };
+    document.addEventListener("keydown", key);
+    window.addEventListener("resize", resize);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.removeEventListener("keydown", key);
+      window.removeEventListener("resize", resize);
+      previous?.focus();
+    };
+  }, [mobileNav]);
   const notify = useCallback((message: string) => {
     setToast(message);
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -681,6 +768,8 @@ export default function App() {
       !gameRef.current.result
     ) {
       pendingAction.current = action;
+      // A Back/Forward route is provisional until leaving the live room is confirmed.
+      window.history.replaceState(null, "", `#${page}`);
       setModal("leave");
       return true;
     }
@@ -1289,10 +1378,30 @@ export default function App() {
         : `${game.result?.winner === "w" ? "White" : "Black"} wins`;
   return (
     <div className={`app-shell page-${page} ${focusMode ? "focus-mode" : ""}`}>
+      <a
+        className="skip-link"
+        href="#page-title"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("page-title")?.focus();
+        }}
+      >
+        Skip to content
+      </a>
       <aside
+        id="primary-navigation"
         className={`sidebar ${mobileNav ? "is-open" : ""}`}
         aria-label="Chess navigation"
+        role={mobileNav ? "dialog" : undefined}
+        aria-modal={mobileNav || undefined}
       >
+        <button
+          className="icon-button nav-close"
+          aria-label="Close menu"
+          onClick={() => setMobileNav(false)}
+        >
+          <X size={22} />
+        </button>
         <a
           href="#"
           className="brand"
@@ -1306,23 +1415,27 @@ export default function App() {
             Knightfall<small>CHESS CLUB</small>
           </span>
         </a>
-        <div className="sidebar-caption">THE CLUBHOUSE</div>
-        <nav>
-          {pages.map((item) => (
-            <button
-              key={item.id}
-              className={`nav-item ${page === item.id ? "active" : ""}`}
-              aria-label={item.label}
-              title={item.label}
-              onClick={() => navigate(item.id)}
-            >
-              <item.icon size={20} strokeWidth={1.7} />
-              <span>{item.label}</span>
-              {item.id === "puzzles" && (
-                <span className="nav-tag">{puzzles.length}</span>
-              )}
-              {item.id === "multiplayer" && <span className="nav-dot" />}
-            </button>
+        <nav aria-label="Main navigation">
+          {["Play", "Improve", "Practice"].map((group) => (
+            <section className="nav-group" key={group} aria-label={group}>
+              <div className="sidebar-caption">{group}</div>
+              {pages
+                .filter((item) => item.group === group)
+                .map((item) => (
+                  <button
+                    key={item.id}
+                    className={`nav-item ${page === item.id ? "active" : ""}`}
+                    aria-label={item.label}
+                    aria-current={page === item.id ? "page" : undefined}
+                    title={item.label}
+                    onClick={() => navigate(item.id)}
+                  >
+                    <item.icon size={21} />
+                    <span>{item.label}</span>
+                    {item.id === "quiz" && <span className="nav-tag">NEW</span>}
+                  </button>
+                ))}
+            </section>
           ))}
         </nav>
         <section className="sidebar-recent" aria-label="Recent games">
@@ -1381,7 +1494,10 @@ export default function App() {
           <button
             className="nav-item"
             aria-label="How to play"
-            onClick={() => setModal("help")}
+            onClick={() => {
+              setMobileNav(false);
+              setModal("help");
+            }}
           >
             <CircleHelp size={19} />
             <span>How to play</span>
@@ -1404,6 +1520,8 @@ export default function App() {
           <button
             className="icon-button mobile-menu"
             aria-label="Open navigation"
+            aria-controls="primary-navigation"
+            aria-expanded={mobileNav}
             onClick={() => setMobileNav(!mobileNav)}
           >
             <Menu size={22} />
@@ -1453,7 +1571,7 @@ export default function App() {
         <main ref={mainRef} aria-labelledby="page-title">
           <div className="page-heading">
             <div>
-              <h1 id="page-title">
+              <h1 id="page-title" tabIndex={-1}>
                 {page === "play" && settings.name !== "You"
                   ? `${settings.name}’s board`
                   : pageTitles[page].title}
@@ -2340,6 +2458,8 @@ export default function App() {
                       game={game}
                       ratingContext={performanceContext(game, ratings)}
                       activeIndex={historyIndex}
+                      autoReview={reviewRequest === game.id}
+                      onReviewRequestHandled={() => setReviewRequest(null)}
                       onActiveReview={setActiveReview}
                       onPreviewLine={previewLine}
                       onRetryMove={retryReviewMove}
@@ -2547,183 +2667,36 @@ export default function App() {
             />
           )}
           {page === "multiplayer" && <NetworkPanel onGame={onLanGame} />}
+          {page === "quiz" && <QuizHub onPuzzles={() => navigate("puzzles")} />}
           {page === "games" && (
-            <div className="library-page">
-              <div className="library-summary">
-                <div className="card library-stat">
-                  <FolderHeart size={24} />
-                  <span>
-                    <strong>{archive.length}</strong>saved games
-                  </span>
-                </div>
-                <div className="card library-stat">
-                  <Trophy size={24} />
-                  <span>
-                    <strong>
-                      {
-                        archive.filter(
-                          (g) => g.result?.winner === g.playerColor,
-                        ).length
-                      }
-                    </strong>
-                    wins recorded
-                  </span>
-                </div>
-                <div className="card library-stat">
-                  <Puzzle size={24} />
-                  <span>
-                    <strong>{solved.length}</strong>puzzles solved
-                  </span>
-                </div>
-              </div>
-              <div className="library-toolbar">
-                <div className="search-field">
-                  <Search size={17} />
-                  <input
-                    placeholder="Search your games…"
-                    aria-label="Search games"
-                    value={gameSearch}
-                    onChange={(e) => setGameSearch(e.target.value)}
-                  />
-                </div>
-                <button
-                  className="button secondary"
-                  onClick={() => setModal("import")}
-                >
-                  <Upload size={16} /> Import a game
-                </button>
-              </div>
-              <div className="card games-table">
-                <div className="games-table-head">
-                  <span>Game</span>
-                  <span>Result</span>
-                  <span>Moves</span>
-                  <span>Played</span>
-                  <span />
-                </div>
-                {archive
-                  .filter((g) =>
-                    g.title.toLowerCase().includes(gameSearch.toLowerCase()),
-                  )
-                  .map((g) => (
-                    <div className="game-row" key={g.id}>
-                      <button
-                        className="game-row-title"
-                        onClick={() =>
-                          imported({
-                            ...g,
-                            mode: "analysis",
-                            started: true,
-                            time: { base: 0, increment: 0 },
-                          })
-                        }
-                      >
-                        <span className="game-row-icon">
-                          {g.mode === "bot" ? (
-                            <Cpu size={20} />
-                          ) : g.mode === "lan" ? (
-                            <Wifi size={20} />
-                          ) : (
-                            <Play size={20} />
-                          )}
-                        </span>
-                        <span>
-                          <strong>{g.title}</strong>
-                          <small>
-                            {g.mode === "bot"
-                              ? "Computer"
-                              : g.mode === "lan"
-                                ? "Wi-Fi game"
-                                : "Local game"}{" "}
-                            ·{" "}
-                            {g.time.base
-                              ? `${g.time.base / 60} min`
-                              : "Untimed"}
-                          </small>
-                        </span>
-                      </button>
-                      <span
-                        className={`result-badge ${g.result?.winner === g.playerColor ? "win" : ""}`}
-                      >
-                        {g.result
-                          ? g.result.winner === null
-                            ? "Draw"
-                            : g.result.winner === g.playerColor
-                              ? "Won"
-                              : "Lost"
-                          : "In progress"}
-                      </span>
-                      <span>{Math.ceil(g.moves.length / 2)}</span>
-                      <span className="muted">
-                        {new Date(g.createdAt).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                      <div className="row-actions">
-                        {!g.result && ["bot", "local"].includes(g.mode) && (
-                          <button
-                            className="icon-button"
-                            aria-label={`Resume ${g.title}`}
-                            title="Resume game"
-                            onClick={() => resumeGame(g)}
-                          >
-                            <Play size={15} />
-                          </button>
-                        )}
-                        <button
-                          className="icon-button"
-                          aria-label={`Export ${g.title}`}
-                          onClick={() => exportPgn(g)}
-                        >
-                          <Download size={16} />
-                        </button>
-                        <button
-                          className="icon-button"
-                          aria-label={`Delete ${g.title}`}
-                          onClick={() => {
-                            const next = archive.filter((a) => a.id !== g.id);
-                            setArchive(next);
-                            writeStore("games", next);
-                            notify("Game removed from your library.");
-                          }}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                {!archive.length && (
-                  <div className="empty-library">
-                    <FolderHeart size={48} strokeWidth={1.2} />
-                    <h2>No saved games yet</h2>
-                    <p>
-                      Play a game and it will be saved automatically on this
-                      device.
-                    </p>
-                    <button
-                      className="button primary"
-                      onClick={() => navigate("play")}
-                    >
-                      Let’s play <ArrowRight size={16} />
-                    </button>
-                  </div>
-                )}
-                {archive.length > 0 &&
-                  !archive.some((g) =>
-                    g.title.toLowerCase().includes(gameSearch.toLowerCase()),
-                  ) && (
-                    <div className="empty-library">
-                      <Search size={32} />
-                      <h3>No games match that search.</h3>
-                    </div>
-                  )}
-              </div>
-              <p className="privacy-footer">
-                <ShieldCheck size={15} /> Saved in this browser on this device.
-                Export your PGN files to keep a backup.
-              </p>
-            </div>
+            <ReviewLibrary
+              games={archive}
+              onReview={(record) => {
+                setReviewRequest(record.id);
+                imported({
+                  ...record,
+                  mode: "analysis",
+                  started: true,
+                  time: { base: 0, increment: 0 },
+                });
+              }}
+              onResume={resumeGame}
+              onImport={() => setModal("import")}
+              onExport={exportPgn}
+              onDelete={(record) => {
+                const next = archive.filter((item) => item.id !== record.id);
+                if (!writeStore("games", next)) {
+                  notify(
+                    "Could not remove the game. Device storage is unavailable.",
+                  );
+                  return;
+                }
+                setArchive(next);
+                removeStoredReview(record.id);
+                notify("Game removed from your library.");
+              }}
+              onPlay={() => navigate("play")}
+            />
           )}
           {page === "settings" && (
             <div className="settings-layout">
@@ -3145,6 +3118,34 @@ export default function App() {
           />
         </Modal>
       )}
+      <nav className="mobile-bottom-nav" aria-label="Quick navigation">
+        {(
+          [
+            { id: "play", label: "Play", icon: Play },
+            { id: "games", label: "Review", icon: Activity },
+            { id: "puzzles", label: "Puzzles", icon: Puzzle },
+            { id: "quiz", label: "Quiz", icon: CircleHelp },
+          ] as const
+        ).map((item) => (
+          <button
+            key={item.id}
+            aria-current={page === item.id ? "page" : undefined}
+            className={page === item.id ? "active" : ""}
+            onClick={() => navigate(item.id)}
+          >
+            <item.icon size={21} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+        <button
+          aria-expanded={mobileNav}
+          aria-controls="primary-navigation"
+          onClick={() => setMobileNav(!mobileNav)}
+        >
+          <Menu size={21} />
+          <span>More</span>
+        </button>
+      </nav>
       {modal === "import" && (
         <ImportDialog onClose={closeModal} onImport={imported} />
       )}
@@ -3179,7 +3180,7 @@ export default function App() {
         <Modal title="Leave your Wi-Fi game?" onClose={closeModal}>
           <p>
             Your opponent will win if you leave this active game. You can review
-            it afterward in My games.
+            it afterward in Game Review.
           </p>
           <div className="dialog-actions">
             <button className="button secondary" onClick={closeModal}>

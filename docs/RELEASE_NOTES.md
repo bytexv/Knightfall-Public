@@ -1,6 +1,14 @@
-# Knightfall 1.6.0
+# Knightfall 1.7.0
 
 An independent chess studio for web, Windows and Android. Local play, analysis and learning run on your device.
+
+## New in 1.7.0
+
+- **Game Review** replaces My games with a complete, searchable saved-game library. Filter reviewed, unreviewed or finished games; sort by date or your accuracy; access every saved record with pagination. Each reviewed game shows separate White and Black accuracy estimates.
+- Completing a local engine review now saves its accuracy and detailed move annotations. The latest twelve detailed reviews reopen immediately, while summaries remain for up to 200 games. Continuing or editing a game invalidates its old scores. Unreviewed and insufficiently evaluated games never receive fabricated percentages.
+- **Chess Quiz** adds 40 questions across rules, strategy, endgames and nine interactive checkmate boards. Choose a five- or ten-question session, see explanations after each answer, resume unfinished quizzes and practice missed questions. Quiz scores do not affect Local Elo.
+- A charcoal sidebar, green actions, neutral cards and Sage as the default board give the app a more familiar chess-club layout. Existing board preferences are preserved. Navigation groups Play, Improve and Practice, with clear current-page markers, browser Back/Forward support and a mobile bottom bar. The mobile menu supports Escape, focus trapping and returning focus to its opener.
+- Existing local engines, 30 bots, learning modes, LAN play and updates remain available. Accuracy is Knightfall’s transparent local move-quality estimate, not Chess.com’s proprietary score or an official rating.
 
 ## New in 1.6.0
 
@@ -86,9 +94,9 @@ Tactics Sprint offers 3-minute, 5-minute and untimed Survival modes with three l
 
 ## Install
 
-**Windows:** Install `Knightfall-1.6.0-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.6.0-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
+**Windows:** Install `Knightfall-1.7.0-Windows-Setup.exe` on 64-bit Windows 10/11 for automatic updates. `Knightfall-1.7.0-Windows-x64.exe` is the optional portable edition. Both are unsigned development builds; Windows may display an unknown-publisher prompt. No separate Node.js installation is needed.
 
-**Android:** Open `Knightfall-1.6.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
+**Android:** Open `Knightfall-1.7.0-Android.apk` on the phone and allow installation from that file/download app when prompted. This APK uses a debug signing key and is not a Play Store release. Android 6.0 or newer is targeted; keep Android System WebView updated where possible.
 
 **Web:** Use the private web link supplied with the release. The hosting provider may require sign-in. Chrome/Edge can install the app from their menu; on iPhone, use Safari **Share → Add to Home Screen**. Keep the first online load open while offline assets finish caching.
 

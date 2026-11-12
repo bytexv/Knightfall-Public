@@ -2,6 +2,14 @@
 
 Knightfall's move labels and percentages are local training heuristics. They are not chess.com's classification algorithm, an official accuracy metric, or a calibrated rating measurement. The engine searches on the device; the review has no external analysis service.
 
+## Game Review library (1.7)
+
+Game Review lists every game still in the device's archive, up to 200 saved games, with search, status filters, date/accuracy sorting and pagination. White and Black accuracy are the same per-color quality calculation used in the review summary below. Unreviewed games say “Not reviewed”; a dash means the review has no sufficiently evaluated independent decisions for that side. The average uses the saved player color and only games with an available score.
+
+Review starts local analysis directly from a game row. A complete review persists its summary; the latest twelve detailed reviews are also cached within a 1.5-million-character budget. Reopening a cached game restores its move classifications and suggested lines. Older detailed results can be recalculated; their accuracy summaries remain. A changed starting position or move sequence invalidates the previous review even if the number of moves is unchanged. Partial or interrupted reviews do not become completed archive scores. Existing game modes, results and clocks are retained when reviewing an unchanged record.
+
+These caches are local to the app/browser and are currently separate from the JSON game backup. Storage failures are reported in the review panel. Export games as PGN or a backup so they can be reviewed again if device data is removed.
+
 ## Move classifications
 
 Scores use White's perspective internally. Loss is converted to the moving player's perspective, with evaluations bounded to ±15 pawns to keep forced-mate sentinels from producing enormous losses. The engine's preferred move is not penalized when consecutive short searches disagree. Keeping a forced mate for the same side does not lose evaluation merely because the mate distance changes.

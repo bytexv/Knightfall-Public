@@ -18,7 +18,10 @@ This inventory describes the implemented application and distinguishes its local
 | Replay | Move list and first/previous/next/last navigation |
 | Board annotations | Temporary right-drag arrows and right-click square marks; Shift/Alt select alternate arrow colors; Escape clears them |
 | Focus view | A board-focused layout available from the board toolbar |
-| Persistence | Local games saved on the device; unfinished bot/shared-screen games can be resumed from My games |
+| Persistence | Local games saved on the device; unfinished bot/shared-screen games can be resumed from Game Review |
+| Game Review library | All saved games, player search, status filters, date/accuracy sorting, separate White and Black accuracy after local analysis, persisted summaries and recent detailed reviews |
+| Chess Quiz | 40 rule, strategy, endgame and tactical questions; five/ten-question sessions, board explanations, saved progress and missed-question retries |
+| Navigation | Grouped sidebar, mobile bottom navigation, accessible menu, current-page markers, Back/Forward navigation and remembered page on reload |
 | Casual-game pause | Bot/shared-screen play pauses when browsing another app section or reloading; LAN clocks continue on the host |
 
 Difficulty labels are not calibrated Elo ratings. Two people playing on the same screen should agree before accepting a draw. Hints and takebacks are disabled in Wi-Fi games.

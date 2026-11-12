@@ -20,6 +20,7 @@ beforeEach(() => {
   dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { url: 'http://localhost/' });
   globalThis.window = dom.window;
   globalThis.document = dom.window.document;
+  globalThis.localStorage = dom.window.localStorage;
   globalThis.HTMLElement = dom.window.HTMLElement;
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   jobs = []; engines = new Set(); destroyed = new Set(); evaluations = [];
@@ -44,6 +45,7 @@ afterEach(async () => {
   dom.window.close();
   delete globalThis.window; delete globalThis.document; delete globalThis.HTMLElement;
   delete globalThis.IS_REACT_ACT_ENVIRONMENT;
+  delete globalThis.localStorage;
 });
 
 function props(game, fen = game.fen, overrides = {}) {
@@ -332,4 +334,36 @@ test('completed review opens totals once and lets the player enter step-by-step 
   await render(game, game.startFen, {activeIndex:-1}); assert.equal(host.querySelector('[role="dialog"]'), null);
   await click('Summary'); assert.ok(host.querySelector('[role="dialog"]'));
   await render({...game,id:'another-game'}); assert.equal(host.querySelector('[role="dialog"]'),null);
+});
+
+
+test('completed reviews survive unmount and a library request avoids redundant engine work', async () => {
+  const game = sampleGame();
+  await render(game);
+  await completeReview(game);
+  const summaries = JSON.parse(localStorage.getItem('knightfall:review-summaries-v1'));
+  assert.equal(summaries[0].gameId, game.id);
+  assert.equal(JSON.parse(localStorage.getItem('knightfall:games'))[0].id, game.id);
+  await act(async () => root.unmount()); root = createRoot(host);
+  const count = jobs.length;
+  let handled = 0;
+  await render(game, game.fen, { autoReview: true, onReviewRequestHandled: () => handled++ });
+  assert.equal(handled, 1);
+  assert.equal(jobs.length, count, 'a saved complete review does not start another search');
+  assert.ok(host.textContent.includes('Summary'));
+});
+
+test('a library review request starts once and an interrupted review never persists completed scores', async () => {
+  const game = sampleGame();
+  let handled = 0;
+  await render(game, game.fen, { autoReview: true, onReviewRequestHandled: () => handled++ });
+  assert.equal(handled, 1);
+  assert.equal(pending().length, 1);
+  const before = jobs.length;
+  await render(game, game.fen, { autoReview: false });
+  assert.equal(jobs.length, before);
+  await settle(pending().at(-1), result(0));
+  await settle(pending().at(-1), result(0, { bestMove: 'e7e5' }));
+  await click('Stop');
+  assert.equal(localStorage.getItem('knightfall:review-summaries-v1'), null);
 });

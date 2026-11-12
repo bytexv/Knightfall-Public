@@ -1,3 +1,5 @@
+import { readSavedReview, storeReview } from "../lib/review-store";
+import { saveGame } from "../lib/storage";
 import {
   Activity,
   ArrowLeft,
@@ -30,6 +32,8 @@ import { Modal } from "./Dialogs";
 export type { MoveReview } from "../lib/review";
 
 export type AnalysisPanelProps = {
+  autoReview?: boolean;
+  onReviewRequestHandled?: () => void;
   engineMode?: "lite" | "full";
   engineThreads?: number;
   searchTime?: number;
@@ -109,6 +113,8 @@ function QualityBadge({
 }
 
 export default function AnalysisPanel({
+  autoReview = false,
+  onReviewRequestHandled,
   ratingContext,
   engineMode = "lite",
   engineThreads = 2,
@@ -149,6 +155,7 @@ export default function AnalysisPanel({
     message: string;
   } | null>(null);
   const [depth, setDepth] = useState(engineMode === "full" ? 24 : 16);
+  const [storageMessage, setStorageMessage] = useState("");
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summarySection, setSummarySection] = useState<"totals" | "phases">(
     "totals",
@@ -172,9 +179,19 @@ export default function AnalysisPanel({
   const liveKey = `${engineMode}:${engineThreads}:${searchTime}:${depth}:${fen}`;
   const latest = useRef({ fen, gameKey, liveKey, tab });
   latest.current = { fen, gameKey, liveKey, tab };
-  const [reviewState, setReviewState] = useState<ReviewState>(() =>
-    emptyReview(gameKey),
-  );
+  function restoredReview(): ReviewState {
+    const saved = readSavedReview(game);
+    return saved
+      ? {
+          ...emptyReview(gameKey),
+          status: "complete",
+          list: saved.list,
+          total: saved.list.length,
+          depth: saved.summary.depth,
+        }
+      : emptyReview(gameKey);
+  }
+  const [reviewState, setReviewState] = useState<ReviewState>(restoredReview);
   const currentReview = useMemo(
     () => (reviewState.key === gameKey ? reviewState : emptyReview(gameKey)),
     [reviewState, gameKey],
@@ -230,7 +247,8 @@ export default function AnalysisPanel({
     setSummaryOpen(false);
     reviewToken.current++;
     reviewEngine.current?.cancel();
-    const cached = reviewCache.current.get(gameKey);
+    setStorageMessage("");
+    const cached = reviewCache.current.get(gameKey) || restoredReview();
     setReviewState(
       cached
         ? {
@@ -240,6 +258,12 @@ export default function AnalysisPanel({
         : emptyReview(gameKey),
     );
   }, [gameKey]);
+
+  useEffect(() => {
+    if (!autoReview) return;
+    onReviewRequestHandled?.();
+    if (!readSavedReview(game) && game.moves.length) void review();
+  }, [autoReview, gameKey]);
 
   useEffect(() => {
     callbacks.current.onActiveReview?.(selectedReview);
@@ -360,6 +384,15 @@ export default function AnalysisPanel({
       }
       if (isCurrent()) {
         saveReview(nextState("complete"));
+        const gameSaved = saveGame(game);
+        const persisted = storeReview(game, list, depth);
+        setStorageMessage(
+          !gameSaved || !persisted.summarySaved
+            ? "Review finished, but device storage could not save it. Export your games before closing."
+            : !persisted.detailsSaved
+              ? "Accuracy saved. The detailed review could not be stored; you may need to run it again after leaving."
+              : "",
+        );
         setSummarySection("totals");
         setSummaryOpen(true);
         callbacks.current.onReviewSelect(
@@ -651,6 +684,11 @@ export default function AnalysisPanel({
             aria-labelledby="analysis-tab-review"
             className="review-workspace"
           >
+            {storageMessage && (
+              <p role="status" className="review-estimate-note">
+                {storageMessage}
+              </p>
+            )}
             <div className="review-topline">
               <h2>Game review</h2>
               {currentReview.status === "complete" && (

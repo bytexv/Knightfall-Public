@@ -26,7 +26,7 @@ export interface Settings {
   botTime: number;
 }
 export const defaultSettings: Settings = {
-  boardTheme: "walnut",
+  boardTheme: "sage",
   sound: true,
   coordinates: true,
   legalMoves: true,
@@ -280,9 +280,38 @@ export function saveGame(game: GameSession) {
     (!valid.moves.length && valid.mode !== "analysis" && !valid.initialComment)
   )
     return false;
+  const previous = savedGames();
+  const original = previous.find((saved) => saved.id === valid.id);
+  // Reviewing an unchanged game must retain its original mode, clock and result.
+  const sameLine =
+    original &&
+    original.startFen === valid.startFen &&
+    original.moves.length === valid.moves.length &&
+    original.moves.every(
+      (move, i) =>
+        move.from === valid.moves[i].from &&
+        move.to === valid.moves[i].to &&
+        move.promotion === valid.moves[i].promotion,
+    );
+  const stored =
+    valid.mode === "analysis" &&
+    original &&
+    original.mode !== "analysis" &&
+    sameLine
+      ? {
+          ...valid,
+          mode: original.mode,
+          started: original.started,
+          time: original.time,
+          clocks: original.clocks,
+          result: original.result,
+          playerColor: original.playerColor,
+          botId: original.botId,
+        }
+      : valid;
   const games = [
-    valid,
-    ...savedGames().filter((saved) => saved.id !== valid.id),
+    stored,
+    ...previous.filter((saved) => saved.id !== valid.id),
   ].slice(0, MAX_GAMES);
   const saved = writeStore("games", games);
   if (saved) {

@@ -268,6 +268,7 @@ async function runAcceptance({ window, app, outputDir }) {
     if (process.argv.includes("--updates-only") && name !== "native-update-notifications-and-controls") return;
     if (process.argv.includes("--learning-only") && !["guided-beginner-course", "guided-game-and-coach-practice", "opening-coach-both-sides-and-alien-eyes", "alien-gambit-pieces-audio-and-settings"].includes(name)) return;
     if (process.argv.includes("--bots-only") && name !== "expanded-bot-roster-and-real-replies") return;
+    if (process.argv.includes("--review-quiz-only") && name !== "review-library-quiz-and-navigation") return;
     currentStep = name;
     const started = Date.now();
     const detail = await action();
@@ -286,7 +287,7 @@ async function runAcceptance({ window, app, outputDir }) {
       });
       window.webContents.reload();
     });
-    await poll("!!document.querySelector('.chessboard')", "reloaded local app");
+    await poll("!!document.querySelector('.app-shell')", "reloaded local app");
     await observeEngine();
   };
 
@@ -370,6 +371,8 @@ async function runAcceptance({ window, app, outputDir }) {
         "Leaving the board did not save the paused local game",
       );
       await reloadLocalApp();
+      check(await evaluate("location.hash==='#settings'"), "Reload lost the settings route");
+      await navigate("Play chess");
       check(
         await evaluate(
           "document.querySelector('.page-heading h1')?.textContent==='Alex’s board'&&document.querySelector('.profile-avatar')?.textContent.trim()==='AL'",
@@ -1220,6 +1223,93 @@ async function runAcceptance({ window, app, outputDir }) {
         archiveAfter,
         realEngineAfterReload: true,
       };
+    });
+
+    await step("review-library-quiz-and-navigation", async () => {
+      window.showInactive(); await wait(400);
+      window.setContentSize(1440, 980);
+      await navigate("Play chess");
+      await clickText("New game", ".page-heading button");
+      await clickText("Pass & play");
+      await evaluate("[...document.querySelectorAll('[role=dialog] .time-picker button')].find(b=>b.textContent.includes('∞')).click()");
+      await clickText("Start local game");
+      for (const [from,to] of [["f2","f3"],["e7","e5"],["g2","g4"],["d8","h4"]]) await boardMove(from,to);
+      const played = await game();
+      check(played.result?.winner === "b", "Review fixture must be an actual completed game");
+      await navigate("Game Review");
+      check(await evaluate(`!!document.querySelector('[data-review-game="${played.id}"] .not-reviewed')`), "Unreviewed game received invented accuracy");
+      await click(`[data-review-game="${played.id}"] .review-row-actions>.button`);
+      await poll("!!document.querySelector('.review-recap')", "automatic full-game review from library", 45000);
+      check(await evaluate(`JSON.parse(localStorage.getItem('knightfall:review-summaries-v1')).some(s=>s.gameId===${JSON.stringify(played.id)}&&s.plies===4)`), "Completed review was not saved");
+      await clickText("Review step by step");
+      await navigate("Game Review");
+      check(await evaluate(`!!document.querySelector('[data-review-game="${played.id}"] .accuracy-pair')`), "Both-side accuracy is missing after returning to the library");
+      await captureResponsive("game-review");
+      await reloadLocalApp();
+      check(await evaluate("location.hash==='#games'&&!!document.querySelector('.review-library')"), "Reload lost the selected page");
+      await click(`[data-review-game="${played.id}"] .review-row-actions>.button`);
+      await poll("document.querySelectorAll('.eval-chart button').length===4", "restored detailed review");
+      check(await evaluate("!document.querySelector('[aria-label=\"Game review progress\"]')"), "Saved review unnecessarily restarted the engine");
+      await navigate("Game Review");
+      await navigate("Chess Quiz");
+      await evaluate("history.back()");
+      await poll("!!document.querySelector('.review-library')", "Back returns to Game Review");
+      await evaluate("history.forward()");
+      await poll("!!document.querySelector('.quiz-hub')", "Forward returns to Chess Quiz");
+      await captureResponsive("chess-quiz");
+      await fill('[aria-label="Quiz topic"]', "Tactics");
+      await click(".quiz-mode-cards button:first-child");
+      const tacticalFixtures = await dataFixture("src/data/puzzles.ts", "export const puzzles: Puzzle[] =");
+      const answerTactical = async (correct) => {
+        const id=await evaluate("(() => {const run=JSON.parse(localStorage.getItem('knightfall:quiz-run-v1'));return run.ids[run.index].replace(/^mate-/, '');})()");
+        const puzzle=tacticalFixtures.find(p=>p.id===id);
+        check(!!puzzle, "Tactical question lacks a verified source position");
+        const chess=new Chess(puzzle.fen), uci=puzzle.solution[0];
+        const answer=chess.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]}).san.replace(/[+#]$/, '');
+        await evaluate(`(() => {const buttons=[...document.querySelectorAll('.quiz-choices button')];if(buttons.some(b=>b.textContent.includes('#')))throw new Error('Mate notation gives the answer away');const button=buttons.find(b=>(b.querySelector('span:nth-child(2)').textContent===${JSON.stringify(answer)})===${correct});if(!button)throw new Error('Missing tactical answer');button.click();})()`);
+      };
+      // One legal non-mating answer, then four correct solutions.
+      await answerTactical(false);
+      check(await evaluate("!!document.querySelector('.quiz-feedback.quiz-wrong')"), "Incorrect answer lacks teaching feedback");
+      await clickText("Show the checkmate");
+      await captureResponsive("quiz-explanation");
+      await clickText("Reset position");
+      await clickText("Save & leave quiz");
+      await clickText("Resume quiz");
+      const quizId = await evaluate("JSON.parse(localStorage.getItem('knightfall:quiz-run-v1')).id");
+      await reloadLocalApp();
+      check(await evaluate(`JSON.parse(localStorage.getItem('knightfall:quiz-run-v1')).id===${JSON.stringify(quizId)}&&!!document.querySelector('.quiz-feedback.quiz-wrong')`), "Quiz restart lost the first answer");
+      await clickText("Next question");
+      for (let i=1;i<5;i++) {
+        await answerTactical(true);
+        await clickText(i === 4 ? "See my results" : "Next question");
+      }
+      check(await evaluate("document.querySelector('.quiz-final-score')?.textContent.replace(/\\s/g,'')==='4/5'"), "Quiz score is wrong");
+      await captureResponsive("quiz-results");
+      await clickText("Practice mistakes");
+      check(await evaluate("JSON.parse(localStorage.getItem('knightfall:quiz-run-v1')).ids.length===1"), "Practice mistakes included correctly answered questions");
+      await answerTactical(true);
+      await clickText("See my results");
+      check(await evaluate("JSON.parse(localStorage.getItem('knightfall:quiz-progress-v1')).mistakes.length===0"), "Correct retry did not clear the missed question");
+      for (const width of [390,320]) {
+        window.setContentSize(width,844); await wait(200);
+        await click('.mobile-bottom-nav button:first-child');
+        check(await evaluate("!!document.querySelector('.chessboard')"), "Mobile Play navigation did not restore a playable page");
+        await click('.mobile-bottom-nav button:last-child');
+        await wait(300); // Wait for the drawer transition before visual inspection.
+        check(await evaluate("document.querySelector('.sidebar').getAttribute('aria-modal')==='true'&&document.querySelector('.sidebar').contains(document.activeElement)"), "Mobile drawer needs modal focus");
+        await inspectLayout();
+        await fs.writeFile(path.join(outputDir,`mobile-navigation-${width}.png`),(await window.webContents.capturePage()).toPNG());
+        window.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});
+        window.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});
+        await poll("!document.querySelector('.sidebar.is-open')", "Escape closes navigation");
+        check(await evaluate("document.body.style.overflow!=='hidden'"), "Closing navigation did not restore scrolling");
+        await click('.mobile-bottom-nav button:nth-child(2)'); await inspectLayout();
+        await fs.writeFile(path.join(outputDir,`game-review-${width}-narrow.png`),(await window.webContents.capturePage()).toPNG());
+      }
+      window.setContentSize(1440,980);
+      await navigate("Play chess");
+      return { reviewedPlies:4, persistedSummary:true, restoredDetails:true, quizQuestions:5, firstScore:4, missedQuestionRetried:true, backForward:true, narrowWidths:[390,320] };
     });
 
     await step("expanded-bot-roster-and-real-replies", async () => {

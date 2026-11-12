@@ -432,6 +432,31 @@ async function remount() {
 }
 const beforeMate = ["e2e4", "e7e5", "f1c4", "b8c6", "d1h5", "g8f6"];
 
+test("grouped navigation supports review and quiz routes, browser history and mobile dismissal", async () => {
+  await render();
+  assert.equal(host.querySelectorAll('.nav-group').length, 3);
+  await clickLabel('Game Review');
+  assert.equal(window.location.hash, '#games');
+  assert.ok(host.querySelector('.review-library'));
+  await clickLabel('Chess Quiz');
+  assert.equal(window.location.hash, '#quiz');
+  assert.ok(host.querySelector('.quiz-hub'));
+  await act(async () => { window.history.back(); await new Promise(resolve => setTimeout(resolve, 30)); });
+  assert.equal(window.location.hash, '#games');
+  assert.ok(host.querySelector('.review-library'));
+  await act(async () => { window.history.forward(); await new Promise(resolve => setTimeout(resolve, 30)); });
+  assert.ok(host.querySelector('.quiz-hub'));
+  assert.equal(host.querySelector('.nav-item[aria-current="page"]').getAttribute('aria-label'), 'Chess Quiz');
+  await clickLabel('Open navigation');
+  assert.equal(host.querySelector('.sidebar').getAttribute('aria-modal'), 'true');
+  assert.equal(document.body.style.overflow, 'hidden');
+  await act(async () => document.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key:'Escape', bubbles:true })));
+  assert.equal(host.querySelector('.sidebar').getAttribute('aria-modal'), null);
+  assert.equal(document.body.style.overflow, '');
+  await remount(); await render();
+  assert.ok(host.querySelector('.quiz-hub'), 'reloading retains the selected quiz route');
+});
+
 test("a timeout discovered by navigation records the terminal bot result before pausing or opening analysis", async (t) => {
   let now = 1000;
   t.mock.method(performance, "now", () => now);
@@ -439,6 +464,7 @@ test("a timeout discovered by navigation records the terminal bot result before 
     if (destination === "Analysis") {
       await remount();
       localStorage.clear();
+      window.history.replaceState(null, "", "#play");
       now = 2000;
     }
     const fixture = ratedPosition(["e2e4", "e7e5"], {
@@ -524,7 +550,7 @@ test("hint and analysis assistance survive saving and resuming, so the eventual 
       ).find((game) => game.id === fixture.game.id);
       assert.deepEqual(archived.rating.assistance, ["analysis"]);
       assert.equal(archived.mode, "bot");
-      await clickText("My games");
+      await clickText("Game Review");
       await clickLabel(`Resume ${fixture.game.title}`);
     }
     assert.deepEqual(
