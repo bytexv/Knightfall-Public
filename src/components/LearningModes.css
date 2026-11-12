@@ -167,3 +167,33 @@
     margin-bottom: 14px;
   }
 }
+.opening-coach-intro {
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 18px;
+}
+.opening-coach-intro > p {
+  line-height: 1.65;
+  margin-top: 0;
+}
+.opening-coach-intro > small {
+  display: block;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.coach-side-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 12px;
+}
+.coach-side-options .button[aria-pressed="true"] {
+  background: #934526;
+  color: #fff;
+  border-color: #934526;
+}
+
+.opening-coach-intro .fine-print {
+  font-size: 12px;
+  line-height: 1.6;
+}

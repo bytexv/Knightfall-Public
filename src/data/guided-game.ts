@@ -1,4 +1,4 @@
-import { Chess, type Move } from "chess.js";
+import { Chess, type Move, type Color } from "chess.js";
 export const guidedOpening = [
   {
     move: "e4",
@@ -57,9 +57,9 @@ export function learningPosition(moves: readonly string[]) {
   for (const move of moves) board.move(move);
   return board;
 }
-export function learningGoal(board: Chess) {
+export function learningGoal(board: Chess, playerColor: Color = "w") {
   if (board.isCheckmate())
-    return board.turn() === "w"
+    return board.turn() === playerColor
       ? "The bot delivered checkmate. Take back a turn to find a safer defense, or start again."
       : "Checkmate—you won! The king has no legal escape.";
   if (board.isStalemate())
@@ -72,7 +72,10 @@ export function learningGoal(board: Chess) {
     return "Look for a useful center move, develop a knight or bishop, and prepare to castle. Check what the bot threatens first.";
   return "Check the bot’s threats. Look at your checks, captures, and threats, then make sure your intended piece will be safe.";
 }
-export function explainLearningMove(move: Move, who: "You" | "The bot") {
+export function explainLearningMove(
+  move: Move,
+  who: "You" | "The bot" | "White" | "Black",
+) {
   const names = {
     p: "pawn",
     n: "knight",

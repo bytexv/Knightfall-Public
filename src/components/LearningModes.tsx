@@ -1,3 +1,10 @@
+import {
+  italianLesson,
+  previousPlayerTurn,
+  type GuidedLesson,
+} from "../data/opening-coach";
+import { playedAlienGambit } from "../lib/alien-gambit";
+import { AlienAudio } from "./AlienAudio";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -9,9 +16,8 @@ import {
   RotateCcw,
   Undo2,
 } from "lucide-react";
-import { Chess } from "chess.js";
+import { Chess, type Color } from "chess.js";
 import {
-  guidedOpening,
   learningPosition,
   learningGoal,
   explainLearningMove,
@@ -23,7 +29,15 @@ import { Modal } from "./Dialogs";
 import "./LearningModes.css";
 type Mode = "guided" | "practice";
 const progressKey = "knightfall:guided-opening";
-export function LearningModes({ onBasics }: { onBasics: () => void }) {
+export function LearningModes({
+  onBasics,
+  alienEnabled,
+  alienAudioEnabled,
+}: {
+  onBasics: () => void;
+  alienEnabled?: boolean;
+  alienAudioEnabled?: boolean;
+}) {
   const [mode, setMode] = useState<Mode | null>(null);
   const [round, setRound] = useState(0);
   const [completed, setCompleted] = useState(() => {
@@ -115,6 +129,8 @@ export function LearningModes({ onBasics }: { onBasics: () => void }) {
           <CoachBoard
             key={round}
             initialMode={mode}
+            alienEnabled={alienEnabled}
+            alienAudioEnabled={alienAudioEnabled}
             onComplete={complete}
             onPractice={() => setMode("practice")}
             onRestart={() => setRound((r) => r + 1)}
@@ -126,11 +142,19 @@ export function LearningModes({ onBasics }: { onBasics: () => void }) {
 }
 export function CoachBoard({
   initialMode,
+  lesson = italianLesson,
+  playerColor = "w",
+  alienEnabled = false,
+  alienAudioEnabled = false,
   onComplete,
   onPractice,
   onRestart,
 }: {
   initialMode: Mode;
+  lesson?: GuidedLesson;
+  playerColor?: Color;
+  alienEnabled?: boolean;
+  alienAudioEnabled?: boolean;
   onComplete: () => void;
   onPractice?: () => void;
   onRestart: () => void;
@@ -152,10 +176,18 @@ export function CoachBoard({
   const generation = useRef(0),
     hintRequest = useRef(0),
     locked = useRef(false);
-  const step = Math.floor(moves.length / 2);
-  const completed = mode === "guided" && step >= guidedOpening.length;
-  const blackToMove = board.turn() === "b" && !board.isGameOver();
-  const current = guidedOpening[Math.min(step, guidedOpening.length - 1)];
+  const [alienUnlocked, setAlienUnlocked] = useState(false);
+  const [sessionId] = useState(() => globalThis.crypto?.randomUUID?.() || `coach-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const step = moves.filter(
+    (_, i) => i % 2 === (playerColor === "w" ? 0 : 1),
+  ).length;
+  const totalSteps = lesson.plies.filter(
+    (ply) => ply.color === playerColor,
+  ).length;
+  const completed = mode === "guided" && moves.length >= lesson.plies.length;
+  const botToMove = board.turn() !== playerColor && !board.isGameOver();
+  const current = lesson.plies[Math.min(moves.length, lesson.plies.length - 1)];
+  const canUndo = moves.some((_, i) => i % 2 === (playerColor === "w" ? 0 : 1));
   useEffect(() => {
     const player = new LocalEngine({
         mode: "lite",
@@ -182,7 +214,7 @@ export function CoachBoard({
   }, [moves, mode]);
   useEffect(() => {
     const ticket = ++generation.current;
-    if (!blackToMove || paused || completed || error) return;
+    if (!botToMove || paused || completed || error) return;
     let active = true;
     const before = board.fen();
     const reply = (uciOrSan: string) => {
@@ -213,7 +245,7 @@ export function CoachBoard({
     const timer = setTimeout(
       () => {
         if (mode === "guided") {
-          reply(current.reply);
+          reply(current.san);
           return;
         }
         void bot.current
@@ -242,16 +274,18 @@ export function CoachBoard({
       clearTimeout(timer);
       bot.current?.cancel();
     };
-  }, [moves, mode, paused, completed, blackToMove, error, attempt]);
+  }, [moves, mode, paused, completed, botToMove, error, attempt]);
   const lastPair = useMemo(() => {
     const played = board.history({ verbose: true });
-    return played.slice(-(played.length % 2 === 0 ? 2 : 1));
-  }, [board]);
+    let start = played.length - 1;
+    while (start >= 0 && played[start].color !== playerColor) start--;
+    return played.slice(Math.max(0, start));
+  }, [board, playerColor]);
   const hintMove = async () => {
-    if (blackToMove || board.isGameOver() || completed) return;
+    if (botToMove || board.isGameOver() || completed) return;
     if (mode === "guided") {
       const next = learningPosition(moves);
-      const move = next.move(current.move);
+      const move = next.move(current.san);
       setHint({ from: move.from, to: move.to });
       setFeedback(`${current.goal} ${current.why}`);
       return;
@@ -298,10 +332,7 @@ export function CoachBoard({
     hintRequest.current++;
     bot.current?.cancel();
     coach.current?.cancel();
-    const next = moves.slice(
-      0,
-      Math.max(0, moves.length - (moves.length % 2 ? 1 : 2)),
-    );
+    const next = previousPlayerTurn(moves, playerColor);
     boardRef.current = learningPosition(next);
     locked.current = false;
     setMoves(next);
@@ -312,6 +343,11 @@ export function CoachBoard({
   };
   return (
     <div className="coach-game">
+      <AlienAudio
+        gameId={sessionId}
+        active={alienEnabled && alienUnlocked}
+        enabled={alienAudioEnabled}
+      />
       <div className="coach-status">
         <span>
           <Bot size={16} />{" "}
@@ -319,21 +355,23 @@ export function CoachBoard({
             ? "Teaching bot · follows this lesson"
             : `Beginner bot · ${engineName}`}
         </span>
-        <span>YOU PLAY WHITE · UNTIMED · UNRATED</span>
+        <span>
+          YOU PLAY {playerColor === "w" ? "WHITE" : "BLACK"} · UNTIMED · UNRATED
+        </span>
       </div>
       <div className="coach-layout">
         <div>
           <ChessBoard
             fen={board.fen()}
-            disabled={
-              blackToMove || board.isGameOver() || completed || hintBusy
-            }
+            orientation={playerColor}
+            alienTheme={alienEnabled && alienUnlocked}
+            disabled={botToMove || board.isGameOver() || completed || hintBusy}
             arrows={hint ? [hint] : []}
             lastMove={board.history({ verbose: true }).at(-1)}
             onMove={(from, to, promotion) => {
               if (
                 locked.current ||
-                boardRef.current.turn() !== "w" ||
+                boardRef.current.turn() !== playerColor ||
                 boardRef.current.isGameOver() ||
                 completed ||
                 hintBusy
@@ -342,12 +380,20 @@ export function CoachBoard({
               try {
                 const next = learningPosition(moves),
                   move = next.move({ from, to, promotion });
-                if (mode === "guided" && move.san !== current.move) {
+                if (mode === "guided" && move.san !== current.san) {
                   setFeedback(
                     `That move is legal. For this lesson, ${current.goal.charAt(0).toLowerCase() + current.goal.slice(1)} Other plans are welcome in coach practice.`,
                   );
                   return;
                 }
+                if (
+                  playerColor === "w" &&
+                  playedAlienGambit(
+                    new Chess().fen(),
+                    next.history({ verbose: true }),
+                  )
+                )
+                  setAlienUnlocked(true);
                 locked.current = true;
                 boardRef.current = next;
                 setMoves([...moves, move.san]);
@@ -363,7 +409,7 @@ export function CoachBoard({
           <div className="coach-board-actions">
             <button
               className="button secondary"
-              disabled={!moves.length}
+              disabled={!canUndo}
               onClick={undo}
             >
               <Undo2 size={15} />
@@ -384,15 +430,15 @@ export function CoachBoard({
             {completed
               ? "LESSON COMPLETE"
               : mode === "guided"
-                ? `STEP ${step + 1} OF ${guidedOpening.length}`
+                ? `STEP ${Math.min(step + 1, totalSteps)} OF ${totalSteps}`
                 : "YOUR PRACTICE GAME"}
           </span>
           <h3>
             {completed
-              ? "You built a solid opening."
+              ? "Teaching line complete."
               : board.isGameOver()
                 ? "Game finished"
-                : blackToMove
+                : botToMove
                   ? paused
                     ? "Bot paused"
                     : "The bot’s turn"
@@ -403,14 +449,14 @@ export function CoachBoard({
           {mode === "guided" && !completed && (
             <progress
               aria-label="Guided game progress"
-              max={guidedOpening.length}
+              max={totalSteps}
               value={step}
             />
           )}
           <p>
             {completed
-              ? "You claimed the center, developed your pieces, and castled. Keep playing from this position with a real local bot, or repeat the lesson."
-              : blackToMove
+              ? lesson.completion
+              : botToMove
                 ? paused
                   ? "Resume the bot when you are ready to see its reply."
                   : mode === "guided"
@@ -418,7 +464,7 @@ export function CoachBoard({
                     : "The local bot is choosing a legal reply."
                 : mode === "guided"
                   ? current.goal
-                  : learningGoal(board)}
+                  : learningGoal(board, playerColor)}
           </p>
           {mode === "guided" && !completed && (
             <p className="coach-why">
@@ -443,7 +489,7 @@ export function CoachBoard({
             <button
               className="button secondary"
               onClick={() => void hintMove()}
-              disabled={blackToMove || hintBusy}
+              disabled={botToMove || hintBusy}
             >
               <Lightbulb size={16} />
               {hintBusy ? "Finding a hint…" : "Show a hint"}
@@ -470,19 +516,13 @@ export function CoachBoard({
               lastPair.map((move, i) => (
                 <p key={`${move.before}-${move.san}`}>
                   <b>
-                    {move.color === "w" ? "You" : "Bot"} · {move.san}
+                    {move.color === playerColor ? "You" : "Bot"} · {move.san}
                   </b>
                   {mode === "guided"
-                    ? move.color === "w"
-                      ? guidedOpening[
-                          Math.floor((moves.length - lastPair.length + i) / 2)
-                        ].why
-                      : guidedOpening[
-                          Math.floor((moves.length - lastPair.length + i) / 2)
-                        ].response
+                    ? lesson.plies[moves.length - lastPair.length + i]?.why
                     : explainLearningMove(
                         move,
-                        move.color === "w" ? "You" : "The bot",
+                        move.color === playerColor ? "You" : "The bot",
                       )}
                 </p>
               ))
@@ -510,8 +550,7 @@ export function CoachBoard({
           </button>
           <p className="coach-note">
             This session stays separate from your saved match and Local Elo.
-            Closing ends this practice session; completed guided lessons stay
-            marked.
+            Closing ends this practice session.
           </p>
         </div>
       </div>

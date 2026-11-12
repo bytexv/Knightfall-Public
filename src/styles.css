@@ -1571,13 +1571,18 @@ select {
 }
 .opening-detail-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   margin-top: 20px;
 }
 .opening-detail-actions .button {
-  font-size: 9px;
+  font-size: 12px;
+}
+.opening-detail-actions .button.primary {
+  flex-basis: 100%;
+  justify-content: center;
 }
 .practice-progress {
   background: #f0ebe2;

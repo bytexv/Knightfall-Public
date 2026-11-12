@@ -26,6 +26,8 @@ type LearnHubProps = {
   onExplore: (gambit: Gambit) => void;
   onPuzzle: () => void;
   onEndgames: () => void;
+  alienEnabled?: boolean;
+  alienAudioEnabled?: boolean;
 };
 type Category = "all" | Gambit["category"] | "saved";
 const filters: { id: Category; label: string }[] = [
@@ -239,7 +241,13 @@ function LessonDialog({
   );
 }
 
-export function LearnHub({ onExplore, onPuzzle, onEndgames }: LearnHubProps) {
+export function LearnHub({
+  onExplore,
+  onPuzzle,
+  onEndgames,
+  alienEnabled,
+  alienAudioEnabled,
+}: LearnHubProps) {
   const [tab, setTab] = useState<"openings" | "lessons">("openings");
   const [category, setCategory] = useState<Category>("all");
   const [query, setQuery] = useState("");
@@ -304,7 +312,12 @@ export function LearnHub({ onExplore, onPuzzle, onEndgames }: LearnHubProps) {
           <Target size={18} /> Practice tactics <ArrowRight size={17} />
         </button>
       </header>
-      <BeginnerCourse onPractice={onPuzzle} onEndgames={onEndgames} />
+      <BeginnerCourse
+        onPractice={onPuzzle}
+        onEndgames={onEndgames}
+        alienEnabled={alienEnabled}
+        alienAudioEnabled={alienAudioEnabled}
+      />
       <div
         className="lh-tabs"
         role="tablist"

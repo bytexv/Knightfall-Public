@@ -208,3 +208,5 @@ See [Third-party notices](docs/THIRD-PARTY.md) for Stockfish, chess.js, React, E
 Learn chess offers single-move basics, a step-by-step Italian opening with teaching-bot replies, and free practice against a local beginner bot. Pause replies, request hints, take back a turn, or start again. These sessions are untimed and unrated.
 
 Performance Elo is now conservative and rating-context aware; it is withheld where the game cannot support a number. See [review methodology](docs/REVIEW.md).
+
+Opening detail screens also offer **Train with bot**: choose either color, follow the line with automatic teaching-bot replies, then continue freely against the local engine. Version 1.5.1 fixes stale alien-token artwork after desktop upgrades by using a distinct path for alien-eye pieces. No app-data reset is needed.

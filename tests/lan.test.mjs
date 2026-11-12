@@ -43,6 +43,7 @@ async function move(player,from,to,ply,promotion) {
 before(async()=>{
   directory=await mkdtemp(path.join(os.tmpdir(),'knightfall-lan-'));
   await writeFile(path.join(directory,'index.html'),'<html>Knightfall test</html>');
+  await writeFile(path.join(directory,'piece.svg'),'<svg xmlns="http://www.w3.org/2000/svg"></svg>');
   await writeFile(path.join(directory,'test.wasm'),Buffer.from([0,97,115,109]));
   host=await startLanServer({port:0,host:'127.0.0.1',staticDir:directory});
 });
@@ -53,6 +54,7 @@ test('serves health, host address and static files with safe MIME types',async()
   const health=await (await fetch(origin+'/health')).json();assert.equal(health.service,'knightfall-lan');
   const info=await (await fetch(origin+'/api/lan-info')).json();assert.equal(info.port,host.port);assert.ok(info.urls.includes(origin));
   assert.match(await (await fetch(origin+'/')).text(),/Knightfall test/);
+  assert.equal((await fetch(origin+'/piece.svg')).headers.get('cache-control'),'no-cache');
   assert.equal((await fetch(origin+'/test.wasm')).headers.get('content-type'),'application/wasm');
   assert.equal((await fetch(origin+'/health',{method:'POST'})).status,405);
   assert.equal(await new Promise((resolve,reject)=>http.get(origin+'/health',{headers:{host:`attacker.example:${host.port}`}},response=>{response.resume();resolve(response.statusCode);}).on('error',reject)),403);

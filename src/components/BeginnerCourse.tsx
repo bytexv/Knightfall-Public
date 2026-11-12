@@ -14,9 +14,13 @@ const key = "knightfall:beginner-course";
 export function BeginnerCourse({
   onPractice,
   onEndgames,
+  alienEnabled,
+  alienAudioEnabled,
 }: {
   onPractice: () => void;
   onEndgames: () => void;
+  alienEnabled?: boolean;
+  alienAudioEnabled?: boolean;
 }) {
   const [done, setDone] = useState<string[]>(() => {
     try {
@@ -45,7 +49,11 @@ export function BeginnerCourse({
   const next = beginnerExercises.findIndex((e) => !done.includes(e.id));
   return (
     <>
-      <LearningModes onBasics={() => open(Math.max(0, next))} />
+      <LearningModes
+        onBasics={() => open(Math.max(0, next))}
+        alienEnabled={alienEnabled}
+        alienAudioEnabled={alienAudioEnabled}
+      />
       <section className="beginner-path" aria-label="Your learning path">
         <div className="beginner-intro">
           <span className="lh-eyebrow">

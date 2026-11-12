@@ -191,7 +191,7 @@ export async function startLanServer({port=8787, host='0.0.0.0', staticDir=path.
       const resolved=await realpath(file);
       if(resolved!==root && !resolved.startsWith(root+path.sep)) return json(403,{error:'Forbidden path'});
       const bytes=await readFile(resolved);
-      res.writeHead(200,{'Content-Type':MIME[path.extname(resolved)] || 'application/octet-stream','Content-Length':bytes.length,'Cache-Control':path.extname(resolved)==='.html' || ['sw.js','sw-manifest.js','manifest.webmanifest'].includes(path.basename(resolved))?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'});
+      res.writeHead(200,{'Content-Type':MIME[path.extname(resolved)] || 'application/octet-stream','Content-Length':bytes.length,'Cache-Control':['.html','.svg'].includes(path.extname(resolved)) || ['sw.js','sw-manifest.js','manifest.webmanifest'].includes(path.basename(resolved))?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'});
       res.end(req.method==='HEAD'?undefined:bytes);
     } catch(error) {
       if(error.code==='ENOENT') return json(404,{error:'Knightfall web build is missing. Run npm run build before starting the host.'});

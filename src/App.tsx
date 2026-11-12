@@ -1,3 +1,4 @@
+import OpeningCoachDialog from "./components/OpeningCoachDialog";
 import { performanceContext } from "./lib/performance-context";
 import { version as appVersion } from "../package.json";
 import { AlienAudio } from "./components/AlienAudio";
@@ -231,6 +232,8 @@ export default function App() {
     | "practice"
     | null
   >(null);
+  const [openingCoach, setOpeningCoach] = useState<Gambit | null>(null);
+  const closeOpeningCoach = useCallback(() => setOpeningCoach(null), []);
   const [thinking, setThinking] = useState(false);
   const [engineName, setEngineName] = useState("Local engine");
   const botEngine = useRef<LocalEngine | null>(null);
@@ -2283,6 +2286,7 @@ export default function App() {
                         <h4>Keep in mind</h4>
                         <p>{selectedGambit.risk}</p>
                         <div className="opening-detail-actions">
+                          <button className="button primary" onClick={() => setOpeningCoach(selectedGambit)}><Play size={15}/> Train with bot</button>
                           <button
                             className="button secondary"
                             onClick={() => {
@@ -2531,6 +2535,8 @@ export default function App() {
           {page === "endgames" && <EndgameSchool onPractice={startDrill} />}
           {page === "openings" && (
             <LearnHub
+              alienEnabled={settings.alienEasterEgg}
+              alienAudioEnabled={settings.sound && settings.alienAudio}
               onEndgames={() => navigate("endgames")}
               onExplore={openGambit}
               onPuzzle={() => navigate("puzzles")}
@@ -3252,6 +3258,7 @@ export default function App() {
           </div>
         </Modal>
       )}
+      {openingCoach && <OpeningCoachDialog gambit={openingCoach} onClose={closeOpeningCoach} alienEnabled={settings.alienEasterEgg} alienAudioEnabled={settings.sound && settings.alienAudio} />}
       {modal === "help" && (
         <Modal title="Welcome to your chess space." onClose={closeModal}>
           <div className="help-list">

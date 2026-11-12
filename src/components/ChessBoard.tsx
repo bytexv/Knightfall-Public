@@ -1,3 +1,4 @@
+import { ALIEN_PIECE_DIRECTORY } from "../lib/piece-assets";
 import { Chess, type Color, type Square } from "chess.js";
 import { X } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -70,7 +71,7 @@ export default function ChessBoard({
     const controller = new BoardAnimator(
       board.current,
       pieceLayer.current,
-      alienTheme ? "pieces/alien" : "pieces",
+      alienTheme ? ALIEN_PIECE_DIRECTORY : "pieces",
     );
     animator.current = controller;
     return () => {
@@ -358,7 +359,7 @@ export default function ChessBoard({
                 <img
                   draggable={false}
                   className="chess-piece"
-                  src={`./${alienTheme ? "pieces/alien" : "pieces"}/${piece.color}${piece.type.toUpperCase()}.svg`}
+                  src={`./${alienTheme ? ALIEN_PIECE_DIRECTORY : "pieces"}/${piece.color}${piece.type.toUpperCase()}.svg`}
                   alt=""
                 />
               )}
@@ -433,7 +434,7 @@ export default function ChessBoard({
                     }}
                   >
                     <img
-                      src={`./${alienTheme ? "pieces/alien" : "pieces"}/${game.turn()}${p.toUpperCase()}.svg`}
+                      src={`./${alienTheme ? ALIEN_PIECE_DIRECTORY : "pieces"}/${game.turn()}${p.toUpperCase()}.svg`}
                       alt={names[p]}
                     />
                   </button>

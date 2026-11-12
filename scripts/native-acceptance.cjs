@@ -113,8 +113,9 @@ async function runAcceptance({ window, app, outputDir }) {
   const game = () =>
     evaluate("JSON.parse(localStorage.getItem('knightfall:current')||'null')");
   const boardMove = async (from, to, promotion) => {
-    await click(`[data-square="${from}"]`);
-    await click(`[data-square="${to}"]`);
+    const prefix = await evaluate("document.querySelector('[aria-modal=\"true\"] .chessboard') ? '[aria-modal=\"true\"] ' : ''");
+    await click(`${prefix}[data-square="${from}"]`);
+    await click(`${prefix}[data-square="${to}"]`);
     if (promotion) {
       const names = { q: "queen", r: "rook", b: "bishop", n: "knight" };
       await click(`[aria-label="Promote to ${names[promotion]}"]`);
@@ -265,7 +266,7 @@ async function runAcceptance({ window, app, outputDir }) {
   };
   const step = async (name, action) => {
     if (process.argv.includes("--updates-only") && name !== "native-update-notifications-and-controls") return;
-    if (process.argv.includes("--learning-only") && !["guided-beginner-course", "guided-game-and-coach-practice", "alien-gambit-pieces-audio-and-settings"].includes(name)) return;
+    if (process.argv.includes("--learning-only") && !["guided-beginner-course", "guided-game-and-coach-practice", "opening-coach-both-sides-and-alien-eyes", "alien-gambit-pieces-audio-and-settings"].includes(name)) return;
     currentStep = name;
     const started = Date.now();
     const detail = await action();
@@ -691,6 +692,39 @@ async function runAcceptance({ window, app, outputDir }) {
       check(await evaluate("document.querySelector('.coach-score').children.length===0"), "Old bot reply leaked into new game");
       await click('[aria-label="Close dialog"]');
       return {sixGuidedTurns:true,realBotReply:true,hint:true,pausedUndo:true,newGameCancelsOldReply:true};
+    });
+
+    await step("opening-coach-both-sides-and-alien-eyes", async () => {
+      await navigate("Learn chess");
+      await evaluate("[...document.querySelectorAll('.lh-opening-card')].find(card=>card.querySelector('h3')?.textContent==='Alien Gambit').querySelector('.lh-open-button').click()");
+      await poll("document.querySelector('.opening-detail h2')?.textContent==='Alien Gambit'","Alien opening screen");
+      await clickText("Train with bot");
+      check(await evaluate("document.querySelectorAll('.coach-game .chess-piece[src*=\"pieces/alien/\"]').length===0"),"Lesson must start with normal pieces");
+      const line=['e4','c6','d4','d5','Nc3','dxe4','Nxe4','Nf6','Ng5','h6','Nxf7','Kxf7','Nf3'];
+      const fixture=new Chess();
+      for(let i=0;i<line.length;i++){
+        const move=fixture.move(line[i]);
+        if(move.color==='w')await boardMove(move.from,move.to,move.promotion);
+        await poll(`document.querySelector('.coach-score').children.length===${i+1}`,"Alien coaching ply "+(i+1));
+        if(i===10){
+          check(await evaluate("document.querySelectorAll('.coach-game .chess-piece[src*=\"pieces/alien/eyes-v1/\"]').length>20"),"Updated eye artwork did not activate on sacrifice");
+          check(await evaluate("(async()=>{const src=document.querySelector('.coach-game .chess-piece[src*=\"pieces/alien/\"]').src;const svg=await(await fetch(src)).text();return svg.includes('class=\"alien-eyes\"')&&!svg.includes('<text');})()"),"Old token artwork remains");
+        }
+      }
+      await captureResponsive("alien-coach-completed");
+      await clickText("Keep playing with coach");
+      await poll("document.querySelector('.coach-score').children.length===14","Free bot continuation",30000);
+      await clickText("Play Black");
+      await poll("document.querySelector('.coach-score').children.length===1","Bot opens as White");
+      await boardMove('c7','c6');
+      await poll("document.querySelector('.coach-score').children.length===3","Bot replies to Black");
+      await clickText("Take back a turn");
+      check(await evaluate("document.querySelector('.coach-score').children.length===1"),"Black takeback must preserve the bot's opening move");
+      await boardMove('c7','c6');
+      await poll("document.querySelector('.coach-score').children.length===3","Black can replay after takeback");
+      await captureResponsive("opening-coach-black");
+      await click('[aria-label="Close dialog"]');
+      return {alienLineBotReplies:true,newEyeAssetVerified:true,freeBotContinuation:true,blackSideOpening:true,blackTakeback:true};
     });
 
     await step("opening-replay-and-rehearsal", async () => {
