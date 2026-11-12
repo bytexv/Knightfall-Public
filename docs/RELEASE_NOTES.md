@@ -55,7 +55,7 @@ The first automated release fixes native Windows installer source paths and remo
 
 Install the new Setup edition once to enable automatic Windows updates. Earlier 1.2 apps shipped without a repository connection and cannot discover this first connected release automatically. Keep the existing app profile; saved games and Local Elo use the same application identity.
 
-GitHub Actions builds and publishes Windows/source/web releases from stable version tags. Signed Android builds join that release only when the five repository signing secrets described in `docs/GITHUB.md` are configured. GitHub denied this session access to those secrets, so this release's compatible APK was built and signed locally instead. No keystore was uploaded.
+GitHub Actions builds and publishes Windows, Android, source and web releases from stable version tags. Android is required: the workflow either signs with the existing configured identity or verifies a locally signed candidate against its tested web build. This release uses the existing local signing identity. No keystore was uploaded.
 
 ## Included from 1.2
 

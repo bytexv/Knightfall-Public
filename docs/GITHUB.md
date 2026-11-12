@@ -15,7 +15,7 @@ git push github main
 
 If the `github` remote already exists, inspect it with `git remote -v`. Use your normal GitHub sign-in or credential helper; credentials do not belong in application files.
 
-The connected GitHub integration currently cannot manage repository signing secrets. The 1.3 Android APK is built locally with the existing development key. Configure the five signing secrets below before automating Android releases. Without them, the workflow still publishes Windows/source/web assets, explicitly omitting Android. No key or password is in the source repository.
+The connected GitHub integration cannot manage repository signing secrets. Android builds retain the existing development signing identity. Either configure the five signing secrets below or stage a locally signed candidate using [BUILDING.md](BUILDING.md). Stable releases require a verified Android APK in both cases. No key or password is in the source repository.
 
 ## What the workflows do
 
@@ -26,7 +26,7 @@ The connected GitHub integration currently cannot manage repository signing secr
 The release contains:
 
 - The Windows x64 Setup installer, its blockmap and `latest.yml` updater feed, plus the portable EXE. GitHub supports these full files without splitting.
-- An Android APK signed with the configured stable certificate, when all five signing secrets are present.
+- An Android APK signed with the existing stable certificate, supplied by repository signing secrets or a verified local candidate.
 - Web and source ZIPs, including licenses and the bundled Stockfish corresponding source.
 - Release instructions and `SHA256SUMS.txt` covering all download files.
 
