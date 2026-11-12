@@ -1,7 +1,12 @@
+import DeserterHub from "./components/DeserterHub";
+import BotDialogue from "./components/BotDialogue";
+import FinishReview from "./components/FinishReview";
+import { legalPremove, premoveTargets, type Premove } from "./lib/premove";
+import { Moon, Sun, Compass } from "lucide-react";
 import ReviewLibrary from "./components/ReviewLibrary";
 import QuizHub from "./components/QuizHub";
 import { removeStoredReview } from "./lib/review-store";
-import { defaultBot, botSearchOptions } from "./lib/bots";
+import { defaultBot, botSearchOptions, resolveBot } from "./lib/bots";
 import OpeningCoachDialog from "./components/OpeningCoachDialog";
 import { performanceContext } from "./lib/performance-context";
 import { version as appVersion } from "../package.json";
@@ -121,7 +126,8 @@ type Page =
   | "settings"
   | "endgames"
   | "challenge"
-  | "quiz";
+  | "quiz"
+  | "deserter";
 const pages = [
   { id: "play", label: "Play chess", icon: Play, group: "Play" },
   { id: "multiplayer", label: "Play with friends", icon: Wifi, group: "Play" },
@@ -130,6 +136,12 @@ const pages = [
   { id: "puzzles", label: "Puzzles", icon: Puzzle, group: "Improve" },
   { id: "quiz", label: "Chess Quiz", icon: CircleHelp, group: "Improve" },
   { id: "openings", label: "Learn chess", icon: BookOpen, group: "Improve" },
+  {
+    id: "deserter",
+    label: "Deserter practice",
+    icon: Compass,
+    group: "Practice",
+  },
   { id: "challenge", label: "Tactics Sprint", icon: Target, group: "Practice" },
   {
     id: "endgames",
@@ -141,6 +153,10 @@ const pages = [
 const validPage = (value: string): value is Page =>
   value === "settings" || pages.some((page) => page.id === value);
 const pageTitles: Record<Page, { title: string; subtitle: string }> = {
+  deserter: {
+    title: "Deserter practice",
+    subtitle: "A random position. One mission: find a way to win.",
+  },
   quiz: {
     title: "Chess Quiz",
     subtitle: "Test an idea. Learn the answer. Take it to the board.",
@@ -263,6 +279,32 @@ export default function App() {
   );
   const [mobileNav, setMobileNav] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [dark, setDark] = useState(false);
+  type QueuedMove = Premove & { gameId: string; plies: number };
+  const [premove, setPremoveState] = useState<QueuedMove | null>(null);
+  const premoveRef = useRef<QueuedMove | null>(null);
+  const clearPremove = useCallback(() => {
+    premoveRef.current = null;
+    setPremoveState(null);
+  }, []);
+  useEffect(() => {
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    const sync = () => {
+      const next =
+        settings.appearance === "dark" ||
+        (settings.appearance === "system" && !!media?.matches);
+      setDark(next);
+      document.documentElement.dataset.appearance = next ? "dark" : "light";
+      document.documentElement.style.colorScheme = next ? "dark" : "light";
+    };
+    sync();
+    if (media?.addEventListener) media.addEventListener("change", sync);
+    else media?.addListener?.(sync);
+    return () => {
+      if (media?.removeEventListener) media.removeEventListener("change", sync);
+      else media?.removeListener?.(sync);
+    };
+  }, [settings.appearance]);
   const [toast, setToast] = useState("");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [modal, setModal] = useState<
@@ -390,7 +432,7 @@ export default function App() {
   const position = preview ? explorationFen(preview) : mainPosition;
   const chess = new Chess(position);
   const atLatest = historyIndex === game.moves.length - 1;
-  const currentBot = bots.find((b) => b.id === game.botId) || defaultBot;
+  const currentBot = resolveBot(game.botId, game.customBotElo);
   const ratingEntry = ratings.history.find((entry) => entry.gameId === game.id);
   const ratingEligible =
     !!game.rating &&
@@ -404,6 +446,64 @@ export default function App() {
         "Your rating changed, but device storage is full. Export a backup before closing.",
       );
   }
+  function queuePremove(move: Premove) {
+    const current = gameRef.current,
+      actor = isLan ? lanSnapshot!.yourColor : current.playerColor;
+    if (
+      !actor ||
+      !settings.premoves ||
+      page !== "play" ||
+      !current.started ||
+      current.result ||
+      new Chess(current.fen).turn() === actor ||
+      !premoveTargets(current.fen, move.from, actor).includes(move.to)
+    )
+      return;
+    const queued = { ...move, gameId: current.id, plies: current.moves.length };
+    premoveRef.current = queued;
+    setPremoveState(queued);
+  }
+  useEffect(() => {
+    const queued = premoveRef.current;
+    if (!queued) return;
+    if (
+      page !== "play" ||
+      !settings.premoves ||
+      queued.gameId !== game.id ||
+      !game.started ||
+      game.result ||
+      modal ||
+      !atLatest ||
+      (isLan && lanConnection !== "connected") ||
+      game.moves.length < queued.plies ||
+      game.moves.length > queued.plies + 1
+    ) {
+      clearPremove();
+      return;
+    }
+    const actor = isLan ? lanSnapshot!.yourColor : game.playerColor;
+    if (
+      !actor ||
+      game.moves.length !== queued.plies + 1 ||
+      new Chess(game.fen).turn() !== actor
+    )
+      return;
+    clearPremove();
+    const move = legalPremove(game.fen, actor, queued);
+    if (move) makeMove(move.from, move.to, move.promotion);
+    else notify("Premove cancelled — it is no longer legal.");
+  }, [
+    page,
+    settings.premoves,
+    game.id,
+    game.fen,
+    game.started,
+    game.result,
+    historyIndex,
+    modal,
+    lanConnection,
+    premove,
+  ]);
   function selectReviewMove(index: number) {
     setExploration(null);
     setArrows([]);
@@ -571,7 +671,7 @@ export default function App() {
     let active = true;
     const fen = game.fen;
     setThinking(true);
-    const bot = bots.find((b) => b.id === game.botId) || defaultBot;
+    const bot = resolveBot(game.botId, game.customBotElo);
     const timer = setTimeout(() => {
       void botEngine.current
         ?.analyze(fen, botSearchOptions(bot, settings.botTime))
@@ -595,6 +695,7 @@ export default function App() {
                 0,
               ),
             ),
+            gameRef.current.customBotElo,
           );
           if (!choice) {
             setThinking(false);
@@ -646,6 +747,7 @@ export default function App() {
     game.result,
     game.playerColor,
     game.botId,
+    game.customBotElo,
     game.id,
     settings.sound,
     settings.engineMode,
@@ -811,6 +913,8 @@ export default function App() {
       color: "w" | "b" | "random";
       time: { base: number; increment: number };
       startFen?: string;
+      customBotElo?: number;
+      practiceKind?: "deserter";
     },
     confirmed = false,
   ) {
@@ -828,24 +932,30 @@ export default function App() {
       startFen: options.startFen,
       playerColor,
       botId: options.botId,
+      ...(options.botId === "adaptive"
+        ? { customBotElo: resolveBot(options.botId, options.customBotElo).elo }
+        : {}),
+      ...(options.practiceKind ? { practiceKind: options.practiceKind } : {}),
       whiteName:
         options.mode === "bot"
           ? playerColor === "w"
             ? settings.name
-            : bots.find((b) => b.id === options.botId)?.name
+            : resolveBot(options.botId, options.customBotElo).name
           : "White",
       blackName:
         options.mode === "bot"
           ? playerColor === "b"
             ? settings.name
-            : bots.find((b) => b.id === options.botId)?.name
+            : resolveBot(options.botId, options.customBotElo).name
           : "Black",
       time: options.time,
       started: true,
       title:
-        options.mode === "bot"
-          ? `You vs ${bots.find((b) => b.id === options.botId)?.name}`
-          : "Pass & play",
+        options.practiceKind === "deserter"
+          ? "Deserter · random position"
+          : options.mode === "bot"
+            ? `You vs ${resolveBot(options.botId, options.customBotElo).name}`
+            : "Pass & play",
     });
     const enrolled =
       options.mode === "bot" && !options.startFen
@@ -956,6 +1066,7 @@ export default function App() {
     if (settings.sound) playSound("end");
   }
   function makeMove(from: string, to: string, promotion = "q") {
+    clearPremove();
     if (isLan) {
       if (
         lanSnapshot.status === "playing" &&
@@ -979,6 +1090,12 @@ export default function App() {
     const current = settleClock();
     if (page !== "analysis" && (current.result || !current.started)) return;
     if (!atLatest && page !== "analysis") return;
+    if (
+      page !== "analysis" &&
+      current.mode === "bot" &&
+      new Chess(current.fen).turn() !== current.playerColor
+    )
+      return;
     if (current.mode === "puzzle" && page === "puzzles") {
       if (puzzleStatus === "solved" || puzzleStatus === "revealed") return;
       const expected = puzzle.solution[puzzlePly];
@@ -1370,14 +1487,29 @@ export default function App() {
         puzzleStatus !== "solved" &&
         puzzleStatus !== "revealed"));
   const boardEnabled = page === "analysis" ? !isLan && !thinking : canMove;
+  const canQueue =
+    page === "play" &&
+    settings.premoves &&
+    atLatest &&
+    game.started &&
+    !game.result &&
+    !modal &&
+    ((game.mode === "bot" && turn !== game.playerColor) ||
+      (isLan &&
+        lanSnapshot.status === "playing" &&
+        !!lanSnapshot.yourColor &&
+        lanSnapshot.turn !== lanSnapshot.yourColor &&
+        lanConnection === "connected"));
   const resultTitle =
     game.result?.winner === null
       ? "Draw"
       : game.result?.winner === game.playerColor && game.mode === "bot"
         ? "You won!"
-        : `${game.result?.winner === "w" ? "White" : "Black"} wins`;
+        : `${playerName(game.result?.winner === "w" ? "w" : "b")} wins`;
   return (
-    <div className={`app-shell page-${page} ${focusMode ? "focus-mode" : ""}`}>
+    <div
+      className={`app-shell page-${page} board-size-${settings.boardSize} ${focusMode ? "focus-mode" : ""}`}
+    >
       <a
         className="skip-link"
         href="#page-title"
@@ -1537,6 +1669,19 @@ export default function App() {
           </div>
           <div className="topbar-right">
             <UpdateIndicator onOpen={() => navigate("settings")} />
+            <button
+              className="icon-button appearance-toggle"
+              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+              title={dark ? "Switch to light mode" : "Switch to dark mode"}
+              onClick={() =>
+                setSettings((s) => ({
+                  ...s,
+                  appearance: dark ? "light" : "dark",
+                }))
+              }
+            >
+              {dark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <span className="on-device">
               <span className="status-dot" /> Local play
             </span>
@@ -1631,6 +1776,73 @@ export default function App() {
               className={`play-layout ${page === "analysis" ? "analysis-layout" : ""}`}
             >
               <div className="board-column">
+                {game.result &&
+                  game.mode !== "puzzle" &&
+                  page !== "analysis" && (
+                    <div className="game-result" role="status">
+                      <Trophy size={28} />
+                      <div>
+                        <h2>
+                          {game.result.reason === "Checkmate"
+                            ? "Checkmate"
+                            : game.result.winner === null
+                              ? "Draw"
+                              : "Game over"}
+                        </h2>
+                        <strong className="winner-name">{resultTitle}</strong>
+                        <p>
+                          {game.result.reason}
+                          {ratingEntry && (
+                            <span
+                              className={`result-rating ${ratingEntry.delta >= 0 ? "rating-up" : "rating-down"}`}
+                            >
+                              {" "}
+                              · Local Elo {ratingEntry.after} (
+                              {ratingEntry.delta >= 0 ? "+" : ""}
+                              {ratingEntry.delta})
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      {!isLan && (
+                        <button
+                          className="button primary"
+                          onClick={() => setModal("new")}
+                        >
+                          <Plus size={15} /> New game
+                        </button>
+                      )}
+                      {isLan ? (
+                        <button
+                          className="button primary"
+                          onClick={() => lanRef.current?.rematch()}
+                        >
+                          {lanSnapshot.rematchVotes.includes(
+                            lanSnapshot.yourColor!,
+                          )
+                            ? "Rematch requested"
+                            : "Rematch"}
+                        </button>
+                      ) : (
+                        <button
+                          className="button primary"
+                          onClick={() => {
+                            setReviewRequest(game.id);
+                            setPage("analysis");
+                            setShowSetup(false);
+                          }}
+                        >
+                          Review game <ArrowRight size={15} />
+                        </button>
+                      )}
+                      <FinishReview
+                        key={game.id}
+                        game={game}
+                        settings={settings}
+                      />
+                    </div>
+                  )}
+
                 {page === "play" && showSetup && !isLan && (
                   <div className="mobile-quick-start">
                     <button
@@ -1664,6 +1876,31 @@ export default function App() {
                     </button>
                   </div>
                 )}
+                <div className="board-size-controls">
+                  <label>
+                    Board size{" "}
+                    <select
+                      aria-label="Playing board size"
+                      value={settings.boardSize}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          boardSize: e.target.value as Settings["boardSize"],
+                        }))
+                      }
+                    >
+                      <option value="auto">Auto fit</option>
+                      <option value="large">Large</option>
+                      <option value="compact">Compact</option>
+                    </select>
+                  </label>
+                  <button
+                    className="text-button"
+                    onClick={() => setFocusMode((v) => !v)}
+                  >
+                    {focusMode ? "Exit focus view" : "Expand board"}
+                  </button>
+                </div>
                 <div className="board-meta">
                   <div className="board-mode">
                     <span className="status-dot" />
@@ -1704,6 +1941,20 @@ export default function App() {
                   enabled={settings.sound && settings.alienAudio}
                 />
                 {playerBar(topColor)}
+                {page === "play" &&
+                  game.mode === "bot" &&
+                  settings.botChat &&
+                  !showSetup && (
+                    <BotDialogue
+                      game={game}
+                      bot={currentBot}
+                      voice={settings.botVoice}
+                      sound={settings.sound}
+                      onMute={() =>
+                        setSettings((s) => ({ ...s, botChat: false }))
+                      }
+                    />
+                  )}
                 <div className="board-with-eval">
                   {page === "analysis" && (
                     <div
@@ -1729,6 +1980,16 @@ export default function App() {
                     orientation={orientation}
                     onMove={makeMove}
                     disabled={!boardEnabled}
+                    premoveColor={
+                      canQueue
+                        ? isLan
+                          ? lanSnapshot.yourColor!
+                          : game.playerColor
+                        : undefined
+                    }
+                    premove={premove}
+                    onPremove={queuePremove}
+                    onCancelPremove={clearPremove}
                     lastMove={
                       preview
                         ? preview.line.moves[preview.index] || null
@@ -1773,6 +2034,31 @@ export default function App() {
                     )}
                 </div>
                 {playerBar(bottomColor, true)}
+                {premove && (
+                  <div className="premove-notice" role="status">
+                    <span>
+                      Premove: {premove.from} → {premove.to}
+                      {premove.promotion
+                        ? ` = ${premove.promotion.toUpperCase()}`
+                        : ""}
+                    </span>
+                    <button className="text-button" onClick={clearPremove}>
+                      Cancel · Esc
+                    </button>
+                  </div>
+                )}
+                {game.practiceKind === "deserter" && page === "play" && (
+                  <div className="deserter-mission">
+                    <Compass size={17} />
+                    <span>Deserter mission · win this position</span>
+                    <button
+                      className="text-button"
+                      onClick={() => navigate("deserter")}
+                    >
+                      New position
+                    </button>
+                  </div>
+                )}
                 {page === "analysis" && activeReview && !preview && (
                   <div
                     className={`mobile-review-toolbar quality-${activeReview.label.toLowerCase()}`}
@@ -2057,59 +2343,6 @@ export default function App() {
                     </button>
                   </div>
                 )}
-                {game.result &&
-                  game.mode !== "puzzle" &&
-                  page !== "analysis" && (
-                    <div className="game-result" role="status">
-                      <Trophy size={28} />
-                      <div>
-                        <h2>{resultTitle}</h2>
-                        <p>
-                          {game.result.reason}
-                          {ratingEntry && (
-                            <span
-                              className={`result-rating ${ratingEntry.delta >= 0 ? "rating-up" : "rating-down"}`}
-                            >
-                              {" "}
-                              · Local Elo {ratingEntry.after} (
-                              {ratingEntry.delta >= 0 ? "+" : ""}
-                              {ratingEntry.delta})
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      {!isLan && (
-                        <button
-                          className="button primary"
-                          onClick={() => setModal("new")}
-                        >
-                          <Plus size={15} /> New game
-                        </button>
-                      )}
-                      {isLan ? (
-                        <button
-                          className="button primary"
-                          onClick={() => lanRef.current?.rematch()}
-                        >
-                          {lanSnapshot.rematchVotes.includes(
-                            lanSnapshot.yourColor!,
-                          )
-                            ? "Rematch requested"
-                            : "Rematch"}
-                        </button>
-                      ) : (
-                        <button
-                          className="button primary"
-                          onClick={() => {
-                            setPage("analysis");
-                            setShowSetup(false);
-                          }}
-                        >
-                          Review game <ArrowRight size={15} />
-                        </button>
-                      )}
-                    </div>
-                  )}
                 {page === "play" && !isLan && (
                   <div className="underboard-tip">
                     <Lightbulb size={17} />
@@ -2204,13 +2437,18 @@ export default function App() {
                       onStart={startGame}
                       onWifi={() => navigate("multiplayer")}
                       initialBot={game.botId}
+                      initialCustomElo={game.customBotElo}
                     />
                   ) : (
                     <>
                       <section className="card game-status-card">
                         <div className="panel-heading">
                           <h3>
-                            {isLan ? "Your Wi-Fi room" : "Game in progress"}
+                            {isLan
+                              ? "Your Wi-Fi room"
+                              : game.result
+                                ? "Game complete"
+                                : "Game in progress"}
                           </h3>
                           <span className="soft-badge">
                             {isLan
@@ -2667,6 +2905,22 @@ export default function App() {
             />
           )}
           {page === "multiplayer" && <NetworkPanel onGame={onLanGame} />}
+          {page === "deserter" && (
+            <DeserterHub
+              settings={settings}
+              onStart={(position, elo) =>
+                startGame({
+                  mode: "bot",
+                  botId: "adaptive",
+                  customBotElo: elo,
+                  color: position.color,
+                  time: { base: 0, increment: 0 },
+                  startFen: position.fen,
+                  practiceKind: "deserter",
+                })
+              }
+            />
+          )}
           {page === "quiz" && <QuizHub onPuzzles={() => navigate("puzzles")} />}
           {page === "games" && (
             <ReviewLibrary
@@ -2873,6 +3127,43 @@ export default function App() {
                     game clock. Changing engine settings restarts analysis.
                   </small>
                 </fieldset>
+                <fieldset className="appearance-settings">
+                  <legend>Appearance & board</legend>
+                  <label>
+                    App theme
+                    <select
+                      aria-label="App appearance"
+                      value={settings.appearance}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          appearance: e.target.value as Settings["appearance"],
+                        }))
+                      }
+                    >
+                      <option value="system">Follow device</option>
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                    </select>
+                  </label>
+                  <label>
+                    Playing board size
+                    <select
+                      aria-label="Default board size"
+                      value={settings.boardSize}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          boardSize: e.target.value as Settings["boardSize"],
+                        }))
+                      }
+                    >
+                      <option value="auto">Auto fit available space</option>
+                      <option value="large">Large</option>
+                      <option value="compact">Compact</option>
+                    </select>
+                  </label>
+                </fieldset>
                 <div className="field-label">BOARD COLORS</div>
                 <div className="theme-picker">
                   {(["sage", "walnut", "ocean"] as const).map((t) => (
@@ -2899,6 +3190,21 @@ export default function App() {
                   ))}
                 </div>
                 {[
+                  {
+                    key: "premoves",
+                    name: "Premoves",
+                    desc: "Queue one move on your opponent’s turn. Illegal premoves are cancelled.",
+                  },
+                  {
+                    key: "botChat",
+                    name: "Bot dialogue",
+                    desc: "Show each bot’s personality and comments during play.",
+                  },
+                  {
+                    key: "botVoice",
+                    name: "Spoken bot dialogue",
+                    desc: "Read bot comments using an English voice installed on your device. Move sounds and dialogue must also be enabled.",
+                  },
                   {
                     key: "sound",
                     name: "Move sounds",
@@ -3173,6 +3479,7 @@ export default function App() {
               navigate("multiplayer");
             }}
             initialBot={game.botId}
+            initialCustomElo={game.customBotElo}
           />
         </Modal>
       )}

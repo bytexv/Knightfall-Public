@@ -22,35 +22,43 @@ import {
   defaultBot,
   matchingBots,
   recommendedBot,
+  resolveBot,
+  customElo,
 } from "../lib/bots";
 
 export function NewGamePanel({
   onStart,
   onWifi,
   initialBot = "scout",
+  initialCustomElo = 1200,
   initialTimeIndex = 3,
   playerRating = 800,
 }: {
   onStart: (settings: {
     mode: "bot" | "local";
     botId: string;
+    customBotElo?: number;
     color: "w" | "b" | "random";
     time: { base: number; increment: number };
   }) => void;
   onWifi: () => void;
   initialBot?: string;
+  initialCustomElo?: number;
   initialTimeIndex?: number;
   playerRating?: number;
 }) {
   const [mode, setMode] = useState<"bot" | "local">("bot");
   const initialOpponent =
     bots.find((bot) => bot.id === initialBot) || defaultBot;
-  const [botId, setBotId] = useState(initialOpponent.id);
+  const [botId, setBotId] = useState(
+    initialBot === "adaptive" ? "adaptive" : initialOpponent.id,
+  );
+  const [dial, setDial] = useState(customElo(initialCustomElo));
   const [band, setBand] = useState<string>(() => botBand(initialOpponent));
   const [query, setQuery] = useState("");
   const [timeIndex, setTimeIndex] = useState(initialTimeIndex);
   const [color, setColor] = useState<"w" | "b" | "random">("w");
-  const bot = bots.find((b) => b.id === botId) || defaultBot;
+  const bot = resolveBot(botId, dial);
   const visibleBots = matchingBots(band, query);
   const suggested = recommendedBot(playerRating);
   return (
@@ -80,6 +88,36 @@ export function NewGamePanel({
       </div>
       {mode === "bot" ? (
         <>
+          <div className="custom-bot-picker">
+            <button
+              className={`button secondary ${botId === "adaptive" ? "selected" : ""}`}
+              aria-pressed={botId === "adaptive"}
+              onClick={() => setBotId("adaptive")}
+            >
+              <Cpu size={17} />
+              Dial · adjustable bot
+            </button>
+            {botId === "adaptive" && (
+              <label className="range-setting">
+                Choose strength <strong>≈ {dial} Elo</strong>
+                <input
+                  type="range"
+                  aria-label="Custom bot Elo"
+                  min="100"
+                  max="3000"
+                  step="50"
+                  value={dial}
+                  onChange={(e) => setDial(Number(e.target.value))}
+                />
+                <span>
+                  100 · first moves <span>3000 · maximum challenge</span>
+                </span>
+                <small>
+                  Fixed for this game. Adjustable games are unrated practice.
+                </small>
+              </label>
+            )}
+          </div>
           <div className="field-label">
             YOUR OPPONENT <span>{bots.length} local bots · ≈ 100–3000</span>
           </div>
@@ -270,6 +308,7 @@ export function NewGamePanel({
           onStart({
             mode,
             botId,
+            ...(botId === "adaptive" ? { customBotElo: dial } : {}),
             color,
             time: {
               base: timeControls[timeIndex].base,

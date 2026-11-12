@@ -1,4 +1,5 @@
 import { validPgnElo } from "./game";
+import { customElo } from "./bots";
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { puzzles } from "../data/puzzles";
 import { validatedPosition } from "./engine-position";
@@ -13,6 +14,11 @@ import {
 } from "./game";
 
 export interface Settings {
+  appearance: "light" | "dark" | "system";
+  boardSize: "auto" | "large" | "compact";
+  premoves: boolean;
+  botChat: boolean;
+  botVoice: boolean;
   boardTheme: "sage" | "walnut" | "ocean";
   sound: boolean;
   coordinates: boolean;
@@ -26,6 +32,11 @@ export interface Settings {
   botTime: number;
 }
 export const defaultSettings: Settings = {
+  appearance: "system",
+  boardSize: "auto",
+  premoves: true,
+  botChat: true,
+  botVoice: false,
   boardTheme: "sage",
   sound: true,
   coordinates: true,
@@ -63,6 +74,17 @@ const safeText = (value: unknown, fallback: string, max: number) =>
 export function sanitizeSettings(value: unknown): Settings {
   const raw = isRecord(value) ? value : {};
   return {
+    appearance:
+      raw.appearance === "light" || raw.appearance === "dark"
+        ? raw.appearance
+        : "system",
+    boardSize:
+      raw.boardSize === "large" || raw.boardSize === "compact"
+        ? raw.boardSize
+        : "auto",
+    premoves: raw.premoves !== false,
+    botChat: raw.botChat !== false,
+    botVoice: raw.botVoice === true,
     boardTheme:
       raw.boardTheme === "sage" ||
       raw.boardTheme === "walnut" ||
@@ -191,9 +213,16 @@ export function validateSavedGame(value: unknown): GameSession | null {
       fen: chess.fen(),
       moves,
       playerColor: value.playerColor === "b" ? "b" : "w",
-      botId: bots.some((bot) => bot.id === value.botId)
-        ? (value.botId as string)
-        : "scout",
+      botId:
+        value.botId === "adaptive" || bots.some((bot) => bot.id === value.botId)
+          ? (value.botId as string)
+          : "scout",
+      ...(value.botId === "adaptive"
+        ? { customBotElo: customElo(value.customBotElo) }
+        : {}),
+      ...(value.practiceKind === "deserter"
+        ? { practiceKind: "deserter" as const }
+        : {}),
       started: value.started === true,
       alienGambit: value.alienGambit === true,
       result: resultFor(chess) || storedResult,

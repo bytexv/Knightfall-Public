@@ -149,6 +149,17 @@ test('draw offers can be declined and accepted through the real room protocol',a
 
 test('a Black host waits for White and the waiting-room clock does not run',async()=>{
  const code=await createRoom('Host','b');assert.equal(firstSquare(),'h1');fakeNow+=120000;await act(async()=>{await delay(20);});assert.equal(currentClient().snapshot.clocks.b,600000);assert.equal(currentClient().snapshot.clocks.w,600000);
- let peer;await act(async()=>{peer=await rawPeer();peer.send({type:'join',code,name:'Visitor'});await peer.wait(message=>message.type==='snapshot'&&message.snapshot.status==='playing');});await waitFor(()=>host.querySelector('.status-message')?.textContent.includes('Visitor to move'));assert.equal(host.querySelector('[data-square="e7"]').getAttribute('aria-disabled'),'true');assert.equal(peer.snapshot.clocks.w,600000);
+ let peer;await act(async()=>{peer=await rawPeer();peer.send({type:'join',code,name:'Visitor'});await peer.wait(message=>message.type==='snapshot'&&message.snapshot.status==='playing');});await waitFor(()=>host.querySelector('.status-message')?.textContent.includes('Visitor to move'));assert.equal(host.querySelector('[data-square="e7"]').getAttribute('aria-disabled'),'false');assert.equal(peer.snapshot.clocks.w,600000);
  await peerAction(peer,{type:'move',from:'e2',to:'e4'},message=>message.type==='snapshot'&&message.snapshot.history.length===1);await waitFor(()=>host.querySelector('[data-square="e7"]').getAttribute('aria-disabled')==='false');await boardMove('e7','e5');await waitFor(()=>peer.snapshot.history.length===2);assert.deepEqual(peer.snapshot.history,['e4','e5']);assert.equal(archive()[0].playerColor,'b');assert.equal(firstSquare(),'h1');
+});
+
+
+test('a LAN premove stays local until the opponent replies, then submits exactly one legal move',async()=>{
+ const code=await createRoom('Host','b');let peer;
+ await act(async()=>{peer=await rawPeer();peer.send({type:'join',code,name:'Visitor'});await peer.wait(message=>message.type==='snapshot'&&message.snapshot.status==='playing');});
+ await waitFor(()=>host.querySelector('.status-message')?.textContent.includes('Visitor to move'));
+ await boardMove('e7','e5');assert.ok(host.querySelector('.premove-notice'));assert.equal(peer.snapshot.history.length,0);
+ await peerAction(peer,{type:'move',from:'e2',to:'e4'},message=>message.type==='snapshot'&&message.snapshot.history.length>=1);
+ await waitFor(()=>peer.snapshot.history.length===2);assert.deepEqual(peer.snapshot.history,['e4','e5']);
+ assert.equal(host.querySelector('.premove-notice'),null);
 });

@@ -7,6 +7,8 @@ import "./styles.css";
 import "./club.css";
 import "./polish.css";
 import "./chess-club.css";
+import "./play-upgrade.css";
+import "./dark-theme.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

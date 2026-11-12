@@ -18,3 +18,19 @@ test('disabled boards remain navigable but cannot send moves',async()=>{props.di
 test('promotion offers all four choices and sends explicit underpromotion',async()=>{props.fen='8/P7/8/8/8/6k1/8/6K1 w - - 0 1';await render();await click(square('a7'));await click(square('a8'));assert.ok(host.querySelector('[role="dialog"]'));assert.equal(host.querySelectorAll('.promotion-choices button').length,4);assert.equal(document.activeElement.getAttribute('aria-label'),'Promote to queen');await click(host.querySelector('[aria-label="Promote to knight"]'));assert.deepEqual(moves,[['a7','a8','n']]);assert.equal(host.querySelector('[role="dialog"]'),null)});
 test('checking king and latest move are marked, and orientation changes rendered square order',async()=>{props.fen='4k3/8/8/8/8/8/8/4R1K1 b - - 0 1';props.lastMove={from:'a1',to:'e1'};props.orientation='b';await render();assert.equal(host.querySelector('[data-square]').dataset.square,'h1');assert.equal(square('e8').classList.contains('in-check'),true);assert.equal(square('e1').classList.contains('last-move'),true)});
 test('right-drag adds and toggles an analysis arrow without moving pieces',async()=>{await render();document.elementFromPoint=()=>square('f3');await act(async()=>square('g1').dispatchEvent(new dom.window.MouseEvent('pointerdown',{bubbles:true,button:2})));await act(async()=>square('f3').dispatchEvent(new dom.window.MouseEvent('pointerup',{bubbles:true,button:2})));assert.equal(host.querySelectorAll('.board-arrows line').length,1);assert.equal(moves.length,0);await act(async()=>host.querySelector('.chessboard').dispatchEvent(new dom.window.KeyboardEvent('keydown',{bubbles:true,key:'Escape'})));assert.equal(host.querySelectorAll('.board-arrows line').length,0)});
+
+
+test('premove selection highlights a conditional move without executing it, and Escape cancels',async()=>{
+ const board=new Chess();board.move('e4');let queued=null,cancelled=0;
+ props={...props,fen:board.fen(),disabled:true,premoveColor:'w',onPremove:m=>queued=m,onCancelPremove:()=>cancelled++};
+ await render();await click(square('g1'));assert.ok(square('f3').getAttribute('aria-label').includes('possible premove'));
+ await click(square('f3'));assert.deepEqual(queued,{from:'g1',to:'f3'});assert.equal(moves.length,0);
+ props={...props,premove:queued};await render();assert.equal(host.querySelectorAll('.premove-square').length,2);
+ await act(async()=>host.querySelector('.chessboard').dispatchEvent(new dom.window.KeyboardEvent('keydown',{bubbles:true,key:'Escape'})));assert.equal(cancelled,1);
+});
+test('premove promotion belongs to the player and preserves underpromotion choice',async()=>{
+ let queued=null;props={...props,fen:'7k/P7/8/8/8/8/8/7K b - - 0 1',disabled:true,premoveColor:'w',onPremove:m=>queued=m};
+ await render();await click(square('a7'));await click(square('a8'));
+ assert.ok(host.querySelector('[aria-label="Promote to knight"] img').getAttribute('src').includes('wN'));
+ await click(host.querySelector('[aria-label="Promote to knight"]'));assert.deepEqual(queued,{from:'a7',to:'a8',promotion:'n'});assert.equal(moves.length,0);
+});

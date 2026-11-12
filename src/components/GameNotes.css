@@ -52,7 +52,7 @@
   white-space: nowrap;
 }
 .game-notes-tools > span.near-limit {
-  color: #8f4b28;
+  color: var(--ink-8f4b28, #8f4b28);
 }
 .game-notes-symbols {
   display: flex;
@@ -71,7 +71,7 @@
   color: var(--text, #272a2d);
 }
 .game-notes-symbols > button:hover:not(:disabled) {
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
 }
 .game-notes-hint {
   font-size: 9px;
@@ -97,14 +97,14 @@
   margin-left: auto;
   font-size: 9px;
   line-height: 1.5;
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
 }
 .game-notes-status.failed {
-  color: #943d2c;
+  color: var(--ink-943d2c, #943d2c);
 }
 .game-notes-unsaved {
   font-size: 9px;
-  color: #755a36;
+  color: var(--ink-755a36, #755a36);
   line-height: 1.6;
   margin: 10px 0 0;
 }

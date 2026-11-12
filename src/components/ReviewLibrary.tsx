@@ -1,3 +1,4 @@
+import { resolveBot } from "../lib/bots";
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
@@ -50,7 +51,7 @@ export default function ReviewLibrary({
     () =>
       games.map((game) => {
         const opponent =
-          bots.find((bot) => bot.id === game.botId)?.name || "Computer";
+          resolveBot(game.botId, game.customBotElo).name;
         return {
           game,
           summary: summaryForGame(game, summaries),

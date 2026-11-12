@@ -1,4 +1,4 @@
-import { bots } from "./bots";
+import { bots, resolveBot } from "./bots";
 import { Chess, type Color, type Square } from "chess.js";
 import { playedAlienGambit } from "./alien-gambit";
 import { validatedPosition } from "./engine-position";
@@ -56,6 +56,8 @@ export interface GameSession {
   moves: MoveRecord[];
   playerColor: Color;
   botId: string;
+  customBotElo?: number;
+  practiceKind?: "deserter";
   started: boolean;
   result: GameResult | null;
   createdAt: number;
@@ -182,7 +184,7 @@ export function sessionPgn(session: GameSession): string {
     const comment = sanitizeComment(move.comment);
     if (comment) c.setComment(comment);
   }
-  const bot = bots.find((b) => b.id === session.botId);
+  const bot = resolveBot(session.botId, session.customBotElo);
   c.header(
     "Event",
     "Knightfall casual game",

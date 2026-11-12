@@ -30,6 +30,7 @@ test('bot picker filters all levels, keeps explicit selection, recommends by Elo
   await click('.bot-match-row button');assert.equal(document.querySelector('.bot-choice.selected').dataset.botChoice,'iris');
   assert.equal(document.querySelector('[aria-label="Bot strength group"]').value,'club');
   await click('[aria-label="Play black"]');await click('.start-game');assert.equal(selected.botId,'iris');assert.equal(selected.color,'b');
+  await click('.custom-bot-picker>.button');await fill('[aria-label="Custom bot Elo"]','1750');await click('.start-game');assert.equal(selected.botId,'adaptive');assert.equal(selected.customBotElo,1750);
   await click('.mode-tabs button:nth-child(2)');assert.equal(document.querySelector('.bot-picker'),null);
   await click('.start-game');assert.equal(selected.mode,'local');
  } finally {await act(async()=>root.unmount());dom.window.close();}

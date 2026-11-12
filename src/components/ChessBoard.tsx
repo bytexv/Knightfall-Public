@@ -1,3 +1,4 @@
+import { premoveTargets, type Premove } from "../lib/premove";
 import { ALIEN_PIECE_DIRECTORY } from "../lib/piece-assets";
 import { Chess, type Color, type Square } from "chess.js";
 import { X } from "lucide-react";
@@ -6,6 +7,10 @@ import { BoardAnimator } from "../lib/board-animator";
 import "./ChessBoard.css";
 export interface ChessBoardProps {
   fen: string;
+  premoveColor?: Color;
+  premove?: Premove | null;
+  onPremove?: (move: Premove) => void;
+  onCancelPremove?: () => void;
   alienTheme?: boolean;
   orientation?: Color;
   onMove?: (from: string, to: string, promotion?: string) => void;
@@ -26,6 +31,10 @@ const names: Record<string, string> = {
 };
 export default function ChessBoard({
   fen,
+  premoveColor,
+  premove,
+  onPremove,
+  onCancelPremove,
   alienTheme = false,
   orientation = "w",
   onMove,
@@ -43,6 +52,9 @@ export default function ChessBoard({
       return new Chess();
     }
   }, [fen]);
+  const queuing = !!premoveColor && game.turn() !== premoveColor && !!onPremove;
+  const inputColor = queuing ? premoveColor! : game.turn();
+  const locked = disabled && !queuing;
   const [selected, setSelected] = useState<string | null>(null);
   const [promotion, setPromotion] = useState<{
     from: string;
@@ -90,13 +102,13 @@ export default function ChessBoard({
     setAnnotations([]);
   }, [fen, orientation]);
   useEffect(() => {
-    if (disabled) {
+    if (locked) {
       setSelected(null);
       setPromotion(null);
       if (dragFrom.current) animator.current?.cancelDrag();
       dragFrom.current = null;
     }
-  }, [disabled]);
+  }, [locked, queuing]);
   useEffect(() => {
     if (promotion)
       board.current
@@ -109,6 +121,8 @@ export default function ChessBoard({
   const legal = selected
     ? game.moves({ square: selected as Square, verbose: true })
     : [];
+  const plannedTargets =
+    selected && queuing ? premoveTargets(fen, selected, inputColor) : [];
   const check = game.isCheck()
     ? squares.find((s) => {
         const p = game.get(s as Square);
@@ -116,7 +130,19 @@ export default function ChessBoard({
       })
     : null;
   function tryMove(from: string, to: string) {
-    if (disabled || !onMove) return false;
+    if (locked) return false;
+    if (queuing) {
+      if (!premoveTargets(fen, from, inputColor).includes(to)) return false;
+      if (
+        game.get(from as Square)?.type === "p" &&
+        (to[1] === "8" || to[1] === "1")
+      )
+        setPromotion({ from, to });
+      else onPremove?.({ from, to });
+      setSelected(null);
+      return true;
+    }
+    if (!onMove) return false;
     const move = game
       .moves({ square: from as Square, verbose: true })
       .find((m) => m.to === to);
@@ -134,11 +160,11 @@ export default function ChessBoard({
       suppressClick.current = false;
       return;
     }
-    if (disabled) return;
+    if (locked) return;
     if (selected && tryMove(selected, square)) return;
     const piece = game.get(square as Square);
     setSelected(
-      piece?.color === game.turn() && selected !== square ? square : null,
+      piece?.color === inputColor && selected !== square ? square : null,
     );
   }
   const pos = (s: string) => ({
@@ -154,6 +180,7 @@ export default function ChessBoard({
         ref={board}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
+            onCancelPremove?.();
             setSelected(null);
             setPromotion(null);
             setMarks([]);
@@ -202,7 +229,9 @@ export default function ChessBoard({
         {squares.map((square, index) => {
           const piece = game.get(square as Square);
           const isDark = (square.charCodeAt(0) + Number(square[1])) % 2 === 0;
-          const target = legal.some((m) => m.to === square);
+          const target = queuing
+            ? plannedTargets.includes(square)
+            : legal.some((m) => m.to === square);
           return (
             <button
               type="button"
@@ -210,13 +239,18 @@ export default function ChessBoard({
               data-square={square}
               tabIndex={focus === square ? 0 : -1}
               onFocus={() => setFocus(square)}
-              className={`square ${isDark ? "dark" : "light"} ${selected === square ? "selected" : ""} ${lastMove && (lastMove.from === square || lastMove.to === square) ? "last-move" : ""} ${check === square ? "in-check" : ""} ${marks.includes(square) ? "marked" : ""}`}
-              aria-label={`${square}${piece ? `, ${piece.color === "w" ? "white" : "black"} ${names[piece.type]}` : ", empty"}${target ? ", legal move" : ""}`}
+              className={`square ${isDark ? "dark" : "light"} ${selected === square ? "selected" : ""} ${lastMove && (lastMove.from === square || lastMove.to === square) ? "last-move" : ""} ${check === square ? "in-check" : ""} ${marks.includes(square) ? "marked" : ""} ${premove && (square === premove.from || square === premove.to) ? "premove-square" : ""} ${queuing ? "premove-input" : ""}`}
+              aria-label={`${square}${piece ? `, ${piece.color === "w" ? "white" : "black"} ${names[piece.type]}` : ", empty"}${target ? (queuing ? ", possible premove" : ", legal move") : ""}`}
               aria-pressed={selected === square}
-              aria-disabled={disabled}
+              aria-disabled={locked}
               onClick={() => click(square)}
               onContextMenu={(e) => {
                 e.preventDefault();
+                if (premove) {
+                  onCancelPremove?.();
+                  setSelected(null);
+                  return;
+                }
                 if (justAnnotated.current) {
                   justAnnotated.current = false;
                   return;
@@ -233,9 +267,9 @@ export default function ChessBoard({
                   justAnnotated.current = false;
                   return;
                 }
-                if (e.button !== 0 || disabled || !onMove) return;
+                if (e.button !== 0 || locked || (!onMove && !onPremove)) return;
                 const p = game.get(square as Square);
-                if (p?.color === game.turn()) {
+                if (p?.color === inputColor) {
                   animator.current?.cancelDrag();
                   dragFrom.current = {
                     square,
@@ -249,7 +283,7 @@ export default function ChessBoard({
               }}
               onPointerMove={(e) => {
                 const drag = dragFrom.current;
-                if (!drag || drag.pointerId !== e.pointerId || disabled) return;
+                if (!drag || drag.pointerId !== e.pointerId || locked) return;
                 if (
                   !drag.active &&
                   Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6
@@ -294,7 +328,7 @@ export default function ChessBoard({
                 if (
                   !dragFrom.current ||
                   dragFrom.current.pointerId !== e.pointerId ||
-                  disabled
+                  locked
                 )
                   return;
                 const element = document
@@ -318,7 +352,7 @@ export default function ChessBoard({
                     : undefined;
                 animator.current?.releaseDrag(
                   to || null,
-                  Boolean(move && onMove),
+                  Boolean(!queuing && move && onMove),
                   Boolean(move?.promotion),
                 );
                 if (to && from !== to && tryMove(from, to)) {
@@ -429,12 +463,14 @@ export default function ChessBoard({
                     key={p}
                     aria-label={`Promote to ${names[p]}`}
                     onClick={() => {
-                      onMove?.(promotion.from, promotion.to, p);
+                      queuing
+                        ? onPremove?.({ ...promotion, promotion: p })
+                        : onMove?.(promotion.from, promotion.to, p);
                       setPromotion(null);
                     }}
                   >
                     <img
-                      src={`./${alienTheme ? ALIEN_PIECE_DIRECTORY : "pieces"}/${game.turn()}${p.toUpperCase()}.svg`}
+                      src={`./${alienTheme ? ALIEN_PIECE_DIRECTORY : "pieces"}/${inputColor}${p.toUpperCase()}.svg`}
                       alt={names[p]}
                     />
                   </button>

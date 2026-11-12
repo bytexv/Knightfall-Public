@@ -12,13 +12,13 @@ Get the latest apps from [GitHub Releases](https://github.com/bytexv/Knightfall-
 
 ## Start playing
 
-1. Open **Play chess**. Choose one of 30 local bots (estimated 100–3000 Elo), or **Pass & play** for two people sharing a screen. Pick a side and time control, then start.
+1. Open **Play chess**. Choose one of 30 local bots (estimated 100–3000 Elo), set **Dial** to your own challenge, or **Pass & play** for two people sharing a screen. Pick a side and time control, then start.
 2. Click or drag a piece to a legal destination. Choose a queen, rook, bishop or knight when a pawn promotes.
 3. Open **Analysis** for a guided game review, move classifications, an evaluation graph and per-side summaries. Switch to **Live analysis** for current engine suggestions. Explore a suggested line or retry a move without changing the original game. **Set up** opens the board editor; **Save game** keeps an imported or edited study, and **Play position** starts practice from the current board.
-4. Explore **Puzzles**, **Tactics Sprint**, **Learn chess**, and **Endgame school** for guided practice.
+4. Explore **Puzzles**, **Tactics Sprint**, **Learn chess**, and **Endgame school** for guided practice. **Deserter practice** generates random legal positions with an advantage to convert against a bot.
 5. Use **Settings → Download a backup** and PGN exports to keep copies of your games.
 
-Press **F** to flip the board. Outside input fields and the board itself, **← / →** replay moves. On the board, arrow keys move focus and Enter or Space selects a piece or destination. Right-drag draws an arrow, right-click marks a square, and Escape clears those temporary annotations. The editor also supports Delete to erase a square. **Focus view** in the board toolbar reduces the surrounding interface while you play.
+Press **F** to flip the board. Outside input fields and the board itself, **← / →** replay moves. On the board, arrow keys move focus and Enter or Space selects a piece or destination. Right-drag draws an arrow, right-click marks a square, and Escape clears those temporary annotations. The editor also supports Delete to erase a square. **Board size** offers Auto fit, Large and Compact. **Expand board** hides the sidebar and heading. On an opponent’s turn in bot or Wi-Fi play, select one premove; it runs only if legal after the reply. Escape, right-click or Cancel clears it. Settings can disable premoves.
 
 For installation details, see [Install Knightfall](docs/INSTALL.md). For a full feature inventory, see [Features](docs/FEATURES.md).
 
@@ -27,8 +27,8 @@ For installation details, see [Install Knightfall](docs/INSTALL.md). For a full 
 | Format | What it contains | Delivery/build output |
 | --- | --- | --- |
 | Web / installable PWA | Responsive app, local engine, learning content, offline cache | `dist/` after `npm run build` |
-| Windows x64 | Electron 45 Setup installer with automatic updates, plus portable edition and Wi-Fi host | `artifacts/windows/Knightfall-1.7.0-Windows-Setup.exe` and `Windows-x64.exe` |
-| Android | Capacitor 7 app with bundled assets and direct LAN joining | `artifacts/Knightfall-1.7.0-android-debug.apk` |
+| Windows x64 | Electron 45 Setup installer with automatic updates, plus portable edition and Wi-Fi host | `artifacts/windows/Knightfall-1.8.0-Windows-Setup.exe` and `Windows-x64.exe` |
+| Android | Capacitor 7 app with bundled assets and direct LAN joining | `artifacts/Knightfall-1.8.0-android-debug.apk` |
 | iPhone / iPad | Native Capacitor project; the web app can also be added to the Home Screen | `ios/`; no signed IPA is included |
 
 The Windows executable is unsigned. The Android APK is a development build signed with a debug key. They are not app-store releases. Native iOS builds require macOS, Xcode and Apple signing. See [Packaging](docs/PACKAGING.md) and [Mobile](docs/MOBILE.md).
@@ -62,6 +62,7 @@ More details: [Same-Wi-Fi play](docs/LAN.md).
 - **Local Elo:** a persistent practice rating, result history and trend graph for eligible completed games against local bots. It starts at 800 and stays provisional for the first 20 rated games. Games using hints, takebacks or live analysis while in progress are unrated, as are custom starting positions and fallback-engine play. Reviewing an already completed game does not change its recorded result. This device-local estimate is separate from online or official ratings and from a single game's review performance estimate.
 - **Learning:** 60 curated tactics from the Lichess CC0 puzzle database; Tactics Sprint with 3-minute, 5-minute and untimed Survival modes; 28 opening primers (including Wittythealien’s Alien Gambit); ten interactive beginner challenges, nine short lessons; and 15 endgame drills, including four draw-defense exercises.
 - **Study tools:** a position editor, custom-position bot/shared-screen play, PGN/FEN import, PGN export with plain-text position notes, a searchable local game archive with resume controls, and JSON backup/restore.
+- **Presentation:** System, Light or Dark appearance, with a quick header toggle; board-size controls; distinct local bot catchphrases and situational comments. Spoken dialogue is optional and uses an installed English system voice, when available. **Checkmate** and the winner appear above the board with New game; local analysis fills in your accuracy and seven groups of good/bad move counts, without guessing scores before completion.
 - **Personalization:** An Alien Gambit Easter egg adds small alien eyes to the regular pieces and plays the supplied short celebration once; disable the Easter egg or its sound independently in Settings. Sage, Walnut and Ocean boards; sound, coordinates and legal-move hints; a local display name; keyboard and touch controls. Piece movement, captures, castling and promotions animate while leaving move input responsive; reduced-motion preferences disable automatic piece travel and fades.
 
 Bot difficulty descriptions are training estimates, not calibrated online ratings. Sprout and Scout combine local engine suggestions with beginner-oriented move policies; higher levels use the engine's chosen move. Opening creator references are educational, not official celebrity bots. The Botez Gambit and Bongcloud are explicitly identified as memes; the Cow Opening is a system rather than a gambit.
@@ -74,7 +75,7 @@ Endgame starting positions were checked against exact tablebases during content 
 
 Positions and analysis requests stay on the device. The application does not include analytics, advertising, cloud game uploads, or cross-device account sync. Fonts, pieces and engine assets are served with the app. Opening an optional source/reference link visits that external website in the normal way.
 
-When a public release repository is configured, the desktop app checks GitHub for a newer stable version at startup and offers a manual check in Settings. Download actions open the validated release link only after you choose; they do not run or install a new app. An unconfigured or private repository does not provide automatic public release checks. See [GitHub releases and updates](docs/GITHUB.md).
+When a public release repository is configured, the desktop app checks GitHub for a newer stable version at startup and offers a manual check in Settings. The installed Windows app downloads verified updates automatically and applies them on exit or a requested restart. The portable app opens the validated installer link when chosen. Android downloads an APK only after you choose and requires system confirmation to update. An unconfigured or private repository does not provide automatic public release checks. See [GitHub releases and updates](docs/GITHUB.md).
 
 The web version needs an initial online load. Keep it open long enough for the full app and engine cache to finish. PWA installation requires HTTPS or a supported localhost origin; a plain HTTP LAN address is for local multiplayer and does not provide the same install/offline guarantees. Native Windows and Android packages already contain the runtime assets. A Wi-Fi game still needs a live network and host even when internet access is unavailable.
 

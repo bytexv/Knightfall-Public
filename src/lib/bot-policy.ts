@@ -3,7 +3,7 @@ import { type EngineResult } from "./engine";
 import { evaluatePosition, moveToUci } from "./engine-fallback";
 import { validatedPosition } from "./engine-position";
 
-import { bots } from "./bots";
+import { bots, resolveBot } from "./bots";
 
 // Anchor the original Sprout/Scout behavior; interpolate gentler and tougher learners.
 const learningAnchors = [
@@ -36,8 +36,11 @@ const learningAnchors = [
     plausibleLoss: 100,
   },
 ];
-function learningPolicy(botId: string) {
-  const bot = bots.find((bot) => bot.id === botId);
+function learningPolicy(botId: string, customBotElo?: number) {
+  const bot =
+    botId === "adaptive"
+      ? resolveBot(botId, customBotElo)
+      : bots.find((bot) => bot.id === botId);
   if (!bot || bot.elo >= 1200) return null;
   const upper = learningAnchors.findIndex((anchor) => anchor.elo >= bot.elo);
   const high = learningAnchors[upper],
@@ -93,6 +96,7 @@ export function chooseBotMove(
   botId: string,
   result: Pick<EngineResult, "bestMove">,
   rng: () => number = Math.random,
+  customBotElo?: number,
 ): string | null {
   let position;
   try {
@@ -103,7 +107,7 @@ export function chooseBotMove(
   if (position.isGameOver()) return null;
   const legal = position.moves({ verbose: true });
   const engineMove = legal.find((move) => moveToUci(move) === result.bestMove);
-  const policy = learningPolicy(botId);
+  const policy = learningPolicy(botId, customBotElo);
   if (!policy) return engineMove ? moveToUci(engineMove) : null;
   // Spot a finished mating pattern at every level. Everything else is a choice.
   const immediateMates = legal.filter((move) => move.san.endsWith("#"));

@@ -1,25 +1,25 @@
 {
-  "version": "1.7.0",
-  "versionCode": 13,
-  "sha256": "400f2b890679291d191cf5b1cfc06810d3d93142dd95c96e8248521d2e286175",
+  "version": "1.8.0",
+  "versionCode": 14,
+  "sha256": "8441b64bafcf14b2b884921ea56068ef429a89e73a2beecfc5d771864152c698",
   "certificateSha256": "daeea1bb79058d62827b08f30423a2c244c4ca5a69dda1cfa91f22b314e2f616",
-  "commit": "465fa46defa7c627a14f194fc9ecbc642f9b3c90",
-  "branch": "android-candidate-v1.7.0",
+  "commit": "5597c010fbde17c82e2afa823b9dbb2e35aa96bb",
+  "branch": "android-candidate-v1.8.0",
   "chunks": [
     {
       "name": "apk.part00",
       "size": 67108864,
-      "sha256": "e3a4717693879581b9c1d0c8eb2d2869f4843c68af17eceb7182364544d404d2"
+      "sha256": "02a00490624b837b2fa2ea82126e6bd9a222e54927c332547b142d46285d50b0"
     },
     {
       "name": "apk.part01",
       "size": 67108864,
-      "sha256": "4f480e01109ab5ef919354f91d25001c6b1ca05633f75a10f26aa8b45dd91f62"
+      "sha256": "95ce2c19c7d4ef8f1f22d9b04ed5bf175db6c9a6fa4c8943591978447994ec4c"
     },
     {
       "name": "apk.part02",
-      "size": 13957398,
-      "sha256": "653d7fd9a3f0f866f2e2492dc593745b807aa773f7ecdc99229a696a518643a6"
+      "size": 13934306,
+      "sha256": "4b1b1f9622885b654b60ee3a3ca515fa9b9f777f22f0d5377358067bbc5a1bff"
     }
   ]
 }

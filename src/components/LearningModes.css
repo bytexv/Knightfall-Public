@@ -26,15 +26,15 @@
   background: var(--panel);
 }
 .learning-mode-grid .learning-mode-featured {
-  border-top: 4px solid #934526;
+  border-top: 4px solid var(--edge-934526, #934526);
   padding-top: 21px;
-  background: #f3ece2;
+  background: var(--surface-f3ece2, #f3ece2);
 }
 .learning-mode-number {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.4px;
-  color: #934526;
+  color: var(--ink-934526, #934526);
 }
 .learning-mode-grid h3 {
   font-size: 21px;
@@ -51,7 +51,7 @@
   align-items: center;
   gap: 6px;
   margin-top: 12px;
-  color: #426743;
+  color: var(--ink-426743, #426743);
 }
 .coach-status {
   display: flex;
@@ -89,8 +89,8 @@
 }
 .coach-why {
   padding: 14px;
-  border-left: 3px solid #934526;
-  background: #f3ece2;
+  border-left: 3px solid var(--edge-934526, #934526);
+  background: var(--surface-f3ece2, #f3ece2);
 }
 .coach-board-actions {
   display: flex;
@@ -99,7 +99,7 @@
   margin-top: 12px;
 }
 .coach-feedback {
-  color: #934526;
+  color: var(--ink-934526, #934526);
   font-size: 14px;
   line-height: 1.6;
   margin: 12px 0;
@@ -118,7 +118,7 @@
 .coach-replies p {
   padding: 10px 12px;
   border-radius: 8px;
-  background: #f3eee6;
+  background: var(--surface-f3eee6, #f3eee6);
   margin: 8px 0;
 }
 .coach-replies b {
@@ -188,9 +188,9 @@
   margin: 16px 0 12px;
 }
 .coach-side-options .button[aria-pressed="true"] {
-  background: #934526;
-  color: #fff;
-  border-color: #934526;
+  background: var(--surface-934526, #934526);
+  color: var(--ink-ffffff, #fff);
+  border-color: var(--edge-934526, #934526);
 }
 
 .opening-coach-intro .fine-print {

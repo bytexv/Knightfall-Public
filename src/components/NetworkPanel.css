@@ -1,6 +1,6 @@
 .network-view {
-  --network-muted: #55684d;
-  --network-accent: #466a3c;
+  --network-muted: var(--ink-55684d, #55684d);
+  --network-accent: var(--ink-466a3c, #466a3c);
   max-width: 1120px;
   margin: 0 auto;
   padding: 12px 0 30px;
@@ -136,8 +136,8 @@
   text-decoration: none;
 }
 .network-primary {
-  background: #d9b48d;
-  color: #272a2d;
+  background: var(--surface-d9b48d, #d9b48d);
+  color: var(--ink-272a2d, #272a2d);
 }
 .network-primary > svg:last-child {
   margin-left: auto;
@@ -288,7 +288,7 @@
   padding: 12px 14px;
   border-radius: 8px;
   background: rgba(210, 110, 92, 0.12);
-  color: #8d3c2e;
+  color: var(--ink-8d3c2e, #8d3c2e);
   border: 1px solid rgba(210, 110, 92, 0.2);
   font-size: 12px;
   line-height: 1.6;

@@ -1,6 +1,19 @@
-# Knightfall 1.7.0
+# Knightfall 1.8.0
 
 An independent chess studio for web, Windows and Android. Local play, analysis and learning run on your device.
+
+## New in 1.8.0
+
+- **Premoves:** queue a single move while a bot or Wi-Fi opponent thinks. Clear it with Escape, right-click or Cancel. The app checks full move legality after the reply; illegal or stale queues are discarded. Promotion choices are supported.
+- **Bigger boards:** Auto fit, Large and Compact controls, plus Expand board to hide the sidebar and heading. The preference persists across sessions.
+- **Deserter practice:** generate unfamiliar, reachable positions from random legal play; local Stockfish selects an advantageous side to finish against a bot. Choose the defender’s strength. If search cannot find a suitable position, a randomized winning queen endgame remains available offline. These are unrated practice games, not fixed puzzle solutions.
+- **Dial:** an adjustable local bot from estimated 100 to 3000 Elo in 50-point steps. The selected strength is fixed for the match. All 30 named opponents remain available for normal rated practice.
+- **Bot personalities:** individual catchphrases and comments reacting to visible moves. Dialogue can be hidden; optional spoken comments use an installed English system voice, when available, with no remote voice service.
+- **Finished games:** a prominent Checkmate/winner announcement and New game action above the board, including phones. A cancelable local review fills in your move accuracy and Brilliant, Great, Good, Inaccuracy, Mistake, Blunder and Miss counts. Good combines Best, Excellent and Good; unsupported percentages remain a dash. Review game opens the detailed analysis.
+- **Dark mode:** System, Light and Dark appearance across play, analysis, training, quiz, library and settings; a quick header toggle remembers your choice. Piece silhouettes and board colors retain their chess meaning.
+- Improved older Android WebView spacing, saved adjustable-bot sessions, speech fallback and cancellation when leaving a review or queued move. Windows Setup and compatible Android updates continue in place, preserving local data.
+
+Elo and review accuracy remain local training estimates. Android requires its system installation confirmation. Portable Windows users should install Setup once for automatic updates; iOS is supplied as a source project and PWA, not a signed IPA.
 
 ## New in 1.7.0
 

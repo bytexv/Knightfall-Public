@@ -7,6 +7,13 @@ This inventory describes the implemented application and distinguishes its local
 | Feature | Behavior |
 | --- | --- |
 | Local bots | 30 local opponents from estimated 100–3000 Elo; strength groups, search and Match my Elo; original opponents retained |
+| Adjustable bot | Dial, estimated 100–3000 Elo in 50-point steps; fixed for the game, unrated practice |
+| Premoves | Queue one conditional move during a bot or Wi-Fi opponent’s turn; full legality rechecked before execution; Escape/right-click/Cancel clears it |
+| Deserter practice | Random legal positions selected for a winning edge by local Stockfish; randomized queen-ending fallback, chosen defender strength and saved mission wins |
+| Bot dialogue | A distinct catchphrase and situation-aware comments per opponent; optional offline system speech and mute controls |
+| Appearance | System, Light and Dark settings across all sections; quick header toggle and persistent preference |
+| Board size | Auto fit, Large, Compact and an expanded focus view |
+| Finish review | Checkmate/winner above the board, New game on mobile, automatic cancelable local review with user accuracy and good/bad move counts |
 | Beginner behavior | Sprout and Scout mix engine choices with legal, beginner-oriented positional and exploratory moves |
 | Shared-screen chess | Two players alternate on one board with independent clocks |
 | Custom-position play | Start a bot or shared-screen game from the current Analysis FEN; untimed is the default |
@@ -49,7 +56,7 @@ PGN import is bounded to one main-line game under 3 MB and at most 1,000 half-mo
 | --- | --- | --- |
 | Tactics | 60 Lichess CC0 positions across 15 themes | Full solution sequences, automatic opponent replies, hints, reveal, theme selection and unassisted-solve progress |
 | Tactics Sprint | The same 60-puzzle progressive course | 3-minute, 5-minute and untimed Survival modes; three lives; local personal bests and study recap |
-| Opening lab | 27 opening primers | Search, category/level filters, saved openings, line replay and rehearsal |
+| Opening lab | 28 opening primers | Search, category/level filters, saved openings, line replay and rehearsal |
 | Short lessons | Nine lessons | Opening principles, blunder checks, tactics, calculation, gambit compensation, endgames, game review, clocks and special moves |
 | Endgame school | 15 verified starting positions | Read the plan, inspect the board, reveal a first-move hint, then practice against a local bot |
 | Draw defense | Four endgame drills | Opposition, rook-pawn corner defense, wrong-colored bishop and Philidor defense |

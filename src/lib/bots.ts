@@ -377,6 +377,25 @@ export const bots: readonly BotProfile[] = [
 ];
 
 export const defaultBot = bots.find((bot) => bot.id === "scout")!;
+export function customElo(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(100, Math.min(3000, Math.round(value / 50) * 50))
+    : 1200;
+}
+export function resolveBot(id: string, elo?: number): BotProfile {
+  if (id !== "adaptive") return bots.find((bot) => bot.id === id) || defaultBot;
+  const target = customElo(elo),
+    nearest = recommendedBot(target);
+  return {
+    ...nearest,
+    id: "adaptive",
+    name: "Dial",
+    elo: target,
+    rating: "Adjustable",
+    focus: "Your chosen challenge",
+    description: "Set the strength before the game. Same board, your pace.",
+  };
+}
 export const botBands = [
   { id: "beginner", label: "First steps", min: 100, max: 600 },
   { id: "casual", label: "Casual", min: 700, max: 1200 },

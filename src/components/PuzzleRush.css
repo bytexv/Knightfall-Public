@@ -20,7 +20,7 @@
   gap: 12px;
   align-items: center;
   margin-bottom: 15px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   font-size: 9px;
 }
 .rush-board-meta > span:first-child {
@@ -29,7 +29,7 @@
   align-items: center;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-player {
   display: flex;
@@ -45,7 +45,7 @@
 .rush-player img {
   width: 35px;
   height: 35px;
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
   border-radius: 8px;
   padding: 4px;
 }
@@ -55,11 +55,11 @@
 }
 .rush-player strong {
   font-size: 12px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-player small {
   font-size: 9px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   margin-top: 4px;
 }
 .rush-clock {
@@ -67,10 +67,10 @@
   align-items: center;
   gap: 9px;
   padding: 9px 14px;
-  background: #f0ebe2;
-  border: 1px solid #d8d0c4;
+  background: var(--surface-f0ebe2, #f0ebe2);
+  border: 1px solid var(--edge-d8d0c4, #d8d0c4);
   border-radius: 7px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-clock > strong {
   font: 26px var(--serif);
@@ -79,12 +79,12 @@
   text-align: right;
 }
 .rush-clock.urgent {
-  background: #fae8de;
-  color: #b3654a;
-  border-color: #eed4c5;
+  background: var(--surface-fae8de, #fae8de);
+  color: var(--ink-b3654a, #b3654a);
+  border-color: var(--edge-eed4c5, #eed4c5);
 }
 .rush-clock.urgent > strong {
-  color: #b3654a;
+  color: var(--ink-b3654a, #b3654a);
 }
 .rush-board-wrap {
   position: relative;
@@ -95,7 +95,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #2b2e3275;
+  background: var(--surface-2b2e3275, #2b2e3275);
   border-radius: 8px;
   backdrop-filter: blur(1.5px);
   pointer-events: none;
@@ -104,14 +104,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #faf8f4f2;
-  border: 1px solid #d8d0c473;
+  background: var(--surface-faf8f4f2, #faf8f4f2);
+  border: 1px solid var(--edge-d8d0c473, #d8d0c473);
   box-shadow: 0 15px 40px #21232620;
   padding: 26px 28px;
   border-radius: 10px;
   max-width: 85%;
   text-align: center;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-ready-cover strong {
   font: 27px var(--serif);
@@ -120,7 +120,7 @@
 .rush-ready-cover small {
   font-size: 10px;
   line-height: 1.7;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-board-status {
   display: flex;
@@ -128,14 +128,14 @@
   gap: 8px;
   min-height: 49px;
   padding: 11px 2px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   font-size: 11px;
 }
 .rush-board-status.solved {
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
 }
 .rush-board-status.mistake {
-  color: #985034;
+  color: var(--ink-985034, #985034);
 }
 .rush-board-status .text-button {
   margin-left: auto;
@@ -150,8 +150,8 @@
   align-items: flex-start;
   gap: 11px;
   padding-top: 14px;
-  border-top: 1px solid #d8d0c4;
-  color: #655e56;
+  border-top: 1px solid var(--edge-d8d0c4, #d8d0c4);
+  color: var(--ink-655e56, #655e56);
   font-size: 9px;
   line-height: 1.7;
 }
@@ -175,31 +175,31 @@
 .rush-hero-icon {
   width: 65px;
   height: 65px;
-  border: 1px solid #eadbc0;
+  border: 1px solid var(--edge-eadbc0, #eadbc0);
   border-radius: 18px;
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ac8b4c;
+  color: var(--ink-ac8b4c, #ac8b4c);
   margin: 26px 0 18px;
 }
 .rush-setup h2 {
   font: 38px/1.09 var(--serif);
   letter-spacing: -0.5px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   margin: 0 0 16px;
 }
 .rush-setup > p,
 .rush-score-card > p {
   font-size: 11px;
   line-height: 1.85;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-mode-label {
   font-size: 9px;
   letter-spacing: 1.25px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   font-weight: 700;
   margin: 25px 0 11px;
 }
@@ -209,24 +209,24 @@
   gap: 8px;
 }
 .rush-modes > button {
-  border: 1px solid #d8d0c4;
+  border: 1px solid var(--edge-d8d0c4, #d8d0c4);
   border-radius: 7px;
-  background: #faf8f4;
+  background: var(--surface-faf8f4, #faf8f4);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   padding: 14px 6px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   cursor: pointer;
   transition:
     background 0.15s,
     border-color 0.15s;
 }
 .rush-modes > button.selected {
-  background: #f0ebe2;
-  border-color: #b99b7b;
-  color: #655e56;
+  background: var(--surface-f0ebe2, #f0ebe2);
+  border-color: var(--edge-b99b7b, #b99b7b);
+  color: var(--ink-655e56, #655e56);
 }
 .rush-modes > button strong {
   font-size: 11px;
@@ -254,30 +254,30 @@
   gap: 12px;
   margin-top: 25px;
   padding-top: 20px;
-  border-top: 1px solid #d8d0c4;
+  border-top: 1px solid var(--edge-d8d0c4, #d8d0c4);
 }
 .rush-rules > span {
   font-size: 10px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   display: flex;
   gap: 9px;
   align-items: center;
 }
 .rush-rules svg {
   flex-shrink: 0;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-setup .rush-footnote {
   font-size: 9px;
   line-height: 1.8;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   margin: 23px 0 0;
 }
 .rush-score-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-score-heading .soft-badge {
   font-size: 9px;
@@ -286,7 +286,7 @@
 .rush-score {
   text-align: center;
   margin: 23px 0 17px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-score > strong {
   display: block;
@@ -298,32 +298,32 @@
   display: block;
   font-size: 10px;
   letter-spacing: 0.5px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   margin-top: 10px;
 }
 .rush-lives {
   display: flex;
   justify-content: center;
   gap: 12px;
-  color: #d5cdc1;
+  color: var(--ink-d5cdc1, #d5cdc1);
   margin: 21px 0 24px;
 }
 .rush-lives .lost {
-  color: #d5cdc1;
+  color: var(--ink-d5cdc1, #d5cdc1);
 }
 .rush-active-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   padding: 19px 0;
-  border-top: 1px solid #d8d0c4;
-  border-bottom: 1px solid #d8d0c4;
+  border-top: 1px solid var(--edge-d8d0c4, #d8d0c4);
+  border-bottom: 1px solid var(--edge-d8d0c4, #d8d0c4);
 }
 .rush-active-stats > span {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   font-size: 9px;
 }
 .rush-active-stats > span:last-child {
@@ -331,31 +331,31 @@
 }
 .rush-active-stats strong {
   font: 25px var(--serif);
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-sequence {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
   margin-top: 21px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   font-size: 9px;
 }
 .rush-sequence > strong {
   font-weight: 500;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-sequence > div {
   grid-column: 1/-1;
   height: 5px;
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
   border-radius: 20px;
   overflow: hidden;
 }
 .rush-sequence i {
   display: block;
   height: 100%;
-  background: #d9b48d;
+  background: var(--surface-d9b48d, #d9b48d);
   border-radius: 20px;
   transition: width 0.2s;
 }
@@ -372,7 +372,7 @@
 }
 .rush-score-card h2 {
   font: 30px/1.15 var(--serif);
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   text-align: center;
   margin: 25px 0 12px;
 }
@@ -386,19 +386,19 @@
   gap: 8px;
   margin: 25px 0;
   padding: 19px 0;
-  border-top: 1px solid #d8d0c4;
-  border-bottom: 1px solid #d8d0c4;
+  border-top: 1px solid var(--edge-d8d0c4, #d8d0c4);
+  border-bottom: 1px solid var(--edge-d8d0c4, #d8d0c4);
 }
 .rush-result-stats strong {
   display: block;
   font: 24px var(--serif);
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-result-stats span {
   display: block;
   margin-top: 6px;
   font-size: 9px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-recap {
   padding: 22px;
@@ -408,11 +408,11 @@
 }
 .rush-recap .panel-heading > span {
   font-size: 10px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-recap h2 {
   font-size: 12px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-recap ol {
   list-style: none;
@@ -428,7 +428,7 @@
   align-items: center;
   gap: 9px;
   padding: 12px 0;
-  border-top: 1px solid #d8d0c4;
+  border-top: 1px solid var(--edge-d8d0c4, #d8d0c4);
 }
 .rush-recap li:first-child {
   border-top: 0;
@@ -441,16 +441,16 @@
   height: 25px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: #f0ebe2;
-  color: #655e56;
+  background: var(--surface-f0ebe2, #f0ebe2);
+  color: var(--ink-655e56, #655e56);
 }
 .rush-recap-icon.solved {
-  background: #f0ebe2;
-  color: #655e56;
+  background: var(--surface-f0ebe2, #f0ebe2);
+  color: var(--ink-655e56, #655e56);
 }
 .rush-recap-icon.missed {
-  background: #f9ece1;
-  color: #c59a75;
+  background: var(--surface-f9ece1, #f9ece1);
+  color: var(--ink-c59a75, #c59a75);
 }
 .rush-recap li > div {
   flex: 1;
@@ -460,14 +460,14 @@
   display: block;
   font-size: 10px;
   font-weight: 500;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   line-height: 1.6;
 }
 .rush-recap li small {
   display: block;
   font-size: 9px;
   margin-top: 3px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .rush-recap li > .text-button {
   font-size: 9px;
@@ -478,7 +478,7 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   padding: 23px 10px;
 }
 .rush-recap-empty p {
@@ -490,16 +490,16 @@
 .rush-source-note {
   font-size: 9px;
   line-height: 1.9;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   margin-top: 15px;
 }
 .rush-source-note a {
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .rush-layout button:focus-visible {
-  outline: 2px solid #5b5147;
+  outline: 2px solid var(--edge-5b5147, #5b5147);
   outline-offset: 3px;
 }
 .rush-layout .inline-error {

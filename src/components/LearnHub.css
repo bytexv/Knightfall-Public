@@ -1,10 +1,10 @@
 .learn-hub {
-  --lh-ink: #272a2d;
-  --lh-muted: #665f57;
-  --lh-border: #d6cec0;
-  --lh-accent: #934526;
-  --lh-surface: #faf8f4;
-  --lh-cream: #f0ebe2;
+  --lh-ink: var(--ink-272a2d, #272a2d);
+  --lh-muted: var(--ink-665f57, #665f57);
+  --lh-border: var(--edge-d6cec0, #d6cec0);
+  --lh-accent: var(--ink-934526, #934526);
+  --lh-surface: var(--surface-faf8f4, #faf8f4);
+  --lh-cream: var(--surface-f0ebe2, #f0ebe2);
   max-width: 1320px;
   margin: 0 auto;
   padding: 4px 0 36px;
@@ -21,7 +21,7 @@
 .learn-hub button:focus-visible,
 .learn-hub input:focus-visible,
 .learn-hub select:focus-visible {
-  outline: 3px solid #5b5147;
+  outline: 3px solid var(--edge-5b5147, #5b5147);
   outline-offset: 3px;
 }
 .lh-heading {
@@ -66,7 +66,7 @@
   font-weight: 650;
 }
 .lh-practice-button:hover {
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
 }
 .lh-tabs {
   display: flex;
@@ -100,20 +100,20 @@
 }
 .lh-tabs > button > span {
   font-size: 10px;
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
   border-radius: 5px;
   padding: 2px 5px;
   color: var(--lh-accent);
 }
 .lh-feature {
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
   min-height: 205px;
   border-radius: 4px;
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   overflow: hidden;
   position: relative;
-  border: 1px solid #d6cec0;
+  border: 1px solid var(--edge-d6cec0, #d6cec0);
   margin-bottom: 25px;
 }
 .lh-feature-copy {
@@ -127,7 +127,7 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .lh-feature h2 {
   font-family: "DM Sans", sans-serif;
@@ -136,12 +136,12 @@
   font-weight: 650;
   letter-spacing: -0.6px;
   margin: 12px 0 9px;
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
 }
 .lh-feature p {
   font-size: 12px;
   line-height: 1.7;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   max-width: 420px;
   margin: 0;
 }
@@ -151,15 +151,15 @@
   gap: 14px;
   margin-top: 18px;
   border: 0;
-  background: #2b2e32;
-  color: #fcfaf6;
+  background: var(--surface-2b2e32, #2b2e32);
+  color: var(--ink-fcfaf6, #fcfaf6);
   border-radius: 4px;
   padding: 10px 14px;
   font-size: 11px;
   font-weight: 650;
 }
 .lh-feature-copy > button:hover {
-  background: #2b2e32;
+  background: var(--surface-2b2e32, #2b2e32);
 }
 .lh-feature-art {
   position: relative;
@@ -168,9 +168,9 @@
   align-items: center;
   justify-content: center;
   gap: 18px;
-  border-left: 1px solid #d6cec0;
+  border-left: 1px solid var(--edge-d6cec0, #d6cec0);
   padding: 24px;
-  background: #e8dfd2;
+  background: var(--surface-e8dfd2, #e8dfd2);
 }
 .lh-art-knight {
   width: 105px;
@@ -179,14 +179,14 @@
 }
 .lh-art-caption {
   font-family: "SFMono-Regular", Consolas, monospace;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   font-size: 10px;
   line-height: 2;
   white-space: nowrap;
 }
 .lh-art-caption strong {
   font-size: 13px;
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
   font-weight: 600;
 }
 .lh-filter-row {
@@ -213,12 +213,12 @@
   font-weight: 550;
 }
 .lh-filters > button:hover {
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
 }
 .lh-filters > button.is-active {
-  color: #272a2d;
-  background: #f0ebe2;
-  border-color: #d6cec0;
+  color: var(--ink-272a2d, #272a2d);
+  background: var(--surface-f0ebe2, #f0ebe2);
+  border-color: var(--edge-d6cec0, #d6cec0);
 }
 .lh-filters > button > span {
   font-size: 9px;
@@ -231,7 +231,7 @@
   background: var(--lh-surface);
   border: 1px solid var(--lh-border);
   border-radius: 4px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   padding: 9px 11px;
   min-width: 195px;
 }
@@ -245,7 +245,7 @@
   font-size: 11px;
 }
 .lh-search input::placeholder {
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .lh-results-row {
   display: flex;
@@ -266,7 +266,7 @@
 .lh-results-row select {
   background: transparent;
   border: 0;
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
   font-size: 11px;
   cursor: pointer;
   padding: 4px 2px;
@@ -288,7 +288,7 @@
   animation: lh-enter 0.3s both;
 }
 .lh-opening-card:hover {
-  border-color: #a99177;
+  border-color: var(--edge-a99177, #a99177);
 }
 .lh-card-top {
   display: flex;
@@ -301,7 +301,7 @@
   height: 40px;
   display: grid;
   place-items: center;
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
   border-radius: 4px;
   flex-shrink: 0;
 }
@@ -310,33 +310,33 @@
   height: 32px;
 }
 .lh-category-creator .lh-piece-tile {
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
 }
 .lh-category-offbeat .lh-piece-tile {
-  background: #ebe7df;
+  background: var(--surface-ebe7df, #ebe7df);
 }
 .lh-difficulty {
   font-size: 9px;
   padding: 4px 7px;
-  border: 1px solid #d6cec0;
+  border: 1px solid var(--edge-d6cec0, #d6cec0);
   border-radius: 5px;
   margin-left: auto;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   white-space: nowrap;
 }
 .lh-difficulty-beginner {
-  color: #655e56;
-  background: #faf8f4;
+  color: var(--ink-655e56, #655e56);
+  background: var(--surface-faf8f4, #faf8f4);
 }
 .lh-difficulty-advanced {
-  color: #7d6141;
-  background: #faf8f4;
-  border-color: #d6cec0;
+  color: var(--ink-7d6141, #7d6141);
+  background: var(--surface-faf8f4, #faf8f4);
+  border-color: var(--edge-d6cec0, #d6cec0);
 }
 .lh-bookmark {
   background: transparent;
   border: 0;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   padding: 4px;
   display: grid;
   place-items: center;
@@ -350,13 +350,13 @@
   align-items: center;
   gap: 5px;
   font-size: 9px;
-  color: #726451;
+  color: var(--ink-726451, #726451);
   min-height: 14px;
   margin-bottom: 8px;
   line-height: 1.4;
 }
 .lh-eco {
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   font-size: 9px;
   letter-spacing: 0.35px;
 }
@@ -380,14 +380,14 @@
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 10px;
   background: var(--lh-cream);
-  border: 1px solid #d6cec0;
+  border: 1px solid var(--edge-d6cec0, #d6cec0);
   border-radius: 5px;
   padding: 9px 8px;
   margin: 0 0 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .lh-move-preview span {
   opacity: 1;
@@ -402,8 +402,8 @@
   font-size: 9px;
   padding: 3px 6px;
   border-radius: 4px;
-  background: #faf8f4;
-  color: #655e56;
+  background: var(--surface-faf8f4, #faf8f4);
+  color: var(--ink-655e56, #655e56);
 }
 .lh-open-button {
   display: flex;
@@ -412,41 +412,41 @@
   width: 100%;
   background: transparent;
   border: 0;
-  border-top: 1px solid #d6cec0;
+  border-top: 1px solid var(--edge-d6cec0, #d6cec0);
   padding: 13px 0;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   font-size: 11px;
   font-weight: 650;
 }
 .lh-open-button:hover {
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
 }
 .lh-show-more {
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid #d6cec0;
+  border: 1px solid var(--edge-d6cec0, #d6cec0);
   background: transparent;
   border-radius: 4px;
   padding: 11px 15px;
   margin: 24px auto 0;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   font-size: 11px;
   font-weight: 600;
 }
 .lh-show-more span {
   font-size: 10px;
   font-weight: 400;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   padding-left: 4px;
 }
 .lh-show-more:hover {
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
 }
 .lh-attribution {
   font-size: 10px;
   line-height: 1.7;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   display: flex;
   align-items: flex-start;
   gap: 7px;
@@ -459,9 +459,9 @@
 .lh-empty {
   text-align: center;
   padding: 50px 20px;
-  border: 1px dashed #d6cec0;
+  border: 1px dashed var(--edge-d6cec0, #d6cec0);
   border-radius: 4px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .lh-empty > svg {
   margin: 0 auto 8px;
@@ -469,7 +469,7 @@
 }
 .lh-empty h3 {
   font-size: 18px;
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
   margin: 9px 0;
 }
 .lh-empty p {
@@ -481,10 +481,10 @@
   gap: 8px;
   align-items: center;
   border: 0;
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
   border-radius: 4px;
   padding: 10px 14px;
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
   font-size: 11px;
 }
 .lh-lessons-intro {
@@ -517,30 +517,30 @@
 .lh-progress > span {
   font-size: 28px;
   font-weight: 600;
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
   letter-spacing: -1px;
 }
 .lh-progress small {
   font-size: 15px;
   font-weight: 400;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   letter-spacing: 0;
 }
 .lh-progress > p {
   font-size: 10px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   margin: 5px 0 10px;
 }
 .lh-progress > div {
   height: 4px;
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
   border-radius: 3px;
   overflow: hidden;
 }
 .lh-progress i {
   display: block;
   height: 100%;
-  background: #a65a34;
+  background: var(--surface-a65a34, #a65a34);
   transition: width 0.3s;
 }
 .lh-lesson-grid {
@@ -561,7 +561,7 @@
   transition: border-color 0.15s;
 }
 .lh-lesson-card:hover {
-  border-color: #b99b7b;
+  border-color: var(--edge-b99b7b, #b99b7b);
 }
 .lh-lesson-card-top {
   display: flex;
@@ -573,21 +573,21 @@
 .lh-lesson-index {
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 22px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .lh-lesson-card-top > span:last-child {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   font-size: 10px;
 }
 .lh-lesson-card.is-read .lh-lesson-card-top > span:last-child {
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .lh-lesson-level {
   font-size: 9px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   letter-spacing: 1.1px;
   text-transform: uppercase;
 }
@@ -608,7 +608,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   font-size: 11px;
   font-weight: 600;
   margin-top: auto;
@@ -617,22 +617,22 @@
   display: flex;
   align-items: center;
   gap: 19px;
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
   border-radius: 4px;
   padding: 24px;
   margin-top: 25px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .lh-practice-callout h3 {
   font-size: 17px;
   font-weight: 600;
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
   letter-spacing: -0.3px;
   margin: 0 0 6px;
 }
 .lh-practice-callout p {
   font-size: 11px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   margin: 0;
 }
 .lh-practice-callout button {
@@ -640,18 +640,18 @@
   align-items: center;
   gap: 12px;
   margin-left: auto;
-  border: 1px solid #d6cec0;
+  border: 1px solid var(--edge-d6cec0, #d6cec0);
   background: transparent;
   border-radius: 4px;
   padding: 10px 12px;
   font-size: 11px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   white-space: nowrap;
 }
 .lh-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: #23262aa6;
+  background: var(--surface-23262aa6, #23262aa6);
   backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
@@ -665,11 +665,11 @@
   max-height: 88dvh;
   overflow-y: auto;
   border-radius: 4px;
-  background: #faf8f4;
+  background: var(--surface-faf8f4, #faf8f4);
   padding: 29px 34px 32px;
   box-shadow: 0 25px 90px #21232640;
   outline: none;
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
 }
 .lh-dialog-top {
   display: flex;
@@ -677,14 +677,14 @@
   justify-content: space-between;
 }
 .lh-close {
-  background: #f0ebe2;
+  background: var(--surface-f0ebe2, #f0ebe2);
   border: 0;
   display: grid;
   place-items: center;
   border-radius: 4px;
   width: 32px;
   height: 32px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .lh-lesson-dialog h2 {
   font-size: 25px;
@@ -695,7 +695,7 @@
 }
 .lh-dialog-summary {
   font-size: 13px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   line-height: 1.7;
   margin: 0 0 12px;
 }
@@ -704,7 +704,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .lh-lesson-body {
   margin: 28px 0;
@@ -716,18 +716,18 @@
 }
 .lh-section-number {
   font-size: 12px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   line-height: 24px;
 }
 .lh-lesson-body h3 {
   font-size: 15px;
   font-weight: 650;
   margin: 0 0 8px;
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
 }
 .lh-lesson-body p {
   font-size: 13px;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   line-height: 1.85;
   margin: 0;
 }
@@ -737,8 +737,8 @@
   gap: 13px;
   padding: 18px;
   border-radius: 4px;
-  background: #f0ebe2;
-  color: #655e56;
+  background: var(--surface-f0ebe2, #f0ebe2);
+  color: var(--ink-655e56, #655e56);
   margin-bottom: 23px;
 }
 .lh-challenge > svg {
@@ -748,13 +748,13 @@
 .lh-challenge strong {
   font-size: 12px;
   font-weight: 650;
-  color: #272a2d;
+  color: var(--ink-272a2d, #272a2d);
 }
 .lh-challenge p {
   font-size: 12px;
   line-height: 1.8;
   margin: 6px 0 0;
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .lh-complete-button {
   width: 100%;
@@ -762,18 +762,18 @@
   align-items: center;
   justify-content: center;
   gap: 9px;
-  background: #7f452d;
-  border: 1px solid #5b5147;
+  background: var(--surface-7f452d, #7f452d);
+  border: 1px solid var(--edge-5b5147, #5b5147);
   border-radius: 4px;
   padding: 13px;
-  color: #fcfaf6;
+  color: var(--ink-fcfaf6, #fcfaf6);
   font-size: 12px;
   font-weight: 600;
 }
 .lh-complete-button.is-complete {
-  background: #f0ebe2;
-  color: #655e56;
-  border-color: #d6cec0;
+  background: var(--surface-f0ebe2, #f0ebe2);
+  color: var(--ink-655e56, #655e56);
+  border-color: var(--edge-d6cec0, #d6cec0);
 }
 @keyframes lh-enter {
   from {
@@ -1019,10 +1019,10 @@
 .learn-hub .lh-results-row,
 .learn-hub .lh-attribution,
 .learn-hub .lh-move-preview {
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
 }
 .learn-hub .lh-search input::placeholder {
-  color: #655e56;
+  color: var(--ink-655e56, #655e56);
   opacity: 1;
 }
 .beginner-path {display:grid;grid-template-columns:1.1fr 1fr;gap:32px;padding:30px;margin:24px 0 32px;background:var(--panel);border:1px solid var(--border);border-radius:14px;}
@@ -1037,7 +1037,7 @@
 .beginner-steps button {border:0;background:transparent;padding:0;color:var(--lh-accent);font-weight:600;cursor:pointer;}
 .beginner-lesson-nav {display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px;}
 .beginner-lesson-nav button {display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--border);border-radius:50%;background:var(--panel);color:var(--text);cursor:pointer;}
-.beginner-lesson-nav .current {background:var(--lh-accent);color:white;border-color:var(--lh-accent);}
+.beginner-lesson-nav .current {background:var(--lh-accent);color:var(--ink-ffffff, #ffffff);border-color:var(--lh-accent);}
 .beginner-exercise {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start;}
 .beginner-instructions h3 {font-size:25px;line-height:1.2;margin:12px 0;}
 .beginner-instructions p {font-size:14px;line-height:1.65;}.beginner-goal {padding:14px;border-left:3px solid var(--lh-accent);background:var(--panel);}.beginner-goal p {margin:6px 0 0;}

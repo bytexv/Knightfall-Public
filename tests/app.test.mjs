@@ -237,9 +237,9 @@ test("finished-game exploration preserves the original mainline and analysis tak
   await wait(340);
   assert.equal(host.textContent.includes("Scout is thinking"), false);
   assert.equal(
-    engineJobs.length,
+    engineJobs.filter(job => job.options.skill !== undefined).length,
     0,
-    "Exploration cannot wake the game-playing bot",
+    "Exploration cannot wake the game-playing bot (post-game review is separate)",
   );
 });
 
@@ -568,4 +568,60 @@ test("hint and analysis assistance survive saving and resuming, so the eventual 
       `${assistance} must exclude the result after resuming`,
     );
   }
+});
+
+
+test('premoves queue during the bot turn, execute after its reply and clear on cancellation or navigation', async () => {
+  localStorage.setItem('knightfall:settings', JSON.stringify({sound:false}));
+  await render();await clickText('Play with Scout');await move('e2','e4');
+  await move('g1','f3');
+  assert.equal(JSON.parse(localStorage.getItem('knightfall:current')).moves.length,1);
+  assert.ok(host.querySelector('.premove-notice'));
+  assert.equal(host.querySelectorAll('.premove-square').length,2);
+  await wait(340);
+  await settled(engineJobs.find(job=>!job.settled && job.options.skill!==undefined),'e7e5');
+  const played=JSON.parse(localStorage.getItem('knightfall:current')).moves;
+  assert.equal(played.length,3);assert.equal(played[0].san,'e4');assert.equal(played[2].san,'Nf3');
+  assert.equal(played[1].color,'b');
+  assert.equal(host.querySelector('.premove-notice'),null);
+  await move('f1','c4');assert.ok(host.querySelector('.premove-notice'));
+  await clickText('Cancel · Esc');assert.equal(host.querySelector('.premove-notice'),null);
+  await move('f1','c4');await clickLabel('Chess Quiz');
+  assert.equal(host.querySelector('.premove-notice'),null);
+  assert.equal(JSON.parse(localStorage.getItem('knightfall:current')).started,false);
+});
+
+test('checkmate is announced above the board and only reviewed moves populate the player summary', async () => {
+  let game=newSession({mode:'bot',playerColor:'b',started:true});
+  for(const [from,to] of [['f2','f3'],['e7','e5'],['g2','g4'],['d8','h4']])game=applyMove(game,from,to);
+  localStorage.setItem('knightfall:current',JSON.stringify(game));await render();
+  assert.equal(host.querySelector('.game-result h2').textContent,'Checkmate');
+  assert.match(host.querySelector('.winner-name').textContent,/You won/);
+  assert.equal(host.querySelector('.finish-accuracy'),null,'No invented percentage before analysis');
+  assert.ok(host.querySelector('.board-column').firstElementChild.classList.contains('game-result'));
+  for(let i=0;i<=game.moves.length;i++) {
+    const job=engineJobs.find(job=>!job.settled && job.options.multiPV===3);assert.ok(job);
+    await settled(job,i<game.moves.length?game.moves[i].from+game.moves[i].to:'');
+  }
+  assert.ok(host.querySelector('.finish-accuracy'));
+  assert.equal(host.querySelectorAll('.finish-counts>div').length,7);
+  assert.ok(JSON.parse(localStorage.getItem('knightfall:review-summaries-v1')).some(s=>s.gameId===game.id));
+});
+
+test('stopping a post-game review cancels its search, retry works and leaving prevents stale results', async () => {
+  let game=newSession({mode:'local',started:true});
+  for(const [from,to] of [['f2','f3'],['e7','e5'],['g2','g4'],['d8','h4']])game=applyMove(game,from,to);
+  localStorage.setItem('knightfall:current',JSON.stringify(game));await render();
+  const first=engineJobs.find(job=>!job.settled&&job.options.multiPV===3);
+  await clickText('Stop review');
+  assert.equal(first.settled,true);
+  assert.match(host.querySelector('.finish-review').textContent,/Review paused/);
+  assert.equal(host.querySelector('.finish-accuracy'),null);
+  await clickText('Try again');
+  const retry=engineJobs.find(job=>!job.settled&&job.options.multiPV===3);
+  assert.ok(retry&&retry!==first);
+  await clickLabel('Chess Quiz');
+  assert.equal(retry.settled,true);
+  assert.equal(host.querySelector('.finish-review'),null);
+  assert.equal(localStorage.getItem('knightfall:review-summaries-v1'),null);
 });
