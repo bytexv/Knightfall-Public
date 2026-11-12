@@ -83,7 +83,7 @@ export async function fetchAndroidRelease(
 ): Promise<UpdateStatus> {
   if (!validReleaseConfig(config)) throw new Error("Invalid release source");
   const releaseUrl = `https://github.com/${config.owner}/${config.repo}/releases`;
-  const endpoint = `https://api.github.com/repos/${config.owner}/${config.repo}/releases/latest`;
+  const endpoint = `https://api.github.com/repos/${config.owner}/${config.repo}/releases`;
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout>;
   const timeout = new Promise<never>((_, reject) => {
@@ -96,88 +96,126 @@ export async function fetchAndroidRelease(
     return await Promise.race([
       timeout,
       (async (): Promise<UpdateStatus> => {
-        const response = await fetcher(endpoint, {
-          signal: controller.signal,
-          credentials: "omit",
-          redirect: "error",
-          headers: { Accept: "application/vnd.github+json" },
-        });
-        if (!response.ok || (response.url && response.url !== endpoint))
-          throw new Error("Release unavailable");
-        if (
-          Number(response.headers.get("content-length")) > 1024 * 1024 ||
-          !response.body
-        ) {
-          await response.body?.cancel();
-          throw new Error("Invalid release");
-        }
-        const reader = response.body.getReader(),
-          decoder = new TextDecoder();
-        let text = "",
-          bytes = 0;
-        try {
-          for (;;) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            bytes += value.byteLength;
-            if (bytes > 1024 * 1024) throw new Error("Release too large");
-            text += decoder.decode(value, { stream: true });
+        async function readRelease(url: string) {
+          const response = await fetcher(url, {
+            signal: controller.signal,
+            credentials: "omit",
+            redirect: "error",
+            headers: { Accept: "application/vnd.github+json" },
+          });
+          if (response.status === 403 || response.status === 429)
+            throw new Error(
+              "GitHub is limiting update checks. Please try again later, or open Release notes & all downloads below.",
+            );
+          if (!response.ok || (response.url && response.url !== url))
+            throw new Error("Release unavailable");
+          if (
+            Number(response.headers.get("content-length")) > 1024 * 1024 ||
+            !response.body
+          ) {
+            await response.body?.cancel();
+            throw new Error("Invalid release");
           }
-          text += decoder.decode();
-        } catch (error) {
-          void reader.cancel();
-          throw error;
-        } finally {
-          reader.releaseLock();
+          const reader = response.body.getReader(),
+            decoder = new TextDecoder();
+          let text = "",
+            bytes = 0;
+          try {
+            for (;;) {
+              const { value, done } = await reader.read();
+              if (done) break;
+              bytes += value.byteLength;
+              if (bytes > 1024 * 1024) throw new Error("Release too large");
+              text += decoder.decode(value, { stream: true });
+            }
+            text += decoder.decode();
+          } catch (error) {
+            void reader.cancel();
+            throw error;
+          } finally {
+            reader.releaseLock();
+          }
+          return JSON.parse(text);
         }
-        const release = JSON.parse(text);
-        const tag = release.tag_name;
-        const latest =
-          typeof tag === "string" && tag.startsWith("v") ? tag.slice(1) : tag;
-        if (
-          typeof latest !== "string" ||
-          !parts(latest) ||
-          release.draft !== false ||
-          release.prerelease !== false ||
-          release.html_url !== `${releaseUrl}/tag/${encodeURIComponent(tag)}` ||
-          !Array.isArray(release.assets) ||
-          release.assets.length > 200
-        )
-          throw new Error("Invalid release");
-        const base = {
-          android: true,
-          currentVersion: current,
-          latestVersion: latest,
-          releaseUrl,
-          checkedAt: new Date().toISOString(),
-        };
-        if (!newerVersion(latest, current))
+        const release = await readRelease(`${endpoint}/latest`);
+        function inspect(release: any): UpdateStatus | null {
+          const tag = release.tag_name;
+          const latest =
+            typeof tag === "string" && tag.startsWith("v") ? tag.slice(1) : tag;
+          if (
+            typeof latest !== "string" ||
+            !parts(latest) ||
+            release.draft !== false ||
+            release.prerelease !== false ||
+            release.html_url !==
+              `${releaseUrl}/tag/${encodeURIComponent(tag)}` ||
+            !Array.isArray(release.assets) ||
+            release.assets.length > 200
+          )
+            throw new Error("Invalid release");
+          const base = {
+            android: true,
+            currentVersion: current,
+            latestVersion: latest,
+            releaseUrl,
+            checkedAt: new Date().toISOString(),
+          };
+          if (!newerVersion(latest, current))
+            return {
+              ...base,
+              status: "up-to-date",
+              message: "You have the latest stable Android release.",
+            };
+          const filename = `Knightfall-${latest}-Android.apk`;
+          const matches = release.assets.filter(
+            (asset: { name?: string }) => asset?.name === filename,
+          );
+          if (matches.length === 0) return null;
+          if (
+            matches.length !== 1 ||
+            matches[0].state !== "uploaded" ||
+            !Number.isSafeInteger(matches[0].size) ||
+            matches[0].size <= 0 ||
+            matches[0].size > 512 * 1024 ** 2 ||
+            matches[0].browser_download_url !==
+              `${releaseUrl}/download/${encodeURIComponent(tag)}/${filename}`
+          )
+            throw new Error("Android download unavailable");
           return {
             ...base,
-            status: "up-to-date",
-            message: "You have the latest stable Android release.",
+            status: "available",
+            downloadUrl: matches[0].browser_download_url,
+            message: `Version ${latest} is available. Download it here, then approve Android’s in-place update. Your games and settings stay.`,
+            android: true,
           };
-        const filename = `Knightfall-${latest}-Android.apk`;
-        const matches = release.assets.filter(
-          (asset: { name?: string }) => asset?.name === filename,
+        }
+        const latest = inspect(release);
+        if (latest) return latest;
+        // A platform-only release must not hide a compatible Android update.
+        const releases = await readRelease(`${endpoint}?per_page=30`);
+        if (!Array.isArray(releases) || releases.length > 30)
+          throw new Error("Invalid release list");
+        let best: UpdateStatus | null = null;
+        for (const candidate of releases) {
+          if (candidate?.draft || candidate?.prerelease) continue;
+          const result = inspect(candidate);
+          if (
+            result?.status === "available" &&
+            (!best || newerVersion(result.latestVersion!, best.latestVersion!))
+          )
+            best = result;
+        }
+        return (
+          best || {
+            android: true,
+            currentVersion: current,
+            releaseUrl,
+            checkedAt: new Date().toISOString(),
+            status: "unavailable",
+            message:
+              "The latest release does not include an Android update yet. Your app still works. Check again later or open Release notes & all downloads below.",
+          }
         );
-        if (
-          matches.length !== 1 ||
-          matches[0].state !== "uploaded" ||
-          !Number.isSafeInteger(matches[0].size) ||
-          matches[0].size <= 0 ||
-          matches[0].size > 512 * 1024 ** 2 ||
-          matches[0].browser_download_url !==
-            `${releaseUrl}/download/${encodeURIComponent(tag)}/${filename}`
-        )
-          throw new Error("Android download unavailable");
-        return {
-          ...base,
-          status: "available",
-          downloadUrl: matches[0].browser_download_url,
-          message: `Version ${latest} is available. Download it here, then approve Android’s in-place update. Your games and settings stay.`,
-          android: true,
-        };
       })(),
     ]);
   } finally {
@@ -311,7 +349,7 @@ async function initialize() {
       });
       return;
     }
-    await checkAppUpdates();
+    await checkAppUpdates(false);
   }
   // Recheck on returning to the app, at most once per four hours.
   document.addEventListener("visibilitychange", () => {
@@ -319,7 +357,7 @@ async function initialize() {
       document.visibilityState === "visible" &&
       Date.now() - lastCheck > 4 * 60 * 60 * 1000
     )
-      void checkAppUpdates();
+      void checkAppUpdates(false);
   });
 }
 export function subscribeAppUpdates(listener: () => void) {
@@ -333,10 +371,10 @@ export function subscribeAppUpdates(listener: () => void) {
   };
 }
 export const getAppUpdateStatus = () => state;
-export async function checkAppUpdates() {
+export async function checkAppUpdates(manual = true) {
   if (inFlight) return inFlight;
   if (state.status === "ready" || state.status === "downloading") return;
-  if (Date.now() - lastCheck < 60000) return;
+  if (!manual && Date.now() - lastCheck < 60000) return;
   lastCheck = Date.now();
   inFlight = (async () => {
     publish({ ...state, status: "checking", message: "Checking for updates…" });
@@ -372,12 +410,18 @@ export async function checkAppUpdates() {
         status: "idle",
         message: "Reload the page while online to get the current web app.",
       });
-    } catch {
+    } catch (error) {
       publish({
         ...state,
+        latestVersion: undefined,
+        downloadUrl: undefined,
+        progress: undefined,
         status: "unavailable",
         message:
-          "Could not check for updates. You can keep playing offline; try again later.",
+          error instanceof Error &&
+          error.message.startsWith("GitHub is limiting")
+            ? error.message
+            : "Could not reach the update server. Check your connection and tap Check for updates to retry. Your games are still available offline.",
       });
     }
   })().finally(() => {

@@ -63,14 +63,14 @@ Copy the certificate's SHA-256 fingerprint into `ANDROID_CERT_SHA256`. On Window
 [Convert]::ToBase64String([IO.File]::ReadAllBytes('C:\private\knightfall-release.jks')) | Set-Clipboard
 ```
 
-Only the signing step receives these secrets. It writes the keystore to the runner's temporary directory, supplies passwords through environment variables, verifies the resulting certificate against the expected fingerprint, and removes temporary signing material. If a secret is absent, the Android APK is omitted with a workflow notice. If a configured certificate differs or signing fails, publication fails. No new development key is substituted.
+Only the signing step receives these secrets. It writes the keystore to the runner's temporary directory, supplies passwords through environment variables, verifies the resulting certificate against the expected fingerprint, and removes temporary signing material. If a secret is absent, the workflow requires a locally signed candidate pinned in `release/android-candidate.json`; see [BUILDING.md](BUILDING.md). A missing Android artifact now fails the release. If a configured certificate differs or signing fails, publication fails. No new development key is substituted.
 
-Before signing secrets are configured, a maintainer can publish locally verified binaries through GitHub's release interface. That is separate from running this automated release workflow. Keep every keystore and password out of Git commits, source ZIPs, release attachments and logs.
+Before signing secrets are configured, use `scripts/stage-android-release.py` to provide the existing signed APK to the automated workflow. Only the public APK is staged; CI verifies its signature, version, checksums and bundled assets before publication. Keep every keystore and password out of Git commits, source ZIPs, release attachments and logs.
 
 ## Publish the next stable version
 
 1. Update `package.json` and the lockfile, Android `versionName` and increasing `versionCode`, and the iOS version fields if distributing that project. Update release notes and the confirmed repository configuration.
-2. Run the source tests and builds, then commit and push the intended source.
+2. Run the source tests and builds. When signing secrets are unavailable, build and stage the compatible Android APK following BUILDING.md. Commit its manifest with the intended source and push.
 3. Create and push the matching stable tag. For example:
 
 ```sh
@@ -82,7 +82,7 @@ Alternatively, choose **Actions → Build and publish release → Run workflow**
 
 The Windows Setup edition checks this repository's `releases/latest/download/latest.yml` at startup and every four hours. It accepts only a newer stable version, the exact versioned Setup filename, a bounded installer size and a SHA-512 digest. electron-updater verifies the downloaded installer before it can install. The app downloads in the background and installs on normal exit; **Restart and update** asks for confirmation first. The unsigned build relies on HTTPS, repository ownership and SHA-512 integrity, not a verified Windows publisher certificate. Protect repository write/release access.
 
-The portable edition uses the bounded GitHub release API checker and opens the exact portable download after a click. Android performs startup/resume checks. Version 1.5 adds an in-app APK download into private cache, restricted HTTPS redirects, file-size/time limits, package/version/signing-certificate checks, and a system installer handoff. The user may need to allow installations from Knightfall once, then approve each in-place update. Saved games and preferences remain. The APK must use the same signing identity as the installed app; missing repository signing secrets still prevent automatic Android artifact publication. Neither platform silently restarts an active game. Native iOS requires a separately signed build.
+The portable edition uses the bounded GitHub release API checker and opens the exact portable download after a click. Android performs startup/resume checks. Version 1.5 adds an in-app APK download into private cache, restricted HTTPS redirects, file-size/time limits, package/version/signing-certificate checks, and a system installer handoff. The user may need to allow installations from Knightfall once, then approve each in-place update. Saved games and preferences remain. The APK must use the same signing identity as the installed app; a signed candidate supports publication when repository signing secrets are unavailable. Neither platform silently restarts an active game. Native iOS requires a separately signed build.
 
 Web updates use the existing service worker. New assets download in the background, and Settings can activate the waiting worker and reload after confirmation. Active games are never automatically reloaded. Native desktop/Capacitor builds do not register a service worker, preventing old web caches from hiding bundled native updates.
 

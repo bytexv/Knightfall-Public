@@ -175,8 +175,10 @@ jobs:
           umask 077
           for variable in ANDROID_KEYSTORE_BASE64 ANDROID_KEY_ALIAS ANDROID_STORE_PASSWORD ANDROID_KEY_PASSWORD ANDROID_CERT_SHA256; do
             if [ -z "${!variable:-}" ]; then
-              echo "Signing secret $variable is not configured. Android APK is omitted; Windows and source publication can continue."
-              echo "available=false" >> "$GITHUB_OUTPUT"
+              echo "Using the locally signed Android candidate; no private key is uploaded."
+              python3 scripts/restore-android-candidate.py
+              python3 scripts/verify-android-release.py "artifacts/Knightfall-$VERSION-Android.apk"
+              echo "available=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
           done
@@ -209,6 +211,7 @@ jobs:
                       raise SystemExit(f'APK web asset mismatch: {asset}')
           print('Android signature, stable certificate, WebView configuration and bundled web assets verified.')
           PY
+          python3 scripts/verify-android-release.py "$apk"
           echo "available=true" >> "$GITHUB_OUTPUT"
       - name: Remove temporary signing material
         if: always()
@@ -252,7 +255,8 @@ jobs:
           version = os.environ['VERSION']
           expected = {f'Knightfall-{version}-{suffix}' for suffix in ('Windows-x64.exe', 'Windows-Setup.exe', 'Windows-Setup.exe.blockmap', 'source.zip', 'web.zip', 'Readme.md')}
           expected.add('latest.yml')
-          if os.environ.get('ANDROID_INCLUDED') == 'true': expected.add(f'Knightfall-{version}-Android.apk')
+          if os.environ.get('ANDROID_INCLUDED') != 'true': raise SystemExit('A stable release must include a compatible Android APK.')
+          expected.add(f'Knightfall-{version}-Android.apk')
           actual = {path.name for path in root.iterdir() if path.is_file()}
           if actual != expected: raise SystemExit('Release artifact inventory is incomplete or contains unexpected files.')
           lines = []
@@ -260,7 +264,7 @@ jobs:
               with (root / name).open('rb') as stream:
                   lines.append(f"{hashlib.file_digest(stream, 'sha256').hexdigest()}  {name}\n")
           (root / 'SHA256SUMS.txt').write_text(''.join(lines))
-          pathlib.Path('release-notes.md').write_text(f'Knightfall {version}\n\nUse Windows-Setup.exe for automatic background updates, or Windows-x64.exe for portable use. The Windows app is unsigned. An Android APK is included only when stable signing secrets are configured; otherwise use an earlier Android release until a signed APK is available.\n\nSource, web assets, licenses and build instructions are included. Verify downloaded files against SHA256SUMS.txt. The installed Windows app validates and downloads stable updates automatically, then installs on normal exit or a confirmed restart. Portable updates require a new download. Android 1.5+ can download a compatible signed APK in-app and asks for system approval to update in place.\n')
+          pathlib.Path('release-notes.md').write_text(f'Knightfall {version}\n\nUse Windows-Setup.exe for automatic background updates, or Windows-x64.exe for portable use. The Windows app is unsigned. The Android APK uses the existing signing identity and updates installed Knightfall copies in place. On versions before 1.5, download the APK and approve the Android update; do not uninstall first.\n\nSource, web assets, licenses and build instructions are included. Verify downloaded files against SHA256SUMS.txt. The installed Windows app validates and downloads stable updates automatically, then installs on normal exit or a confirmed restart. Portable updates require a new download. Android 1.5+ can download a compatible signed APK in-app and asks for system approval to update in place.\n')
           PY
       - name: Publish the stable release
         run: |

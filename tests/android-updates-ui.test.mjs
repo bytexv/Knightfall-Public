@@ -23,6 +23,16 @@ test('Android downloads through the native bridge, retains progress, and confirm
   for(let i=0;i<100&&api.getAppUpdateStatus().status!=='available';i++)await new Promise(r=>setTimeout(r,10));
   assert.equal(api.getAppUpdateStatus().status,'available');
   assert.equal(api.getAppUpdateStatus().android,true);
+  const onlineFetch=globalThis.fetch;
+  let attempts=0;
+  globalThis.fetch=async()=>{attempts++;throw new TypeError('Failed to fetch');};
+  await api.checkAppUpdates();
+  assert.equal(attempts,1); assert.equal(api.getAppUpdateStatus().status,'unavailable');
+  assert.equal(api.getAppUpdateStatus().downloadUrl,undefined);
+  assert.match(api.getAppUpdateStatus().message,/Check your connection/);
+  globalThis.fetch=onlineFetch;
+  await api.checkAppUpdates();
+  assert.equal(api.getAppUpdateStatus().status,'available');
   dom.window.open=()=>{throw new Error('Download must stay inside app');};
   await api.openAppUpdate();assert.equal(downloaded.version,'99.0.0');assert.equal(api.getAppUpdateStatus().progress,42);
   listener({status:'ready',latestVersion:'99.0.0',progress:100,message:'Ready'});

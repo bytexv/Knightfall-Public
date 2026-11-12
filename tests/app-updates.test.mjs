@@ -32,3 +32,25 @@ test('Android aborts a stalled request without blocking local play', async () =>
   await assert.rejects(fetchAndroidRelease(config, '1.3.0', (_url, options) => { signal = options.signal; return new Promise(() => {}); }, 10), /timed out/);
   assert.equal(signal.aborted, true);
 });
+test('a newer Windows-only release does not hide the latest compatible Android APK', async () => {
+  const urls = [];
+  const result = await fetchAndroidRelease(config, '1.3.1', async url => {
+    urls.push(url);
+    return response(url.endsWith('/latest') ? {...release('1.6.0'), assets: []} : [
+      {...release('1.6.0'), assets: []}, release('1.4.0'), {...release('9.0.0'), prerelease: true}, release('1.5.2')]);
+  });
+  assert.equal(result.status, 'available'); assert.equal(result.latestVersion, '1.5.2');
+  assert.equal(urls.length, 2); assert.ok(urls[1].endsWith('?per_page=30'));
+});
+test('missing Android publication has an actionable message and no unsafe download', async () => {
+  const result = await fetchAndroidRelease(config, '1.3.1', async url => response(url.endsWith('/latest') ? {...release('1.5.2'), assets: []} : [{...release('1.5.2'), assets: []}, release('1.2.0')]));
+  assert.equal(result.status, 'unavailable'); assert.match(result.message, /does not include an Android update/); assert.equal(result.downloadUrl, undefined);
+});
+test('fallback rejects a tampered Android download and bounds the release list', async () => {
+  const malicious = release('1.5.2'); malicious.assets[0].browser_download_url='https://evil.test/update.apk';
+  for (const list of [[malicious], Array.from({length:31},()=>release())])
+    await assert.rejects(fetchAndroidRelease(config, '1.3.1', async url => response(url.endsWith('/latest') ? {...release('1.6.0'), assets: []} : list)));
+});
+test('rate limits are distinguished from a missing package', async () => {
+  for (const status of [403,429]) await assert.rejects(fetchAndroidRelease(config, '1.3.1', async () => new Response('',{status})), /GitHub is limiting update checks/);
+});
