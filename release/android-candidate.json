@@ -1,0 +1,25 @@
+{
+  "version": "1.5.2",
+  "versionCode": 11,
+  "sha256": "baffe2811cede5c5ea81683c30404fcab9f8cee34d99747a095fa55862e9f016",
+  "certificateSha256": "daeea1bb79058d62827b08f30423a2c244c4ca5a69dda1cfa91f22b314e2f616",
+  "commit": "0518d5d5f7114901ab9af0b1458392011d41abbf",
+  "branch": "android-candidate-v1.5.2",
+  "chunks": [
+    {
+      "name": "apk.part00",
+      "size": 67108864,
+      "sha256": "fdfd8ef723cfe46d190ece8d2a09cc788f46b325f59f46e567912758dcc60a95"
+    },
+    {
+      "name": "apk.part01",
+      "size": 67108864,
+      "sha256": "8bcca87690a07b8fa222a2435f9640c44b0ddb8000b8fdf4a08282386538b7be"
+    },
+    {
+      "name": "apk.part02",
+      "size": 13689554,
+      "sha256": "3705e431c6836bc494c9f4b0ba64fe7040b553661d59a779c8fe734180ae6e4c"
+    }
+  ]
+}
