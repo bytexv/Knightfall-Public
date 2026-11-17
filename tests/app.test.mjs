@@ -625,3 +625,23 @@ test('stopping a post-game review cancels its search, retry works and leaving pr
   assert.equal(host.querySelector('.finish-review'),null);
   assert.equal(localStorage.getItem('knightfall:review-summaries-v1'),null);
 });
+
+ test('multiple premoves advance one per reply and can move the same piece twice', async () => {
+  localStorage.setItem('knightfall:settings', JSON.stringify({sound:false}));
+  await render();await clickText('Play with Scout');await move('e2','e4');
+  await move('g1','f3');await move('f3','g5');
+  assert.match(host.querySelector('.premove-notice').textContent,/2 queued/);
+  assert.equal(JSON.parse(localStorage.getItem('knightfall:current')).moves.length,1);
+  await wait(340);await settled(engineJobs.find(job=>!job.settled&&job.options.skill!==undefined),'e7e5');
+  assert.equal(JSON.parse(localStorage.getItem('knightfall:current')).moves[2].san,'Nf3');
+  assert.match(host.querySelector('.premove-notice').textContent,/1 queued/);
+  await wait(340);await settled(engineJobs.find(job=>!job.settled&&job.options.skill!==undefined),'b8c6');
+  const game=JSON.parse(localStorage.getItem('knightfall:current'));
+  assert.equal(game.moves.length,5);assert.equal(game.moves[4].san,'Ng5');assert.equal(host.querySelector('.premove-notice'),null);
+ });
+
+test('an illegal first premove discards every remaining move',async()=>{
+ localStorage.setItem('knightfall:settings', JSON.stringify({sound:false}));await render();await clickText('Play with Scout');await move('e2','e4');await move('f1','h3');await move('g1','f3');
+ assert.match(host.querySelector('.premove-notice').textContent,/2 queued/);await wait(340);await settled(engineJobs.find(job=>!job.settled&&job.options.skill!==undefined),'e7e5');
+ assert.equal(JSON.parse(localStorage.getItem('knightfall:current')).moves.length,2);assert.equal(host.querySelector('.premove-notice'),null);assert.match(host.textContent,/queue cancelled/);
+});

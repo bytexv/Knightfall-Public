@@ -1,3 +1,8 @@
+# Knightfall 1.9.0
+
+- Queue up to ten premoves, including successive moves by the same piece. A labeled plan preview shows the projected position. Moves execute one per opponent reply after full legality checks. Cancel clears the whole queue; invalid moves, navigation and disconnection also clear it.
+- Choose Off, Subtle, Smooth or Expressive animations in Settings. Piece travel, capture fades, drag returns and page transitions follow the intensity; expressive captures gently shrink. Reduced motion overrides animation preferences.
+
 # Knightfall 1.8.0
 
 An independent chess studio for web, Windows and Android. Local play, analysis and learning run on your device.

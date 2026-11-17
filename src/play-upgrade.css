@@ -496,3 +496,6 @@
 .no-flex-gap .quiz-hero-tags > span + span {
   margin-left: 12px;
 }
+
+:root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after { animation-duration: 0s !important; transition-duration: 0s !important; scroll-behavior: auto !important; }
+.premove-notice { overflow-wrap: anywhere; }

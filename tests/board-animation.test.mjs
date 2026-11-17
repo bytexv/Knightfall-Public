@@ -294,3 +294,14 @@ test("a delayed authoritative move keeps the dropped piece at its destination an
   assert.equal(host.querySelectorAll(".board-motion-piece").length, 1);
   assert.equal(animations.at(-1).frames[0].transform, "translate(0%, 0%)");
 });
+
+test('motion intensity changes timing and Off clears running visuals without changing pieces', async () => {
+  document.documentElement.dataset.motion='subtle'; await render(); await play('e4');
+  assert.equal(animations[0].options.duration,190*.65);
+  document.documentElement.dataset.motion='off';window.dispatchEvent(new window.Event('knightfall:motion'));
+  assert.equal(host.querySelectorAll('.board-motion-piece').length,0);
+  const n=animations.length;await play('e5');assert.equal(animations.length,n);
+  assert.ok(square('e5').querySelector('img'));
+  document.documentElement.dataset.motion='expressive';await play('Nf3');assert.equal(animations.at(-1).options.duration,190*1.4);
+  media.matches=true;await play('Nc6');assert.equal(animations.at(-1).options.duration,190*1.4);
+});

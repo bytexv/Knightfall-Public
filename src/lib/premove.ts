@@ -23,7 +23,7 @@ export function premoveTargets(
       const to = String.fromCharCode(97 + nx) + (ny + 1),
         dx = nx - x,
         dy = ny - y;
-      if (to === from || game.get(to as Square)?.color === color) continue;
+      if (to === from || game.get(to as Square)?.color === color || game.get(to as Square)?.type === "k") continue;
       const ax = Math.abs(dx),
         ay = Math.abs(dy),
         forward = color === "w" ? 1 : -1;
@@ -73,4 +73,21 @@ export function legalPremove(
   } catch {
     return null;
   }
+}
+
+/** Conditional preview only. Real legality is always checked against the opponent's reply. */
+export function premovePreview(fen: string, moves: Premove[]): string {
+  const board = new Chess(fen);
+  for (const move of moves) {
+    const piece = board.get(move.from as Square);
+    if (!piece || board.get(move.to as Square)?.type === "k") break;
+    board.remove(move.from as Square);
+    board.remove(move.to as Square);
+    board.put({color:piece.color,type:(move.promotion || piece.type) as typeof piece.type},move.to as Square);
+    if(piece.type === 'k' && Math.abs(move.from.charCodeAt(0)-move.to.charCodeAt(0))===2) {
+      const rank=move.from[1], right=move.to[0]==='g', from=(right?'h':'a')+rank, to=(right?'f':'d')+rank;
+      const rook=board.get(from as Square);if(rook){board.remove(from as Square);board.put(rook,to as Square);}
+    }
+  }
+  return board.fen();
 }

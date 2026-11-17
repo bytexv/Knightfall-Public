@@ -16,6 +16,7 @@ import {
 export interface Settings {
   appearance: "light" | "dark" | "system";
   boardSize: "auto" | "large" | "compact";
+  animationIntensity: "off" | "subtle" | "smooth" | "expressive";
   premoves: boolean;
   botChat: boolean;
   botVoice: boolean;
@@ -34,6 +35,7 @@ export interface Settings {
 export const defaultSettings: Settings = {
   appearance: "system",
   boardSize: "auto",
+  animationIntensity: "smooth",
   premoves: true,
   botChat: true,
   botVoice: false,
@@ -82,6 +84,7 @@ export function sanitizeSettings(value: unknown): Settings {
       raw.boardSize === "large" || raw.boardSize === "compact"
         ? raw.boardSize
         : "auto",
+    animationIntensity: ["off", "subtle", "expressive"].includes(String(raw.animationIntensity)) ? raw.animationIntensity as Settings["animationIntensity"] : "smooth",
     premoves: raw.premoves !== false,
     botChat: raw.botChat !== false,
     botVoice: raw.botVoice === true,

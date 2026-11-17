@@ -1,7 +1,7 @@
 import DeserterHub from "./components/DeserterHub";
 import BotDialogue from "./components/BotDialogue";
 import FinishReview from "./components/FinishReview";
-import { legalPremove, premoveTargets, type Premove } from "./lib/premove";
+import { legalPremove, premoveTargets, premovePreview, type Premove } from "./lib/premove";
 import { Moon, Sun, Compass } from "lucide-react";
 import ReviewLibrary from "./components/ReviewLibrary";
 import QuizHub from "./components/QuizHub";
@@ -281,11 +281,11 @@ export default function App() {
   const [focusMode, setFocusMode] = useState(false);
   const [dark, setDark] = useState(false);
   type QueuedMove = Premove & { gameId: string; plies: number };
-  const [premove, setPremoveState] = useState<QueuedMove | null>(null);
-  const premoveRef = useRef<QueuedMove | null>(null);
+  const [premove, setPremoveState] = useState<QueuedMove[]>([]);
+  const premoveRef = useRef<QueuedMove[]>([]);
   const clearPremove = useCallback(() => {
-    premoveRef.current = null;
-    setPremoveState(null);
+    premoveRef.current = [];
+    setPremoveState([]);
   }, []);
   useEffect(() => {
     const media = window.matchMedia?.("(prefers-color-scheme: dark)");
@@ -305,6 +305,11 @@ export default function App() {
       else media?.removeListener?.(sync);
     };
   }, [settings.appearance]);
+  useEffect(() => {
+    document.documentElement.dataset.motion = settings.animationIntensity;
+    window.dispatchEvent(new window.Event("knightfall:motion"));
+    mainRef.current?.getAnimations?.().forEach(animation => animation.cancel());
+  }, [settings.animationIntensity]);
   const [toast, setToast] = useState("");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [modal, setModal] = useState<
@@ -456,15 +461,16 @@ export default function App() {
       !current.started ||
       current.result ||
       new Chess(current.fen).turn() === actor ||
-      !premoveTargets(current.fen, move.from, actor).includes(move.to)
+      !premoveTargets(premovePreview(current.fen, premoveRef.current), move.from, actor).includes(move.to)
     )
       return;
-    const queued = { ...move, gameId: current.id, plies: current.moves.length };
+    if (premoveRef.current.length >= 10) { notify("You can queue up to 10 premoves."); return; }
+    const queued = [...premoveRef.current, { ...move, gameId: current.id, plies: current.moves.length + premoveRef.current.length * 2 }];
     premoveRef.current = queued;
     setPremoveState(queued);
   }
   useEffect(() => {
-    const queued = premoveRef.current;
+    const queued = premoveRef.current[0];
     if (!queued) return;
     if (
       page !== "play" ||
@@ -475,7 +481,7 @@ export default function App() {
       modal ||
       !atLatest ||
       (isLan && lanConnection !== "connected") ||
-      game.moves.length < queued.plies ||
+      game.moves.length < queued.plies - 1 ||
       game.moves.length > queued.plies + 1
     ) {
       clearPremove();
@@ -488,10 +494,12 @@ export default function App() {
       new Chess(game.fen).turn() !== actor
     )
       return;
-    clearPremove();
     const move = legalPremove(game.fen, actor, queued);
-    if (move) makeMove(move.from, move.to, move.promotion);
-    else notify("Premove cancelled — it is no longer legal.");
+    if (move) {
+      premoveRef.current = premoveRef.current.slice(1);
+      setPremoveState(premoveRef.current);
+      makeMove(move.from, move.to, move.promotion, true);
+    } else { clearPremove(); notify("Premove queue cancelled — the next move is no longer legal."); }
   }, [
     page,
     settings.premoves,
@@ -571,13 +579,13 @@ export default function App() {
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const animation =
-      !reduced &&
+      !reduced && settings.animationIntensity !== "off" &&
       mainRef.current?.animate?.(
         [
-          { opacity: 0.55, transform: "translateY(7px)" },
+          { opacity: 0.55, transform: `translateY(${settings.animationIntensity === "expressive" ? 12 : settings.animationIntensity === "subtle" ? 3 : 7}px)` },
           { opacity: 1, transform: "translateY(0)" },
         ],
-        { duration: 210, easing: "cubic-bezier(.2,.7,.2,1)" },
+        { duration: settings.animationIntensity === "expressive" ? 280 : settings.animationIntensity === "subtle" ? 120 : 210, easing: "cubic-bezier(.2,.7,.2,1)" },
       );
     return () => {
       if (animation) animation.cancel();
@@ -1065,8 +1073,8 @@ export default function App() {
     }
     if (settings.sound) playSound("end");
   }
-  function makeMove(from: string, to: string, promotion = "q") {
-    clearPremove();
+  function makeMove(from: string, to: string, promotion = "q", queued = false) {
+    if (!queued) clearPremove();
     if (isLan) {
       if (
         lanSnapshot.status === "playing" &&
@@ -1970,7 +1978,7 @@ export default function App() {
                     </div>
                   )}
                   <ChessBoard
-                    fen={position}
+                    fen={canQueue && premove.length ? premovePreview(position, premove) : position}
                     alienTheme={
                       settings.alienEasterEgg &&
                       (game.alienGambit === true ||
@@ -1987,7 +1995,7 @@ export default function App() {
                           : game.playerColor
                         : undefined
                     }
-                    premove={premove}
+                    premove={premove[0] || null}
                     onPremove={queuePremove}
                     onCancelPremove={clearPremove}
                     lastMove={
@@ -2034,13 +2042,11 @@ export default function App() {
                     )}
                 </div>
                 {playerBar(bottomColor, true)}
-                {premove && (
+                {premove.length > 0 && (
                   <div className="premove-notice" role="status">
                     <span>
-                      Premove: {premove.from} → {premove.to}
-                      {premove.promotion
-                        ? ` = ${premove.promotion.toUpperCase()}`
-                        : ""}
+                      {canQueue ? "Plan preview · " : ""}{premove.length} queued: {premove.map((m,i) => `${i+1}. ${m.from} → ${m.to}${m.promotion ? "="+m.promotion.toUpperCase() : ""}`).join(" · ")}
+                      {" · Each move waits for an opponent reply."}
                     </span>
                     <button className="text-button" onClick={clearPremove}>
                       Cancel · Esc
@@ -3129,6 +3135,13 @@ export default function App() {
                 </fieldset>
                 <fieldset className="appearance-settings">
                   <legend>Appearance & board</legend>
+                  <label>Animation intensity
+                    <select aria-label="Animation intensity" value={settings.animationIntensity} onChange={e=>setSettings(s=>({...s,animationIntensity:e.target.value as Settings["animationIntensity"]}))}>
+                      <option value="off">Off · instant moves</option><option value="subtle">Subtle · quick and gentle</option><option value="smooth">Smooth · balanced</option><option value="expressive">Expressive · more movement</option>
+                    </select>
+                  </label>
+                  <p className="fine-print">Applies to pieces and page transitions. Your device’s reduced-motion preference always takes priority.</p>
+
                   <label>
                     App theme
                     <select
@@ -3193,7 +3206,7 @@ export default function App() {
                   {
                     key: "premoves",
                     name: "Premoves",
-                    desc: "Queue one move on your opponent’s turn. Illegal premoves are cancelled.",
+                    desc: "Queue up to 10 moves on your opponent’s turn. An illegal move cancels the remaining queue.",
                   },
                   {
                     key: "botChat",

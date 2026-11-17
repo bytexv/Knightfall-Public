@@ -16,7 +16,7 @@ type Drag = Visual & { from: string; point: Point };
 const samePiece = (a?: BoardPiece | null, b?: BoardPiece | null) =>
   a?.color === b?.color && a?.type === b?.type;
 const DURATION = 190;
-const EASING = "cubic-bezier(.22,.68,.15,1)";
+const EASING = "cubic-bezier(.16,1,.3,1)";
 
 /** A visual-only layer: the accessible squares and legal game state update immediately. */
 export class BoardAnimator {
@@ -38,8 +38,12 @@ export class BoardAnimator {
       "(prefers-reduced-motion: reduce)",
     );
     this.media?.addEventListener?.("change", this.onMotionPreference);
+    board.ownerDocument.defaultView?.addEventListener("knightfall:motion", this.onSetting);
   }
 
+  private intensity() { return this.board.ownerDocument.documentElement.dataset.motion || "smooth"; }
+  private duration(base: number) { return base * (this.intensity() === "subtle" ? .65 : this.intensity() === "expressive" ? 1.4 : 1); }
+  private onSetting = () => this.clear();
   private onMotionPreference = () => {
     if (this.media?.matches) this.clear();
   };
@@ -97,6 +101,7 @@ export class BoardAnimator {
     after: BoardPiece,
     duration = DURATION,
   ) {
+    duration = this.duration(duration);
     const to = squarePoint(square, this.orientation);
     const visual = this.makeVisual(before, to, square);
     visual.node.classList.add("is-travelling");
@@ -106,6 +111,7 @@ export class BoardAnimator {
         {
           transform: `translate(${(from.x - to.x) * 100}%, ${(from.y - to.y) * 100}%)`,
         },
+        ...(this.intensity() === "expressive" ? [{ transform: `translate(${(from.x-to.x)*18}%, ${(from.y-to.y)*18-4}%) scale(1.04)`, offset: .72 }] : []),
         { transform: "translate(0%, 0%)" },
       ],
       { duration, easing: EASING },
@@ -158,8 +164,8 @@ export class BoardAnimator {
     visual.node.classList.add("is-capture");
     this.fading.add(visual);
     const animation = visual.node.animate(
-      [{ opacity: entering ? 0 : 1 }, { opacity: entering ? 1 : 0 }],
-      { duration: 130, easing: "ease-out" },
+      [{ opacity: entering ? 0 : 1, transform: "scale(1)" }, { opacity: entering ? 1 : 0, transform: this.intensity() === "expressive" && !entering ? "scale(.76)" : "scale(1)" }],
+      { duration: this.duration(130), easing: "ease-out" },
     );
     visual.animations.push(animation);
     animation.onfinish = () => {
@@ -187,7 +193,7 @@ export class BoardAnimator {
     if (
       !previous ||
       changedOrientation ||
-      this.media?.matches ||
+      this.media?.matches || this.intensity() === "off" ||
       typeof this.layer.animate !== "function"
     )
       return;
@@ -260,7 +266,7 @@ export class BoardAnimator {
     this.remove(drag);
     if (
       !promotion &&
-      !this.media?.matches &&
+      !this.media?.matches && this.intensity() !== "off" &&
       typeof this.layer.animate === "function"
     ) {
       try {
@@ -290,5 +296,6 @@ export class BoardAnimator {
   destroy() {
     this.clear();
     this.media?.removeEventListener?.("change", this.onMotionPreference);
+    this.board.ownerDocument.defaultView?.removeEventListener("knightfall:motion", this.onSetting);
   }
 }

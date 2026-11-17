@@ -158,8 +158,11 @@ test('a LAN premove stays local until the opponent replies, then submits exactly
  const code=await createRoom('Host','b');let peer;
  await act(async()=>{peer=await rawPeer();peer.send({type:'join',code,name:'Visitor'});await peer.wait(message=>message.type==='snapshot'&&message.snapshot.status==='playing');});
  await waitFor(()=>host.querySelector('.status-message')?.textContent.includes('Visitor to move'));
- await boardMove('e7','e5');assert.ok(host.querySelector('.premove-notice'));assert.equal(peer.snapshot.history.length,0);
+ await boardMove('e7','e5');await boardMove('g8','f6');assert.ok(host.querySelector('.premove-notice'));assert.equal(peer.snapshot.history.length,0);
  await peerAction(peer,{type:'move',from:'e2',to:'e4'},message=>message.type==='snapshot'&&message.snapshot.history.length>=1);
  await waitFor(()=>peer.snapshot.history.length===2);assert.deepEqual(peer.snapshot.history,['e4','e5']);
+ assert.match(host.querySelector('.premove-notice').textContent,/1 queued/);
+ await peerAction(peer,{type:'move',from:'g1',to:'f3'},message=>message.type==='snapshot'&&message.snapshot.history.length>=3);
+ await waitFor(()=>peer.snapshot.history.length===4);assert.deepEqual(peer.snapshot.history,['e4','e5','Nf3','Nf6']);
  assert.equal(host.querySelector('.premove-notice'),null);
 });
