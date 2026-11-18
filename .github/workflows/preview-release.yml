@@ -1,0 +1,50 @@
+name: Publish verified 2.1.0 desktop and web preview
+on:
+  push:
+    branches: [preview-2.1.0]
+permissions:
+  actions: read
+  contents: write
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: '44352076496'
+      SOURCE_SHA: f10eca6474f5a9c54b4ba10926961dd6ec330dfe
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for all platform results
+        run: gh run watch "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --interval 30 --exit-status || true
+      - name: Verify completed source and Windows checks
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" > run.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/jobs" > jobs.json
+          gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v2.1.0" > tag.json
+          python3 - <<'PY'
+          import json,os
+          run=json.load(open('run.json'));jobs={j['name']:j['conclusion'] for j in json.load(open('jobs.json'))['jobs']};tag=json.load(open('tag.json'))
+          assert run['head_sha']==os.environ['SOURCE_SHA']==tag['object']['sha']
+          assert run['status']=='completed' and jobs.get('source')=='success' and jobs.get('windows')=='success'
+          assert jobs.get('android')=='failure', 'Use the complete stable release when Android succeeds'
+          android=next(j for j in json.load(open('jobs.json'))['jobs'] if j['name']=='android')
+          steps={s['name']:s['conclusion'] for s in android['steps']}
+          assert steps.get('Test native helpers and build unsigned release')=='success'
+          assert steps.get('Sign with the configured stable Android identity')=='failure'
+          PY
+      - name: Download exact tested artifacts
+        run: |
+          mkdir assets
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name Knightfall-web-source --dir assets
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name Knightfall-Windows-x64 --dir assets
+          python3 - <<'PY'
+          import pathlib,hashlib
+          root=pathlib.Path('assets')
+          expected={f'Knightfall-2.1.0-{suffix}' for suffix in ['Windows-Setup.exe','Windows-Setup.exe.blockmap','Windows-x64.exe','web.zip','source.zip','Readme.md']}|{'latest.yml'}
+          assert {p.name for p in root.iterdir()}==expected
+          (root/'SHA256SUMS.txt').write_text(''.join(f'{hashlib.file_digest((root/name).open("rb"),"sha256").hexdigest()}  {name}\n' for name in sorted(expected)))
+          PY
+      - name: Publish clearly labeled preview
+        run: |
+          gh release create v2.1.0 --repo "$GITHUB_REPOSITORY" --verify-tag --prerelease --title 'Knightfall 2.1.0 Preview — Windows and web' --notes-file docs/PREVIEW_2_1.md assets/*
