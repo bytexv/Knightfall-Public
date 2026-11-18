@@ -1,0 +1,46 @@
+name: Publish verified 2.0.0 desktop and web preview
+on:
+  push:
+    branches: [preview-2.0.0]
+permissions:
+  actions: read
+  contents: write
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: '44341230507'
+      SOURCE_SHA: 86b41bf10f40ebc88716b6ebd5c92f566a0d6bca
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for all platform results
+        run: gh run watch "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --interval 30 --exit-status || true
+      - name: Verify completed source and Windows checks
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" > run.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/jobs" > jobs.json
+          gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v2.0.0" > tag.json
+          python3 - <<'PY'
+          import json,os
+          run=json.load(open('run.json'));jobs={j['name']:j['conclusion'] for j in json.load(open('jobs.json'))['jobs']};tag=json.load(open('tag.json'))
+          assert run['head_sha']==os.environ['SOURCE_SHA']==tag['object']['sha']
+          assert run['status']=='completed' and jobs.get('source')=='success' and jobs.get('windows')=='success'
+          assert jobs.get('android')=='failure', 'Use the complete stable release when Android succeeds'
+          PY
+      - name: Download exact tested artifacts
+        run: |
+          mkdir assets
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name Knightfall-web-source --dir assets
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name Knightfall-Windows-x64 --dir assets
+          python3 - <<'PY'
+          import pathlib,hashlib
+          root=pathlib.Path('assets')
+          expected={f'Knightfall-2.0.0-{suffix}' for suffix in ['Windows-Setup.exe','Windows-Setup.exe.blockmap','Windows-x64.exe','web.zip','source.zip','Readme.md']}|{'latest.yml'}
+          assert {p.name for p in root.iterdir()}==expected
+          (root/'SHA256SUMS.txt').write_text(''.join(f'{hashlib.file_digest((root/name).open("rb"),"sha256").hexdigest()}  {name}\n' for name in sorted(expected)))
+          PY
+      - name: Publish clearly labeled preview
+        run: |
+          gh release create v2.0.0 --repo "$GITHUB_REPOSITORY" --verify-tag --prerelease --title 'Knightfall 2.0.0 Preview — Windows and web' --notes-file docs/PREVIEW_2_0.md assets/*
