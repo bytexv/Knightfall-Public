@@ -678,22 +678,3 @@ test('edit a two-move plan or discard it by clicking an unused square', async ()
   assert.equal(host.querySelector('.premove-notice'), null);
   assert.equal(JSON.parse(localStorage.getItem('knightfall:current')).moves.length, 1);
 });
-
-for (const [engine, depth, shouldReport] of [
-  ['Stockfish', 15, true], ['Stockfish', 5, false], ['Knightfall Lite', 15, false],
-]) test(`automatic bot coach compares the played move using ${engine} at depth ${depth}`, async () => {
-  await render(); await clickText('Play with Scout');
-  await clickText('Enable move feedback'); await move('f2', 'f3');
-  async function deliver(bestMove, score) {
-    const job = engineJobs.find(job => !job.settled && job.options.movetime === 1000);
-    assert.ok(job); job.settled = true;
-    await act(async () => job.resolve({ bestMove, score, engine, depth,
-      lines: [{ multipv: 1, score, depth, pv: [bestMove] }] }));
-  }
-  await deliver('e2e4', 260);
-  await deliver('e7e5', -150);
-  const card = host.querySelector('.move-coach');
-  assert.equal(card.textContent.includes('the engine prefers e4'), shouldReport);
-  assert.equal(JSON.parse(localStorage.getItem('knightfall:current')).moves.length, 1);
-  await clickText('Turn off feedback'); assert.equal(host.querySelector('.move-coach'), null);
-});

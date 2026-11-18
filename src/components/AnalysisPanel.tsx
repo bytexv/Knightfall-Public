@@ -1,3 +1,4 @@
+import ReviewRecommendation from "./ReviewRecommendation";
 import { readSavedReview, storeReview } from "../lib/review-store";
 import { saveGame } from "../lib/storage";
 import {
@@ -803,6 +804,9 @@ export default function AnalysisPanel({
                       <span>{formatEvaluation(selectedReview)}</span>
                     </div>
                     <QualityBadge item={selectedReview} large />
+                    {isMistake(selectedReview) && selectedReview.best && (
+                      <ReviewRecommendation fen={selectedMove.before} review={selectedReview}/>
+                    )}
                     <p>
                       {selectedReview.reason ||
                         selectedReview.note ||

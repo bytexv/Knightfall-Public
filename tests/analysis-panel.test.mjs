@@ -237,6 +237,10 @@ test('guided review links chart, filters, navigation and move feedback to the re
   assert.equal(selections.at(-1), 0, 'Completion selects the first key move');
   assert.match(host.querySelector('.review-focus').textContent, /2\. Nf3/);
   assert.match(host.querySelector('.review-focus .review-quality').textContent, /Mistake/);
+  const diagram = host.querySelector('.review-recommendation svg');
+  assert.match(diagram.getAttribute('aria-label'), /Before Nf3, the engine suggests Bc4, from f1 to c4/);
+  assert.ok(diagram.querySelector('line'));
+  assert.equal(diagram.querySelector('image[href="./pieces/wB.svg"][x="5"][y="7"]') !== null, true);
   assert.equal(activeReviews.at(-1).index, 0);
   assert.equal(host.querySelectorAll('.review-item').length, 2, 'Mistakes filter includes the two significant losses');
   await click('All moves');
@@ -252,6 +256,7 @@ test('guided review links chart, filters, navigation and move feedback to the re
   await render(game, game.moves[3].fen, { ...callbacks, activeIndex: 3 });
   assert.match(host.querySelector('.review-focus .review-quality').textContent, /Blunder/);
   assert.equal(host.querySelector('.eval-chart button[aria-current="step"]'), host.querySelectorAll('.eval-chart button')[3]);
+  assert.match(host.querySelector('.review-recommendation').textContent, /d6/);
   assert.equal(host.querySelector('[aria-label="Next key move"]').disabled, true);
   await render(game, game.startFen, { ...callbacks, activeIndex: -1 });
   assert.equal(activeReviews.at(-1), null);
