@@ -1,3 +1,7 @@
+# Knightfall 2.0.1
+
+Coached bot games now compare the positions before and after your move. For a likely miss, mistake, or blunder, the coach automatically shows the recommended move. Expand the card to study the earlier position and continuation. Shallow and fallback searches do not produce verdicts. Activate coaching on your turn to switch the game to unrated practice.
+
 # Knightfall 2.0.0
 
 - Use the position coach on your turn against a bot. Compare legal candidate moves, reveal a suggestion, and calculate the engine’s reply. Getting coaching switches the game to practice.

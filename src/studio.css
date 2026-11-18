@@ -21,3 +21,8 @@
 .position-coach p,.release-highlights li {margin:.45rem 0 .8rem}
 .position-coach [role=status]:not(:empty){display:block;margin-top:.6rem}
 .coach-choices {display:flex;flex-wrap:wrap;gap:6px}
+.move-coach {border-left:3px solid #729682;padding:8px 12px;background:var(--panel);margin-bottom:8px}
+.move-coach > div:first-child {display:flex;justify-content:space-between;align-items:center}
+.move-coach details {margin-top:.5rem}
+.move-coach .chessboard-shell {max-width:220px;margin-top:.5rem}
+.position-coach > .text-button {margin-left:.7rem}

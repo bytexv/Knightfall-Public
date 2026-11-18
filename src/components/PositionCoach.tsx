@@ -13,8 +13,8 @@ function clue(move: Move, inCheck: boolean) {
   return `Look at your ${pieces[move.piece]} on ${move.from}. Compare its activity on each legal destination.`;
 }
 interface Lesson { move: Move; prompt: string; choices: string[]; reply?: string }
-export default function PositionCoach({ fen, settings, onAssist, onArrow }: {
-  fen: string; settings: Settings; onAssist: () => void; onArrow: (from: string, to: string) => void;
+export default function PositionCoach({ fen, settings, onAssist, feedbackEnabled, onArrow }: {
+  fen: string; settings: Settings; feedbackEnabled: boolean; onAssist: () => void; onArrow: (from: string, to: string) => void;
 }) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [status, setStatus] = useState("");
@@ -61,8 +61,9 @@ export default function PositionCoach({ fen, settings, onAssist, onArrow }: {
       {!revealed && <><p>Which move would you try?</p><div className="coach-choices">{lesson.choices.map(san =>
         <button key={san} className="button secondary" onClick={() => san === lesson.move.san ? show() : setStatus(`${san} is legal. Compare another candidate with the clue.`)}>{san}</button>)}
         <button className="text-button" onClick={show}>Show the line</button></div></>}
-    </> : <><p>Study your next move. Coaching makes this game unrated.</p>
-      <button className="button secondary" disabled={!!engine.current} onClick={begin}>Coach this position</button></>}
+    </> : <><p>Study your next move. Coaching enables move feedback and makes this game unrated.</p>
+      <button className="button secondary" disabled={!!engine.current} onClick={begin}>Coach this position</button>
+      {!feedbackEnabled && <button className="text-button" onClick={onAssist}>Enable move feedback</button>}</>}
     <span role="status">{status}</span>
   </section>;
 }

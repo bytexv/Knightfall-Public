@@ -1,4 +1,5 @@
 import DeserterHub from "./components/DeserterHub";
+import MoveCoach from "./components/MoveCoach";
 import PositionCoach from "./components/PositionCoach";
 import { boardThemes } from "./lib/storage";
 import BotDialogue from "./components/BotDialogue";
@@ -340,6 +341,20 @@ export default function App() {
     return returning && previous !== appVersion ? "updates" : null;
   });
   useEffect(() => { writeStore("lastVersion", appVersion); }, []);
+  const [coaching, setCoaching] = useState<{gameId: string; fromPly: number} | null>(() => readStore("move-coach", null));
+  function startCoaching() {
+    const current = gameRef.current;
+    if (current.mode !== "bot" || current.result) return;
+    setGame(markRatingAssisted(current, "hint"));
+    if (coaching?.gameId === current.id) return;
+    const session = {gameId: current.id, fromPly: current.moves.length};
+    setCoaching(session);
+    writeStore("move-coach", session);
+  }
+  function stopCoaching() {
+    setCoaching(null);
+    writeStore("move-coach", null);
+  }
   const [hiddenResult, setHiddenResult] = useState<string | null>(null);
   const [openingCoach, setOpeningCoach] = useState<Gambit | null>(null);
   const closeOpeningCoach = useCallback(() => setOpeningCoach(null), []);
@@ -1426,6 +1441,9 @@ export default function App() {
   }
   const topColor: Color = orientation === "w" ? "b" : "w",
     bottomColor: Color = orientation;
+  const coachActive = game.mode === "bot" && coaching?.gameId === game.id && (!game.rating || game.rating.assistance.includes("hint"));
+  const lastPlayerPly = game.moves.length - (game.moves.at(-1)?.color === game.playerColor ? 1 : 2);
+  const coachedPly = coachActive && lastPlayerPly >= coaching!.fromPly ? lastPlayerPly : -1;
   const turn = new Chess(game.fen).turn();
   function playerName(color: Color) {
     if (isLan) return lanSnapshot.players[color]?.name || "Waiting for player…";
@@ -1898,6 +1916,9 @@ export default function App() {
                   }
                   enabled={settings.sound && settings.alienAudio}
                 />
+                {page === "play" && atLatest && !showSetup && coachedPly >= 0 && <MoveCoach
+                  key={game.id + coachedPly + game.moves[coachedPly].fen}
+                  move={game.moves[coachedPly]} index={coachedPly} settings={settings} onStop={stopCoaching}/>}
                 {playerBar(topColor)}
                 {page === "play" &&
                   game.mode === "bot" &&
@@ -2064,7 +2085,7 @@ export default function App() {
                 {game.result && hiddenResult === game.id && page === "play" && <button className="button secondary" onClick={() => setHiddenResult(null)}>Show game result</button>}
                 {page === "play" && game.mode === "bot" && !showSetup && game.started && !game.result && atLatest && turn === game.playerColor && (
                   <PositionCoach key={game.id + game.fen} fen={game.fen} settings={settings}
-                    onAssist={() => setGame(markRatingAssisted(gameRef.current, "hint"))}
+                    onAssist={startCoaching} feedbackEnabled={coachActive}
                     onArrow={(from, to) => setArrows([{ from, to }])}/>
                 )}
                 {premove.length > 0 && (
@@ -3513,7 +3534,7 @@ export default function App() {
       {modal === "updates" && (
         <Modal title={`What's new in Knightfall ${appVersion}`} onClose={closeModal}>
           <ul className="release-highlights">
-            <li>Try a position lesson from the coach during a bot game.</li>
+            <li>Get automatic recommendations after likely mistakes in coached bot games, or ask for a position lesson.</li>
             <li>Compare estimated opponent strength with your local rating before a challenge.</li>
             <li>Tap an unused square to clear your plan, or remove just the last premove.</li>
             <li>Choose Modern or Legacy navigation and three new board colors in Settings.</li>
