@@ -591,14 +591,17 @@ test('premoves queue during the bot turn, execute after its reply and clear on c
   assert.equal(JSON.parse(localStorage.getItem('knightfall:current')).started,false);
 });
 
-test('checkmate is announced above the board and only reviewed moves populate the player summary', async () => {
+test('checkmate is announced over the board and only reviewed moves populate the player summary', async () => {
   let game=newSession({mode:'bot',playerColor:'b',started:true});
   for(const [from,to] of [['f2','f3'],['e7','e5'],['g2','g4'],['d8','h4']])game=applyMove(game,from,to);
   localStorage.setItem('knightfall:current',JSON.stringify(game));await render();
   assert.equal(host.querySelector('.game-result h2').textContent,'Checkmate');
   assert.match(host.querySelector('.winner-name').textContent,/You won/);
   assert.equal(host.querySelector('.finish-accuracy'),null,'No invented percentage before analysis');
-  assert.ok(host.querySelector('.board-column').firstElementChild.classList.contains('game-result'));
+  assert.ok(host.querySelector('.board-with-eval .game-result'));
+  await clickLabel('View final board');
+  assert.ok(host.querySelector('.result-layer').hidden);
+  await clickText('Show game result');
   for(let i=0;i<=game.moves.length;i++) {
     const job=engineJobs.find(job=>!job.settled && job.options.multiPV===3);assert.ok(job);
     await settled(job,i<game.moves.length?game.moves[i].from+game.moves[i].to:'');
@@ -644,4 +647,34 @@ test('an illegal first premove discards every remaining move',async()=>{
  localStorage.setItem('knightfall:settings', JSON.stringify({sound:false}));await render();await clickText('Play with Scout');await move('e2','e4');await move('f1','h3');await move('g1','f3');
  assert.match(host.querySelector('.premove-notice').textContent,/2 queued/);await wait(340);await settled(engineJobs.find(job=>!job.settled&&job.options.skill!==undefined),'e7e5');
  assert.equal(JSON.parse(localStorage.getItem('knightfall:current')).moves.length,2);assert.equal(host.querySelector('.premove-notice'),null);assert.match(host.textContent,/queue cancelled/);
+});
+
+test('returning player sees the release log once, then can reopen it', async () => {
+  localStorage.setItem('knightfall:settings', '{}');
+  await render();
+  assert.match(host.querySelector('[role=dialog]').textContent, /Position|position/);
+  await clickText('Back to Knightfall');
+  await remount(); await render();
+  assert.equal(host.querySelector('[role=dialog]'), null);
+});
+
+test('coach shows a legal candidate on request and records assistance', async () => {
+  await render(); await clickText('Play with Scout');
+  await clickText('Coach this position');
+  const job = engineJobs.find(job => job.options.movetime === 900);
+  await settled(job, 'e2e4');
+  await clickText('Show the line');
+  assert.match(host.querySelector('.position-coach').textContent, /Try e4/);
+  assert.ok(JSON.parse(localStorage.getItem('knightfall:current')).rating.assistance.includes('hint'));
+});
+
+test('edit a two-move plan or discard it by clicking an unused square', async () => {
+  await render(); await clickText('Play with Scout'); await move('e2','e4');
+  await move('g1','f3'); await move('f3','g5');
+  await clickText('Undo last');
+  assert.match(host.querySelector('.premove-notice').textContent, /1 queued/);
+  await move('f3','g5');
+  await act(async () => host.querySelector('[data-square="a5"]').click());
+  assert.equal(host.querySelector('.premove-notice'), null);
+  assert.equal(JSON.parse(localStorage.getItem('knightfall:current')).moves.length, 1);
 });

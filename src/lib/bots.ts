@@ -404,8 +404,7 @@ export const botBands = [
   { id: "master", label: "Master", min: 2500, max: 3000 },
 ] as const;
 export function botBand(bot: BotProfile) {
-  return botBands.find((band) => bot.elo >= band.min && bot.elo <= band.max)!
-    .id;
+  return (botBands.find((band) => bot.elo <= band.max) ?? botBands[botBands.length - 1]).id;
 }
 export function recommendedBot(rating: number) {
   const target = Number.isFinite(rating) ? rating : defaultBot.elo;
@@ -435,6 +434,6 @@ export function botSearchOptions(
     movetime: bot.id === "stockfish" ? maximumTime : bot.time,
     skill: bot.skill,
     depth: bot.id === "stockfish" ? 30 : bot.elo >= 1800 ? 26 : 20,
-    ...(bot.elo >= 1400 && bot.id !== "stockfish" ? { elo: bot.elo } : {}),
+    ...(bot.elo >= 1320 && bot.id !== "stockfish" ? { elo: bot.elo } : {}),
   };
 }

@@ -64,3 +64,5 @@ if (
       /* Native app remains usable if web cache cleanup is unavailable. */
     });
 }
+
+import "./studio.css";

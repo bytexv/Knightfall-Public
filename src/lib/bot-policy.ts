@@ -35,6 +35,7 @@ const learningAnchors = [
     temperature: 35,
     plausibleLoss: 100,
   },
+  { elo: 1200, engineChance: 1, explorationChance: 0, temperature: 30, plausibleLoss: 80 },
 ];
 function learningPolicy(botId: string, customBotElo?: number) {
   const bot =

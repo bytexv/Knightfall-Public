@@ -1,3 +1,12 @@
+# Knightfall 2.0.0
+
+- Use the position coach on your turn against a bot. Compare legal candidate moves, reveal a suggestion, and calculate the engine’s reply. Getting coaching switches the game to practice.
+- Bot setup shows your local rating, estimated score, and rated record against each opponent. Adjustable 1150 Elo opponents now move reliably. Stockfish uses its rating target for adjustable 1350 Elo games. Ratings remain practice estimates.
+- Switch between Legacy and Modern navigation in Settings. Try Orchid, Fjord, or Terracotta board colors.
+- Edit queued premoves with Undo last. Tap an unused square to clear the whole queue. In analysis, start a plan from the current position and reset the line.
+- View results and move summaries over the board. Close the card to examine the final position and reopen it at any time.
+- Returning players see the update log once per version. Reopen it in Settings.
+
 # Knightfall 1.9.0
 
 - Queue up to ten premoves, including successive moves by the same piece. A labeled plan preview shows the projected position. Moves execute one per opponent reply after full legality checks. Cancel clears the whole queue; invalid moves, navigation and disconnection also clear it.

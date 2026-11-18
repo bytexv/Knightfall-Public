@@ -19,7 +19,7 @@ export interface ChessBoardProps {
   arrows?: { from: string; to: string; color?: string }[];
   showCoordinates?: boolean;
   showLegalMoves?: boolean;
-  theme?: "sage" | "walnut" | "ocean";
+  theme?: import("../lib/storage").Settings["boardTheme"];
 }
 const names: Record<string, string> = {
   p: "pawn",
@@ -163,6 +163,7 @@ export default function ChessBoard({
     if (locked) return;
     if (selected && tryMove(selected, square)) return;
     const piece = game.get(square as Square);
+    if (premove && (piece?.color !== inputColor || selected === square)) onCancelPremove?.();
     setSelected(
       piece?.color === inputColor && selected !== square ? square : null,
     );

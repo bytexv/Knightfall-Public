@@ -13,14 +13,17 @@ import {
   type MoveRecord,
 } from "./game";
 
+export const boardThemes = ["sage", "walnut", "ocean", "orchid", "fjord", "terracotta"] as const;
+
 export interface Settings {
+  interfaceStyle: "modern" | "legacy";
   appearance: "light" | "dark" | "system";
   boardSize: "auto" | "large" | "compact";
   animationIntensity: "off" | "subtle" | "smooth" | "expressive";
   premoves: boolean;
   botChat: boolean;
   botVoice: boolean;
-  boardTheme: "sage" | "walnut" | "ocean";
+  boardTheme: typeof boardThemes[number];
   sound: boolean;
   coordinates: boolean;
   legalMoves: boolean;
@@ -33,6 +36,7 @@ export interface Settings {
   botTime: number;
 }
 export const defaultSettings: Settings = {
+  interfaceStyle: "modern",
   appearance: "system",
   boardSize: "auto",
   animationIntensity: "smooth",
@@ -76,6 +80,7 @@ const safeText = (value: unknown, fallback: string, max: number) =>
 export function sanitizeSettings(value: unknown): Settings {
   const raw = isRecord(value) ? value : {};
   return {
+    interfaceStyle: raw.interfaceStyle === "legacy" ? "legacy" : "modern",
     appearance:
       raw.appearance === "light" || raw.appearance === "dark"
         ? raw.appearance
@@ -88,12 +93,7 @@ export function sanitizeSettings(value: unknown): Settings {
     premoves: raw.premoves !== false,
     botChat: raw.botChat !== false,
     botVoice: raw.botVoice === true,
-    boardTheme:
-      raw.boardTheme === "sage" ||
-      raw.boardTheme === "walnut" ||
-      raw.boardTheme === "ocean"
-        ? raw.boardTheme
-        : defaultSettings.boardTheme,
+    boardTheme: boardThemes.find(theme => theme === raw.boardTheme) ?? defaultSettings.boardTheme,
     sound: typeof raw.sound === "boolean" ? raw.sound : defaultSettings.sound,
     coordinates:
       typeof raw.coordinates === "boolean"

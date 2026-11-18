@@ -15,6 +15,7 @@ import {
   Wifi,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { expectedScore, type RatingEntry } from "../lib/ratings";
 import { bots, timeControls, type GameSession } from "../lib/game";
 import {
   botBands,
@@ -33,6 +34,7 @@ export function NewGamePanel({
   initialCustomElo = 1200,
   initialTimeIndex = 3,
   playerRating = 800,
+  ratingHistory = [],
 }: {
   onStart: (settings: {
     mode: "bot" | "local";
@@ -46,6 +48,7 @@ export function NewGamePanel({
   initialCustomElo?: number;
   initialTimeIndex?: number;
   playerRating?: number;
+  ratingHistory?: RatingEntry[];
 }) {
   const [mode, setMode] = useState<"bot" | "local">("bot");
   const initialOpponent =
@@ -60,6 +63,7 @@ export function NewGamePanel({
   const [color, setColor] = useState<"w" | "b" | "random">("w");
   const bot = resolveBot(botId, dial);
   const visibleBots = matchingBots(band, query);
+  const meetings = useMemo(() => ratingHistory.filter(entry => entry.botId === botId), [ratingHistory, botId]);
   const suggested = recommendedBot(playerRating);
   return (
     <section className="card new-game-card">
@@ -69,7 +73,7 @@ export function NewGamePanel({
           <span /> Local play
         </span>
       </div>
-      <p className="panel-intro">Pick an opponent, a clock, and your side.</p>
+
       <div className="segmented mode-tabs">
         <button
           className={mode === "bot" ? "active" : ""}
@@ -233,7 +237,9 @@ export function NewGamePanel({
                 </span>
               </strong>
               <span className="bot-focus">Practice: {bot.focus}</span>
-              <p>{bot.description}</p>
+              <p>{bot.focus} · Your local Elo {playerRating}</p>
+              <small>Estimated score {Math.round(100 * expectedScore(playerRating, bot.elo))}% · a draw counts as half a point.</small>
+              {meetings.length > 0 && <p>Your record against {bot.name}: {meetings.filter(g => g.score === 1).length} wins · {meetings.filter(g => g.score === 0.5).length} draws · {meetings.filter(g => g.score === 0).length} losses</p>}
             </div>
           </div>
           <p className="elo-explainer">

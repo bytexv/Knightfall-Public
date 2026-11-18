@@ -32,6 +32,7 @@ beforeEach(async()=>{
  const appModule=await import('../src/App.tsx');App=appModule.default;const {createRoot}=await import('react-dom/client');host=document.getElementById('root');root=createRoot(host);
  localStorage.setItem('knightfall:settings',JSON.stringify({sound:false}));
  await act(async()=>root.render(createElement(App)));
+ await clickText("Back to Knightfall");
 });
 afterEach(async()=>{
  await act(async()=>{root.unmount();for(const client of appClients)client.disconnect();for(const peer of peers)peer.close();await lan.close();await delay(5);});

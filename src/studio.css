@@ -1,0 +1,23 @@
+.chessboard-shell.theme-orchid,.theme-preview.orchid {--square-light:#eee3f3;--square-dark:#94769f}
+.chessboard-shell.theme-fjord,.theme-preview.fjord {--square-light:#dcf0e9;--square-dark:#558a85}
+.chessboard-shell.theme-terracotta,.theme-preview.terracotta {--square-light:#ffe6c8;--square-dark:#b5755e}
+.theme-preview:is(.orchid,.fjord,.terracotta) i {background:var(--square-light)}
+.theme-preview:is(.orchid,.fjord,.terracotta) .dark {background:var(--square-dark)}
+.ui-modern .sidebar {background:#1e3030}
+.ui-modern .sidebar .nav-item {border-radius:10px}
+.ui-modern .sidebar .nav-item.active {color:#172a24;background:#c4e0ce}
+.ui-modern .sidebar .sidebar-caption {color:#aac4b8;letter-spacing:.09em}
+.ui-modern .mobile-bottom-nav button.active {box-shadow:inset 0 3px #629782}
+.ui-modern .sidebar-recent {border-color:#48615a}
+.ui-modern .new-game-card {border-radius:16px}
+.ui-modern .bot-roster {max-height:16rem;overflow:auto;align-content:start;padding:3px}
+.ui-modern .bot-choice.selected {outline:2px solid var(--accent);outline-offset:-2px}
+.board-with-eval {position:relative}
+.result-layer {position:absolute;inset:0;z-index:8;display:grid;place-items:center;background:#151c2038;border-radius:5px}
+.result-layer[hidden]{display:none}
+.result-layer .game-result {position:relative;width:min(94%,27rem);max-height:94%;overflow:auto;margin:0;box-shadow:0 8px 32px #13212445;padding:clamp(12px,3vw,24px);padding-right:38px}
+.dismiss-result {position:absolute;top:5px;right:5px}
+.position-coach {background:var(--panel);border:1px solid var(--border);border-left:3px solid #729682;border-radius:8px;padding:14px 18px;margin:12px 0}
+.position-coach p,.release-highlights li {margin:.45rem 0 .8rem}
+.position-coach [role=status]:not(:empty){display:block;margin-top:.6rem}
+.coach-choices {display:flex;flex-wrap:wrap;gap:6px}

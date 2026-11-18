@@ -212,10 +212,14 @@ function sanitizeEntry(value: unknown): EntrySource | null {
   };
 }
 
+export function expectedScore(player: number, opponent: number): number {
+  return 1 / (1 + 10 ** ((opponent - player) / 400));
+}
+
 function appendEntry(ledger: RatingLedger, source: EntrySource): void {
   const before = ledger.rating;
   const kFactor = ledger.totalRatedGames < PROVISIONAL_RATED_GAMES ? 40 : 20;
-  const expected = 1 / (1 + 10 ** ((source.opponentRating - before) / 400));
+  const expected = expectedScore(before, source.opponentRating);
   const after = Math.max(
     MIN_RATING,
     Math.min(

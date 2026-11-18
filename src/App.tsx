@@ -1,4 +1,6 @@
 import DeserterHub from "./components/DeserterHub";
+import PositionCoach from "./components/PositionCoach";
+import { boardThemes } from "./lib/storage";
 import BotDialogue from "./components/BotDialogue";
 import FinishReview from "./components/FinishReview";
 import { legalPremove, premoveTargets, premovePreview, type Premove } from "./lib/premove";
@@ -150,6 +152,14 @@ const pages = [
     group: "Practice",
   },
 ] as const;
+const modernNavigation = [
+  { label: "Play", ids: ["play", "multiplayer"] },
+  { label: "Study", ids: ["games", "analysis", "openings"] },
+  { label: "Train", ids: ["puzzles", "quiz", "deserter", "challenge", "endgames"] },
+];
+const legacyNavigation = ["Play", "Improve", "Practice"].map(label => ({
+  label, ids: pages.filter(page => page.group === label).map(page => String(page.id)),
+}));
 const validPage = (value: string): value is Page =>
   value === "settings" || pages.some((page) => page.id === value);
 const pageTitles: Record<Page, { title: string; subtitle: string }> = {
@@ -313,6 +323,7 @@ export default function App() {
   const [toast, setToast] = useState("");
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [modal, setModal] = useState<
+    | "updates"
     | "import"
     | "new"
     | "resign"
@@ -323,7 +334,13 @@ export default function App() {
     | "editor"
     | "practice"
     | null
-  >(null);
+  >(() => {
+    const previous = readStore<string | null>("lastVersion", null);
+    const returning = previous !== null || readStore("settings", null) !== null;
+    return returning && previous !== appVersion ? "updates" : null;
+  });
+  useEffect(() => { writeStore("lastVersion", appVersion); }, []);
+  const [hiddenResult, setHiddenResult] = useState<string | null>(null);
   const [openingCoach, setOpeningCoach] = useState<Gambit | null>(null);
   const closeOpeningCoach = useCallback(() => setOpeningCoach(null), []);
   const [thinking, setThinking] = useState(false);
@@ -1516,7 +1533,7 @@ export default function App() {
         : `${playerName(game.result?.winner === "w" ? "w" : "b")} wins`;
   return (
     <div
-      className={`app-shell page-${page} board-size-${settings.boardSize} ${focusMode ? "focus-mode" : ""}`}
+      className={`app-shell ui-${settings.interfaceStyle} page-${page} board-size-${settings.boardSize} ${focusMode ? "focus-mode" : ""}`}
     >
       <a
         className="skip-link"
@@ -1556,11 +1573,11 @@ export default function App() {
           </span>
         </a>
         <nav aria-label="Main navigation">
-          {["Play", "Improve", "Practice"].map((group) => (
+          {(settings.interfaceStyle === "modern" ? modernNavigation : legacyNavigation).map(({label: group, ids}) => (
             <section className="nav-group" key={group} aria-label={group}>
               <div className="sidebar-caption">{group}</div>
               {pages
-                .filter((item) => item.group === group)
+                .filter((item) => ids.includes(item.id))
                 .map((item) => (
                   <button
                     key={item.id}
@@ -1572,7 +1589,7 @@ export default function App() {
                   >
                     <item.icon size={21} />
                     <span>{item.label}</span>
-                    {item.id === "quiz" && <span className="nav-tag">NEW</span>}
+                    {settings.interfaceStyle === "legacy" && item.id === "quiz" && <span className="nav-tag">NEW</span>}
                   </button>
                 ))}
             </section>
@@ -1784,73 +1801,6 @@ export default function App() {
               className={`play-layout ${page === "analysis" ? "analysis-layout" : ""}`}
             >
               <div className="board-column">
-                {game.result &&
-                  game.mode !== "puzzle" &&
-                  page !== "analysis" && (
-                    <div className="game-result" role="status">
-                      <Trophy size={28} />
-                      <div>
-                        <h2>
-                          {game.result.reason === "Checkmate"
-                            ? "Checkmate"
-                            : game.result.winner === null
-                              ? "Draw"
-                              : "Game over"}
-                        </h2>
-                        <strong className="winner-name">{resultTitle}</strong>
-                        <p>
-                          {game.result.reason}
-                          {ratingEntry && (
-                            <span
-                              className={`result-rating ${ratingEntry.delta >= 0 ? "rating-up" : "rating-down"}`}
-                            >
-                              {" "}
-                              · Local Elo {ratingEntry.after} (
-                              {ratingEntry.delta >= 0 ? "+" : ""}
-                              {ratingEntry.delta})
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      {!isLan && (
-                        <button
-                          className="button primary"
-                          onClick={() => setModal("new")}
-                        >
-                          <Plus size={15} /> New game
-                        </button>
-                      )}
-                      {isLan ? (
-                        <button
-                          className="button primary"
-                          onClick={() => lanRef.current?.rematch()}
-                        >
-                          {lanSnapshot.rematchVotes.includes(
-                            lanSnapshot.yourColor!,
-                          )
-                            ? "Rematch requested"
-                            : "Rematch"}
-                        </button>
-                      ) : (
-                        <button
-                          className="button primary"
-                          onClick={() => {
-                            setReviewRequest(game.id);
-                            setPage("analysis");
-                            setShowSetup(false);
-                          }}
-                        >
-                          Review game <ArrowRight size={15} />
-                        </button>
-                      )}
-                      <FinishReview
-                        key={game.id}
-                        game={game}
-                        settings={settings}
-                      />
-                    </div>
-                  )}
-
                 {page === "play" && showSetup && !isLan && (
                   <div className="mobile-quick-start">
                     <button
@@ -1977,6 +1927,75 @@ export default function App() {
                       <span>{(Math.abs(evaluation) / 100).toFixed(1)}</span>
                     </div>
                   )}
+                {game.result &&
+                  game.mode !== "puzzle" &&
+                  page !== "analysis" && (
+                    <div className="result-layer" hidden={hiddenResult === game.id}>
+                    <div className="game-result" role="region" aria-label="Game result">
+                      <button className="icon-button dismiss-result" aria-label="View final board" onClick={() => setHiddenResult(game.id)}><X size={18}/></button>
+                      <Trophy size={28} />
+                      <div>
+                        <h2>
+                          {game.result.reason === "Checkmate"
+                            ? "Checkmate"
+                            : game.result.winner === null
+                              ? "Draw"
+                              : "Game over"}
+                        </h2>
+                        <strong className="winner-name">{resultTitle}</strong>
+                        <p>
+                          {game.result.reason}
+                          {ratingEntry && (
+                            <span
+                              className={`result-rating ${ratingEntry.delta >= 0 ? "rating-up" : "rating-down"}`}
+                            >
+                              {" "}
+                              · Local Elo {ratingEntry.after} (
+                              {ratingEntry.delta >= 0 ? "+" : ""}
+                              {ratingEntry.delta})
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      {!isLan && (
+                        <button
+                          className="button primary"
+                          onClick={() => setModal("new")}
+                        >
+                          <Plus size={15} /> New game
+                        </button>
+                      )}
+                      {isLan ? (
+                        <button
+                          className="button primary"
+                          onClick={() => lanRef.current?.rematch()}
+                        >
+                          {lanSnapshot.rematchVotes.includes(
+                            lanSnapshot.yourColor!,
+                          )
+                            ? "Rematch requested"
+                            : "Rematch"}
+                        </button>
+                      ) : (
+                        <button
+                          className="button primary"
+                          onClick={() => {
+                            setReviewRequest(game.id);
+                            setPage("analysis");
+                            setShowSetup(false);
+                          }}
+                        >
+                          Review game <ArrowRight size={15} />
+                        </button>
+                      )}
+                      <FinishReview
+                        key={game.id}
+                        game={game}
+                        settings={settings}
+                      />
+                    </div></div>
+                  )}
+
                   <ChessBoard
                     fen={canQueue && premove.length ? premovePreview(position, premove) : position}
                     alienTheme={
@@ -2042,12 +2061,22 @@ export default function App() {
                     )}
                 </div>
                 {playerBar(bottomColor, true)}
+                {game.result && hiddenResult === game.id && page === "play" && <button className="button secondary" onClick={() => setHiddenResult(null)}>Show game result</button>}
+                {page === "play" && game.mode === "bot" && !showSetup && game.started && !game.result && atLatest && turn === game.playerColor && (
+                  <PositionCoach key={game.id + game.fen} fen={game.fen} settings={settings}
+                    onAssist={() => setGame(markRatingAssisted(gameRef.current, "hint"))}
+                    onArrow={(from, to) => setArrows([{ from, to }])}/>
+                )}
                 {premove.length > 0 && (
                   <div className="premove-notice" role="status">
                     <span>
                       {canQueue ? "Plan preview · " : ""}{premove.length} queued: {premove.map((m,i) => `${i+1}. ${m.from} → ${m.to}${m.promotion ? "="+m.promotion.toUpperCase() : ""}`).join(" · ")}
-                      {" · Each move waits for an opponent reply."}
+                      {" · Tap an unused square to clear the plan."}
                     </span>
+                    {premove.length > 1 && <button className="text-button" onClick={() => {
+                      premoveRef.current = premoveRef.current.slice(0, -1);
+                      setPremoveState(premoveRef.current);
+                    }}>Undo last</button>}
                     <button className="text-button" onClick={clearPremove}>
                       Cancel · Esc
                     </button>
@@ -2108,6 +2137,9 @@ export default function App() {
                     </button>
                   </div>
                 )}
+                {page === "analysis" && !preview && !gambitPractice && !chess.isGameOver() && (
+                  <button className="button secondary" onClick={() => setExploration(explorePosition(game, historyIndex))}>Plan from this position</button>
+                )}
                 {preview && (
                   <section
                     className="variation-bar"
@@ -2134,6 +2166,12 @@ export default function App() {
                           ? "Try your idea on the board. Your original game stays saved."
                           : "Step through this line, or move a piece to try your own idea.")}
                     </p>
+                    {preview.line.moves.length > 0 && preview.mode === "explore" && (
+                      <button className="text-button" onClick={() => {
+                        setExploration(explorePosition(game, preview.anchor));
+                        setArrows([]);
+                      }}>Clear planned line</button>
+                    )}
                     <div className="variation-controls">
                       <button
                         aria-label="Previous variation move"
@@ -2439,7 +2477,8 @@ export default function App() {
                 {page === "play" &&
                   (showSetup && !isLan ? (
                     <NewGamePanel
-                      playerRating={ratings.rating}
+                      ratingHistory={ratings.history}
+            playerRating={ratings.rating}
                       onStart={startGame}
                       onWifi={() => navigate("multiplayer")}
                       initialBot={game.botId}
@@ -3135,6 +3174,11 @@ export default function App() {
                 </fieldset>
                 <fieldset className="appearance-settings">
                   <legend>Appearance & board</legend>
+                  <label>Interface
+                    <select value={settings.interfaceStyle} onChange={e => setSettings(s => ({...s, interfaceStyle: e.target.value as Settings["interfaceStyle"]}))}>
+                      <option value="modern">Modern</option><option value="legacy">Legacy</option>
+                    </select>
+                  </label>
                   <label>Animation intensity
                     <select aria-label="Animation intensity" value={settings.animationIntensity} onChange={e=>setSettings(s=>({...s,animationIntensity:e.target.value as Settings["animationIntensity"]}))}>
                       <option value="off">Off · instant moves</option><option value="subtle">Subtle · quick and gentle</option><option value="smooth">Smooth · balanced</option><option value="expressive">Expressive · more movement</option>
@@ -3179,7 +3223,7 @@ export default function App() {
                 </fieldset>
                 <div className="field-label">BOARD COLORS</div>
                 <div className="theme-picker">
-                  {(["sage", "walnut", "ocean"] as const).map((t) => (
+                  {boardThemes.map((t) => (
                     <button
                       key={t}
                       className={`theme-option ${settings.boardTheme === t ? "selected" : ""}`}
@@ -3258,6 +3302,7 @@ export default function App() {
               </section>
               <div className="settings-aside">
                 <RatingCard ledger={ratings} />
+                <button className="button secondary" onClick={() => setModal("updates")}>View update log</button>
                 <UpdateCard />
                 <section className="card about-card">
                   <img src="./icon.svg" alt="" />
@@ -3465,12 +3510,25 @@ export default function App() {
           <span>More</span>
         </button>
       </nav>
+      {modal === "updates" && (
+        <Modal title={`What's new in Knightfall ${appVersion}`} onClose={closeModal}>
+          <ul className="release-highlights">
+            <li>Try a position lesson from the coach during a bot game.</li>
+            <li>Compare estimated opponent strength with your local rating before a challenge.</li>
+            <li>Tap an unused square to clear your plan, or remove just the last premove.</li>
+            <li>Choose Modern or Legacy navigation and three new board colors in Settings.</li>
+            <li>Read your result and move review directly over the final position.</li>
+          </ul>
+          <button className="button primary" onClick={closeModal}>Back to Knightfall</button>
+        </Modal>
+      )}
       {modal === "import" && (
         <ImportDialog onClose={closeModal} onImport={imported} />
       )}
       {modal === "practice" && (
         <Modal title="Play this position." onClose={closeModal}>
           <NewGamePanel
+            ratingHistory={ratings.history}
             playerRating={ratings.rating}
             onStart={(options) => startGame({ ...options, startFen: position })}
             onWifi={() => {
@@ -3485,6 +3543,7 @@ export default function App() {
       {modal === "new" && (
         <Modal title="A fresh board. A fresh start." onClose={closeModal}>
           <NewGamePanel
+            ratingHistory={ratings.history}
             playerRating={ratings.rating}
             onStart={startGame}
             onWifi={() => {

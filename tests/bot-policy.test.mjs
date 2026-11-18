@@ -77,3 +77,9 @@ test('injected random seeds are reproducible and out-of-range samples stay safe'
     play(start, move);
   }
 });
+
+test('adjustable 1150 Elo interpolates a legal learner move', () => {
+  for (const roll of [0, 0.96, 0.999]) {
+    play(start, chooseBotMove(start, 'adaptive', { bestMove: 'e2e4' }, () => roll, 1150));
+  }
+});
