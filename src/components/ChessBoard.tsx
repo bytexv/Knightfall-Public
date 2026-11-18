@@ -7,6 +7,7 @@ import { BoardAnimator } from "../lib/board-animator";
 import "./ChessBoard.css";
 export interface ChessBoardProps {
   fen: string;
+  qualityBadges?: { square: string; label: string; symbol: string }[];
   premoveColor?: Color;
   premove?: Premove | null;
   onPremove?: (move: Premove) => void;
@@ -31,6 +32,7 @@ const names: Record<string, string> = {
 };
 export default function ChessBoard({
   fen,
+  qualityBadges,
   premoveColor,
   premove,
   onPremove,
@@ -233,6 +235,7 @@ export default function ChessBoard({
           const target = queuing
             ? plannedTargets.includes(square)
             : legal.some((m) => m.to === square);
+          const qualityBadge = qualityBadges?.find(badge => badge.square === square);
           return (
             <button
               type="button"
@@ -241,7 +244,7 @@ export default function ChessBoard({
               tabIndex={focus === square ? 0 : -1}
               onFocus={() => setFocus(square)}
               className={`square ${isDark ? "dark" : "light"} ${selected === square ? "selected" : ""} ${lastMove && (lastMove.from === square || lastMove.to === square) ? "last-move" : ""} ${check === square ? "in-check" : ""} ${marks.includes(square) ? "marked" : ""} ${premove && (square === premove.from || square === premove.to) ? "premove-square" : ""} ${queuing ? "premove-input" : ""}`}
-              aria-label={`${square}${piece ? `, ${piece.color === "w" ? "white" : "black"} ${names[piece.type]}` : ", empty"}${target ? (queuing ? ", possible premove" : ", legal move") : ""}`}
+              aria-label={`${square}${piece ? `, ${piece.color === "w" ? "white" : "black"} ${names[piece.type]}` : ", empty"}${target ? (queuing ? ", possible premove" : ", legal move") : ""}${qualityBadge ? `, ${qualityBadge.label}` : ""}`}
               aria-pressed={selected === square}
               aria-disabled={locked}
               onClick={() => click(square)}
@@ -397,6 +400,9 @@ export default function ChessBoard({
                   src={`./${alienTheme ? ALIEN_PIECE_DIRECTORY : "pieces"}/${piece.color}${piece.type.toUpperCase()}.svg`}
                   alt=""
                 />
+              )}
+              {qualityBadge?.square === square && piece && (
+                <span className="move-stamp" data-label={qualityBadge.label} role="img" aria-label={qualityBadge.label}>{qualityBadge.symbol}</span>
               )}
               {target && showLegalMoves && (
                 <span className={piece ? "legal-ring" : "legal-dot"} />

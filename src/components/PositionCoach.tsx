@@ -1,6 +1,7 @@
 import { Chess, type Move } from "chess.js";
 import { useEffect, useRef, useState } from "react";
 import { LocalEngine } from "../lib/engine";
+import { analyzeCoachPosition, usableSearch } from "../lib/coach";
 import type { Settings } from "../lib/storage";
 
 const pieces = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king" };
@@ -13,8 +14,8 @@ function clue(move: Move, inCheck: boolean) {
   return `Look at your ${pieces[move.piece]} on ${move.from}. Compare its activity on each legal destination.`;
 }
 interface Lesson { move: Move; prompt: string; choices: string[]; reply?: string }
-export default function PositionCoach({ fen, settings, onAssist, onArrow }: {
-  fen: string; settings: Settings; onAssist: () => void; onArrow: (from: string, to: string) => void;
+export default function PositionCoach({ fen, settings, onArrow }: {
+  fen: string; settings: Settings; onArrow: (from: string, to: string) => void;
 }) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [status, setStatus] = useState("");
@@ -23,13 +24,13 @@ export default function PositionCoach({ fen, settings, onAssist, onArrow }: {
   useEffect(() => () => { engine.current?.destroy(); engine.current = null; }, []);
   async function begin() {
     if (engine.current) return;
-    onAssist();
     const search = new LocalEngine({ mode: settings.engineMode, threads: settings.engineThreads });
     engine.current = search;
     setStatus("Studying the position…");
     try {
-      const result = await search.analyze(fen, { movetime: 900, depth: 16 });
+      const result = await analyzeCoachPosition(search, fen, () => engine.current === search);
       if (engine.current !== search) return;
+      if (!usableSearch(fen, result)) throw new Error("No verified line");
       const board = new Chess(fen);
       const legal = board.moves({ verbose: true });
       const best = legal.find(m => m.lan === result.bestMove);
@@ -37,12 +38,12 @@ export default function PositionCoach({ fen, settings, onAssist, onArrow }: {
       board.move(best);
       const pv = result.lines.find(line => line.pv[0] === best.lan)?.pv;
       const reply = pv?.[1] && board.moves({verbose:true}).find(m => m.lan === pv[1])?.san;
-      const choices = [best.san, ...legal.filter(m => m.lan !== best.lan)
-        .sort((a,b) => Number(b.piece === best.piece) - Number(a.piece === best.piece)).slice(0,2).map(m => m.san)].sort();
+      const candidates = result.lines.filter(line => line.depth >= 10).map(line => line.pv[0]);
+      const choices = legal.filter(move => candidates.includes(move.lan)).map(move => move.san).sort();
       setLesson({ move: best, prompt: clue(best, new Chess(fen).isCheck()), choices, reply });
       setStatus("");
     } catch {
-      if (engine.current === search) setStatus("The coach could not read this position. Try again.");
+      if (engine.current === search) setStatus("Stockfish could not verify a line for this position. Try again.");
     } finally {
       search.destroy();
       if (engine.current === search) engine.current = null;
@@ -61,7 +62,7 @@ export default function PositionCoach({ fen, settings, onAssist, onArrow }: {
       {!revealed && <><p>Which move would you try?</p><div className="coach-choices">{lesson.choices.map(san =>
         <button key={san} className="button secondary" onClick={() => san === lesson.move.san ? show() : setStatus(`${san} is legal. Compare another candidate with the clue.`)}>{san}</button>)}
         <button className="text-button" onClick={show}>Show the line</button></div></>}
-    </> : <><p>Study your next move. Coaching makes this game unrated.</p>
+    </> : <><p>Compare a few legal moves before you choose one.</p>
       <button className="button secondary" disabled={!!engine.current} onClick={begin}>Coach this position</button></>}
     <span role="status">{status}</span>
   </section>;

@@ -652,20 +652,102 @@ test('an illegal first premove discards every remaining move',async()=>{
 test('returning player sees the release log once, then can reopen it', async () => {
   localStorage.setItem('knightfall:settings', '{}');
   await render();
-  assert.match(host.querySelector('[role=dialog]').textContent, /Position|position/);
+  assert.match(host.querySelector('[role=dialog]').textContent, /Stockfish/);
   await clickText('Back to Knightfall');
   await remount(); await render();
   assert.equal(host.querySelector('[role=dialog]'), null);
 });
 
-test('coach shows a legal candidate on request and records assistance', async () => {
-  await render(); await clickText('Play with Scout');
-  await clickText('Coach this position');
-  const job = engineJobs.find(job => job.options.movetime === 900);
-  await settled(job, 'e2e4');
+function nextCoachSearch() {
+  const job = engineJobs.find(job => !job.settled && [1100, 2400].includes(job.options.movetime));
+  assert.ok(job, 'Expected an unrestricted Coach search');
+  assert.equal(job.options.elo, undefined);
+  return job;
+}
+async function finishCoachSearch(bestMove, score = 0, depth = 15, engine = 'Stockfish 17.1 Lite') {
+  const job = nextCoachSearch();
+  job.settled = true;
+  await act(async () => job.resolve({bestMove, score, depth, engine, lines: [{pv:[bestMove], score, depth, multipv:1}]}));
+}
+
+test('Coach has a separate board, grades the destination and restores play after navigation', async () => {
+  await render(); await clickLabel('Coach');
+  await clickText('Play coach'); await clickText('Study position'); await clickText('Coach this position');
+  await finishCoachSearch('e2e4');
   await clickText('Show the line');
   assert.match(host.querySelector('.position-coach').textContent, /Try e4/);
-  assert.ok(JSON.parse(localStorage.getItem('knightfall:current')).rating.assistance.includes('hint'));
+  await move('e2','e4');
+  assert.equal(host.querySelector('.move-stamp'), null);
+  await finishCoachSearch('e2e4', 31);
+  assert.equal(host.querySelector('.move-stamp'), null);
+  await finishCoachSearch('e7e5', 27);
+  assert.equal(host.querySelector('[data-square="e4"] .move-stamp')?.dataset.label, 'Book');
+  assert.match(host.querySelector('.coach-evidence').textContent, /depth 15 → 15 · \+0.31 → \+0.27/);
+  const saved = JSON.parse(localStorage.getItem('knightfall:coach-session'));
+  assert.equal(saved.moves[0].san, 'e4'); assert.equal(saved.rating, undefined);
+  await clickLabel('Previous coach move');
+  assert.equal(host.querySelector('.move-stamp'),null);
+  await clickLabel('Next coach move');
+  await clickLabel('Game Review'); await clickLabel('Coach');
+  await finishCoachSearch('e2e4'); await finishCoachSearch('e7e5');
+  assert.equal(host.querySelector('.move-stamp')?.dataset.label,'Book');
+  await clickText('Take back');
+  assert.equal(JSON.parse(localStorage.getItem('knightfall:coach-session')).moves.length,0);
+  assert.equal(JSON.parse(localStorage.getItem('knightfall:current')).moves.length,0);
+});
+
+test('Coach plays White when Black is selected and rates a non-book move using both positions', async () => {
+  await render(); await clickLabel('Coach'); await clickText('Black');
+  const select=host.querySelector('#coach-strength');
+  await act(async()=>{select.value='nova';select.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});
+  await clickText('Play coach');
+  await wait(600); const bot=engineJobs.find(job=>job.options.elo===2000);
+  await settled(bot,'e2e4');
+  assert.equal(host.querySelector('[data-square]')?.dataset.square,'h1');
+  assert.equal(new Chess(nextCoachSearch().fen).turn(), 'w');
+  await finishCoachSearch('e2e4');
+  assert.equal(new Chess(nextCoachSearch().fen).turn(), 'b');
+  await finishCoachSearch('a7a6');
+  await move('a7','a6');
+  assert.equal(new Chess(nextCoachSearch().fen).turn(), 'w');
+  await finishCoachSearch('d2d4');
+  assert.equal(host.querySelector('[data-square="a6"] .move-stamp')?.dataset.label,'Best');
+  assert.equal(host.querySelector('[data-square="e4"] .move-stamp')?.dataset.label,'Book');
+  assert.match(host.querySelector('.coach-evidence').textContent,/Stockfish/);
+});
+
+test('the beginner coach plays the move its engine searched, including quiet replies', async () => {
+  await render(); await clickLabel('Coach'); await clickText('Play coach');
+  await move('e2','e4');
+  await finishCoachSearch('e2e4'); await finishCoachSearch('e7e5');
+  await wait(600);
+  const job = engineJobs.find(job => !job.settled && job.options.skill === 0);
+  assert.ok(job);
+  await settled(job, 'h7h6');
+  assert.equal(JSON.parse(localStorage.getItem('knightfall:coach-session')).moves[1].san, 'h6');
+});
+
+test('Coach grades an opening from the search and rejects inadequate or stale results', async () => {
+  await render(); await clickLabel('Coach'); await clickText('Play coach');
+  await move('e2','e4');
+  await finishCoachSearch('d2d4', 50);
+  await finishCoachSearch('e7e5', -70);
+  assert.equal(host.querySelector('.move-stamp').dataset.label, 'Mistake');
+  await clickText('Take back');
+  await move('h2','h3');
+  await finishCoachSearch('d2d4', 0, 4);
+  assert.equal(nextCoachSearch().options.multiPV, 1);
+  await finishCoachSearch('d2d4', 0, 7);
+  await finishCoachSearch('e7e5', 0, 4, 'Fallback');
+  assert.equal(host.querySelector('.move-stamp').dataset.label, 'Unrated');
+  assert.equal(host.querySelector('.coach-evidence'), null);
+  await clickText('Take back');
+  await move('a2','a3');
+  const stale = nextCoachSearch();
+  await clickText('Take back');
+  await settled(stale, 'd2d4');
+  assert.equal(host.querySelector('.move-stamp'), null);
+  assert.equal(JSON.parse(localStorage.getItem('knightfall:coach-session')).moves.length, 0);
 });
 
 test('edit a two-move plan or discard it by clicking an unused square', async () => {

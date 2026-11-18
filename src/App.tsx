@@ -1,5 +1,5 @@
 import DeserterHub from "./components/DeserterHub";
-import PositionCoach from "./components/PositionCoach";
+import CoachRoom from "./components/CoachRoom";
 import { boardThemes } from "./lib/storage";
 import BotDialogue from "./components/BotDialogue";
 import FinishReview from "./components/FinishReview";
@@ -122,6 +122,7 @@ type Page =
   | "play"
   | "analysis"
   | "puzzles"
+  | "coach"
   | "openings"
   | "games"
   | "multiplayer"
@@ -131,6 +132,7 @@ type Page =
   | "quiz"
   | "deserter";
 const pages = [
+  { id: "coach", label: "Coach", icon: GraduationCap, group: "Improve" },
   { id: "play", label: "Play chess", icon: Play, group: "Play" },
   { id: "multiplayer", label: "Play with friends", icon: Wifi, group: "Play" },
   { id: "games", label: "Game Review", icon: Activity, group: "Improve" },
@@ -154,7 +156,7 @@ const pages = [
 ] as const;
 const modernNavigation = [
   { label: "Play", ids: ["play", "multiplayer"] },
-  { label: "Study", ids: ["games", "analysis", "openings"] },
+  { label: "Study", ids: ["coach", "games", "analysis", "openings"] },
   { label: "Train", ids: ["puzzles", "quiz", "deserter", "challenge", "endgames"] },
 ];
 const legacyNavigation = ["Play", "Improve", "Practice"].map(label => ({
@@ -163,6 +165,7 @@ const legacyNavigation = ["Play", "Improve", "Practice"].map(label => ({
 const validPage = (value: string): value is Page =>
   value === "settings" || pages.some((page) => page.id === value);
 const pageTitles: Record<Page, { title: string; subtitle: string }> = {
+  coach: {title: "Play Coach", subtitle: "A practice game with feedback on every move."},
   deserter: {
     title: "Deserter practice",
     subtitle: "A random position. One mission: find a way to win.",
@@ -791,6 +794,7 @@ export default function App() {
         )
       )
         return;
+      if (pageRef.current === "coach" && e.key !== "Escape") return;
       if (
         e.key === "ArrowLeft" &&
         !(e.target as HTMLElement).closest(".chessboard")
@@ -994,12 +998,12 @@ export default function App() {
   }
   function navigate(next: Page, confirmed = false) {
     if (
-      next === "challenge" &&
+      (next === "challenge" || next === "coach") &&
       !confirmed &&
       confirmLeave(() => navigate(next, true))
     )
       return;
-    if (next === "challenge" && game.mode === "lan") {
+    if ((next === "challenge" || next === "coach") && game.mode === "lan") {
       leaveLan();
       replaceGame(newSession());
       setShowSetup(true);
@@ -2062,11 +2066,6 @@ export default function App() {
                 </div>
                 {playerBar(bottomColor, true)}
                 {game.result && hiddenResult === game.id && page === "play" && <button className="button secondary" onClick={() => setHiddenResult(null)}>Show game result</button>}
-                {page === "play" && game.mode === "bot" && !showSetup && game.started && !game.result && atLatest && turn === game.playerColor && (
-                  <PositionCoach key={game.id + game.fen} fen={game.fen} settings={settings}
-                    onAssist={() => setGame(markRatingAssisted(gameRef.current, "hint"))}
-                    onArrow={(from, to) => setArrows([{ from, to }])}/>
-                )}
                 {premove.length > 0 && (
                   <div className="premove-notice" role="status">
                     <span>
@@ -2942,6 +2941,7 @@ export default function App() {
             />
           )}
           {page === "endgames" && <EndgameSchool onPractice={startDrill} />}
+          {page === "coach" && <CoachRoom settings={settings}/>}
           {page === "openings" && (
             <LearnHub
               alienEnabled={settings.alienEasterEgg}
@@ -3490,7 +3490,7 @@ export default function App() {
             { id: "play", label: "Play", icon: Play },
             { id: "games", label: "Review", icon: Activity },
             { id: "puzzles", label: "Puzzles", icon: Puzzle },
-            { id: "quiz", label: "Quiz", icon: CircleHelp },
+            { id: "coach", label: "Coach", icon: GraduationCap },
           ] as const
         ).map((item) => (
           <button
@@ -3515,13 +3515,9 @@ export default function App() {
       {modal === "updates" && (
         <Modal title={`What's new in Knightfall ${appVersion}`} onClose={closeModal}>
           <ul className="release-highlights">
-            <li>Check for updates retries immediately on desktop. The web app also detects updates already downloading at launch.</li>
-            <li>Game Review automatically shows the recommended move and its arrow on the earlier position after misses and mistakes.</li>
-            <li>Try a position lesson from the coach during a bot game.</li>
-            <li>Compare estimated opponent strength with your local rating before a challenge.</li>
-            <li>Tap an unused square to clear your plan, or remove just the last premove.</li>
-            <li>Choose Modern or Legacy navigation and three new board colors in Settings.</li>
-            <li>Read your result and move review directly over the final position.</li>
+            <li>Open Coach to choose your side and play an unrated local bot at your preferred strength.</li>
+            <li>See Stockfish’s grade on each piece and compare the evaluations before and after your move.</li>
+            <li>Your practice board is saved when you leave the tab.</li>
           </ul>
           <button className="button primary" onClick={closeModal}>Back to Knightfall</button>
         </Modal>

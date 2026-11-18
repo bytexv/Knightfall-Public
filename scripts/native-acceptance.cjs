@@ -269,7 +269,7 @@ async function runAcceptance({ window, app, outputDir }) {
     if (process.argv.includes("--learning-only") && !["guided-beginner-course", "guided-game-and-coach-practice", "opening-coach-both-sides-and-alien-eyes", "alien-gambit-pieces-audio-and-settings"].includes(name)) return;
     if (process.argv.includes("--bots-only") && name !== "expanded-bot-roster-and-real-replies") return;
     if (process.argv.includes("--review-quiz-only") && name !== "review-library-quiz-and-navigation") return;
-    if (process.argv.includes("--play-upgrade-only") && name !== "premoves-deserter-dark-mode-and-results") return;
+    if (process.argv.includes("--play-upgrade-only") && !["premoves-deserter-dark-mode-and-results", "live-coach-engine-grades"].includes(name)) return;
     currentStep = name;
     const started = Date.now();
     const detail = await action();
@@ -1311,6 +1311,28 @@ async function runAcceptance({ window, app, outputDir }) {
       window.setContentSize(1440,980);
       await navigate("Play chess");
       return { reviewedPlies:4, persistedSummary:true, restoredDetails:true, quizQuestions:5, firstScore:4, missedQuestionRetried:true, backForward:true, narrowWidths:[390,320] };
+    });
+
+    await step("live-coach-engine-grades", async () => {
+      window.showInactive(); await wait(400);
+      await navigate('Coach'); await captureResponsive('coach-setup');
+      await fill('#coach-strength', 'nova'); await clickText('Black', '.coach-sides button');
+      await clickText('Play coach', '.coach-notebook button');
+      const evidence = "document.querySelector('.coach-evidence')?.textContent";
+      await poll(evidence, 'Stockfish grade for the opening move', 30000);
+      const first = await evaluate(evidence);
+      await boardMove('a7', 'a6');
+      const markedPawn = "document.querySelector('[data-square=a6] .move-stamp')";
+      await poll(markedPawn + " && " + evidence, 'computed grade on the black pawn', 30000);
+      const second = await evaluate(evidence);
+      const label = await evaluate(markedPawn + '.dataset.label');
+      check(label !== 'Unrated' && first.includes('depth') && second.includes('depth'), 'Missing Stockfish evidence');
+      await click('[aria-label="Previous coach move"]'); await click('[aria-label="Next coach move"]');
+      await captureResponsive('coach-playing');
+      await navigate('Settings'); await navigate('Coach');
+      await poll(evidence, 'computed grade after restoring practice', 30000);
+      await navigate('Play chess');
+      return {first, move: 'a6', label, second, selectedSide: 'Black', restored: true};
     });
 
     await step("premoves-deserter-dark-mode-and-results", async () => {

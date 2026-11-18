@@ -1,3 +1,7 @@
+# Knightfall 2.1.0
+
+Coach now has its own practice board in the sidebar and mobile navigation. Choose White, Black or Random and one of 30 local bots. Stockfish checks both sides of every move, including book moves, before marking the destination square. The notebook shows the search depths and the change in evaluation. Weak or unavailable searches leave the move unrated. In Coach, every bot reply comes from its strength-limited search. Position lessons use legal candidates from Stockfish’s calculated lines. Replay either side’s moves, ask for a position lesson, or take back a turn. The coach session resumes separately from rated play and Game Review.
+
 # Knightfall 2.0.3
 
 Manual Windows checks now retry the stable feed immediately, even after a recent background check. Web clients track service-worker updates already installing at launch. Android retries loading its bundled release configuration after a transient failure. Stable channels continue to exclude previews and downgrades.
