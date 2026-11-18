@@ -19,7 +19,13 @@ test('Android downloads through the native bridge, retains progress, and confirm
  let unsubscribe;
  try {
   const api=await import('../src/lib/app-updates.ts');
+  const configuredFetch=globalThis.fetch;
+  globalThis.fetch=async()=>{throw Error('bundle temporarily unavailable')};
   unsubscribe=api.subscribeAppUpdates(()=>{});
+  for(let i=0;i<100&&api.getAppUpdateStatus().status!=='unavailable';i++)await new Promise(r=>setTimeout(r,10));
+  assert.equal(api.getAppUpdateStatus().status,'unavailable');
+  globalThis.fetch=configuredFetch;
+  await api.checkAppUpdates();
   for(let i=0;i<100&&api.getAppUpdateStatus().status!=='available';i++)await new Promise(r=>setTimeout(r,10));
   assert.equal(api.getAppUpdateStatus().status,'available');
   assert.equal(api.getAppUpdateStatus().android,true);

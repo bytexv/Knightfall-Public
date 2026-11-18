@@ -41,7 +41,9 @@ function createAutomaticUpdateManager({ updater, config, currentVersion, onStatu
     publish('unavailable', 'Could not verify or download an update. Your current app still works; try again later.');
   };
   updater.on('error', failed);
-  updater.on('update-not-available', () => publish('up-to-date', 'You have the latest stable version.', { checkedAt: new Date(now()).toISOString() }));
+  updater.on('update-not-available', info => publish('up-to-date', 'No newer stable Windows release is available. Preview downloads are listed on GitHub.', {
+    checkedAt: new Date(now()).toISOString(), ...(parseVersion(info?.version) ? { latestVersion: info.version } : {}),
+  }));
   updater.on('update-available', info => {
     if (!validateInstaller(info, currentVersion)) { failed(); return; }
     pending = { version: info.version, sha512: info.files[0].sha512 };
@@ -59,10 +61,10 @@ function createAutomaticUpdateManager({ updater, config, currentVersion, onStatu
     updater.autoInstallOnAppQuit = true;
     publish('ready', `Version ${pending.version} is ready. It installs when you close the app, or you can restart now.`, { latestVersion: pending.version, progress: 100 });
   });
-  async function check() {
+  async function check(manual = false) {
     if (inFlight) return inFlight;
     if (['downloading', 'ready'].includes(state.status)) return getStatus();
-    if (lastStarted !== null && now() - lastStarted >= 0 && now() - lastStarted < minIntervalMs) return getStatus();
+    if (!manual && lastStarted !== null && now() - lastStarted >= 0 && now() - lastStarted < minIntervalMs) return getStatus();
     lastStarted = now();
     publish('checking', 'Checking for updates…');
     inFlight = (async () => {

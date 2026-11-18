@@ -73,3 +73,12 @@ test('an offline check fails safely and does not expose raw transport details', 
   const { updater, manager } = setup(); updater.checkForUpdates = async () => { throw new Error('private transport details'); };
   const result = await manager.check(); assert.equal(result.status, 'unavailable'); assert.doesNotMatch(result.message, /private transport/);
 });
+
+test('installed Windows manual retry after reconnect checks the feed immediately', async () => {
+  const {updater, manager} = setup({now:()=>10000});
+  updater.checkForUpdates=async()=>{throw Error('offline')};
+  assert.equal((await manager.check()).status,'unavailable');
+  updater.checkForUpdates=async()=>updater.emit('update-available', info());
+  assert.equal((await manager.check(true)).status,'downloading');
+  assert.equal(updater.downloads,1);
+});

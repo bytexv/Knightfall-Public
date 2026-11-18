@@ -106,7 +106,7 @@ async function start() {
   });
   ipcMain.handle('knightfall:check-updates', event => {
     if (!trustedSender(event)) throw new Error('Untrusted application origin');
-    return updates.check();
+    return updates.check(true);
   });
   ipcMain.handle('knightfall:open-update', async event => {
     if (!trustedSender(event)) throw new Error('Untrusted application origin');

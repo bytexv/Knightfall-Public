@@ -115,7 +115,7 @@ async function requestLatestRelease({ config, currentVersion, platform = 'win32'
   });
   const request = (async () => {
     const response = await fetchImpl(endpoint, {
-      method: 'GET', redirect: 'error', credentials: 'omit', signal: controller.signal,
+      method: 'GET', cache: 'no-store', redirect: 'error', credentials: 'omit', signal: controller.signal,
       headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': `Knightfall/${currentVersion}` },
     });
     if (response.status !== 200) {
@@ -183,10 +183,10 @@ function createUpdateManager({ config, currentVersion, platform = 'win32', fetch
     return { ...status };
   }
   function getStatus() { return { ...status }; }
-  function check() {
+  function check(manual = false) {
     if (!checkedConfig) return Promise.resolve(getStatus());
     if (inFlight) return inFlight;
-    if (lastStarted !== null && now() >= lastStarted && now() - lastStarted < minIntervalMs) return Promise.resolve(getStatus());
+    if (!manual && lastStarted !== null && now() >= lastStarted && now() - lastStarted < minIntervalMs) return Promise.resolve(getStatus());
     lastStarted = now();
     publish({ status: 'checking', currentVersion, releaseUrl: releasesUrl(checkedConfig), message: 'Checking GitHub for updates…' });
     inFlight = (async () => {

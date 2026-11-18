@@ -89,6 +89,7 @@ export default function UpdateCard() {
               ? "Updates replace the app in place. Android requires installation approval; no uninstall needed."
               : "Use the Windows Setup edition for automatic updates. Portable downloads open on GitHub."}
       </small>
+      {!state.web && <small>Update checks use stable releases. Preview builds are available on the releases page.</small>}
       {state.releaseUrl && (
         <a
           className="update-release-link"

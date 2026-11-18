@@ -3515,6 +3515,7 @@ export default function App() {
       {modal === "updates" && (
         <Modal title={`What's new in Knightfall ${appVersion}`} onClose={closeModal}>
           <ul className="release-highlights">
+            <li>Check for updates retries immediately on desktop. The web app also detects updates already downloading at launch.</li>
             <li>Game Review automatically shows the recommended move and its arrow on the earlier position after misses and mistakes.</li>
             <li>Try a position lesson from the coach during a bot game.</li>
             <li>Compare estimated opponent strength with your local rating before a challenge.</li>

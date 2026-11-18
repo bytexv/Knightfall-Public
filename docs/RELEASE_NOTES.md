@@ -1,3 +1,7 @@
+# Knightfall 2.0.3
+
+Manual Windows checks now retry the stable feed immediately, even after a recent background check. Web clients track service-worker updates already installing at launch. Android retries loading its bundled release configuration after a transient failure. Stable channels continue to exclude previews and downgrades.
+
 # Knightfall 2.0.2
 
 Game Review automatically shows an illustrated recommendation for missed chances, inaccuracies, mistakes, and blunders. The diagram shows the position before the move, oriented for the player who moved. Limited searches are labeled as suggestions. During a bot game, position coaching is available on request.

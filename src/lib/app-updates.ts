@@ -100,6 +100,7 @@ export async function fetchAndroidRelease(
           const response = await fetcher(url, {
             signal: controller.signal,
             credentials: "omit",
+            cache: "no-store",
             redirect: "error",
             headers: { Accept: "application/vnd.github+json" },
           });
@@ -164,7 +165,7 @@ export async function fetchAndroidRelease(
             return {
               ...base,
               status: "up-to-date",
-              message: "You have the latest stable Android release.",
+              message: `No newer stable Android release is available. GitHub lists ${latest} as stable.`,
             };
           const filename = `Knightfall-${latest}-Android.apk`;
           const matches = release.assets.filter(
@@ -262,9 +263,18 @@ function watchRegistration(reg: ServiceWorkerRegistration) {
   ready();
   if (watchedRegistrations.has(reg)) return;
   watchedRegistrations.add(reg);
-  reg.addEventListener("updatefound", () =>
-    reg.installing?.addEventListener("statechange", ready),
-  );
+  const followInstall = () => {
+    const worker = reg.installing;
+    if (!worker || !navigator.serviceWorker.controller) return;
+    publish({ ...state, web: true, status: "checking", message: "Downloading the new web version…" });
+    worker.addEventListener("statechange", () => {
+      if (reg.waiting) ready();
+      else if (worker.state === "redundant" && state.status === "checking")
+        publish({ ...state, status: "unavailable", message: "The web update could not finish. Check again when online." });
+    });
+  };
+  reg.addEventListener("updatefound", followInstall);
+  followInstall();
 }
 async function initialize() {
   bridge = (window as Window & { knightfall?: Bridge }).knightfall;
@@ -332,23 +342,6 @@ async function initialize() {
         nativeUpdater = false;
       }
     }
-    try {
-      const response = await fetch(
-        new URL("update-config.json", document.baseURI),
-      );
-      const value: unknown = await response.json();
-      if (response.ok && validReleaseConfig(value)) config = value;
-    } catch {
-      /* Bundled configuration may be unavailable. */
-    }
-    if (!config) {
-      publish({
-        ...state,
-        status: "unconfigured",
-        message: "No public update source is configured.",
-      });
-      return;
-    }
     await checkAppUpdates(false);
   }
   // Recheck on returning to the app, at most once per four hours.
@@ -385,7 +378,17 @@ export async function checkAppUpdates(manual = true) {
         if (revision === before) publish(next);
         return;
       }
-      if (native && config) {
+      if (native) {
+        if (!config) {
+          const response = await fetch(new URL("update-config.json", document.baseURI), {cache: "no-store"});
+          if (!response.ok) throw new Error("Configuration unavailable");
+          const value: unknown = await response.json();
+          if (!validReleaseConfig(value)) {
+            publish({ ...state, status: "unconfigured", message: "No public update source is configured." });
+            return;
+          }
+          config = value;
+        }
         publish(await fetchAndroidRelease(config, version));
         return;
       }
@@ -395,7 +398,7 @@ export async function checkAppUpdates(manual = true) {
         if (reg) {
           watchRegistration(reg);
           await reg.update();
-          if (state.status !== "ready")
+          if (!reg.installing && state.status !== "ready" && state.status !== "unavailable")
             publish({
               ...state,
               status: "up-to-date",

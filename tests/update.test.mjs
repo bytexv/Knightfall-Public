@@ -141,3 +141,11 @@ test('API failures become clear status messages without exposing raw transport e
   const manager = createUpdateManager({ config, currentVersion: '1.2.0', fetchImpl: async () => { throw new Error('SECRET_PROXY_CREDENTIAL'); } });
   assert.doesNotMatch((await manager.check()).message, /SECRET_PROXY/);
 });
+
+test('portable manual check sees a new stable release inside the background cooldown', async () => {
+  let version = '1.2.0';
+  const manager = createUpdateManager({config,currentVersion:version,now:()=>10000,fetchImpl:async()=>response(release(version))});
+  assert.equal((await manager.check()).status,'up-to-date');
+  version='1.3.0';
+  assert.equal((await manager.check(true)).latestVersion,version);
+});
