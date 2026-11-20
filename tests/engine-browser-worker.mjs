@@ -20,6 +20,8 @@ Object.defineProperties(observedWebAssembly, {
 });
 const scope = {
   location,
+  WorkerGlobalScope: class WorkerGlobalScope {},
+  ReadableStream, Headers, Response,
   onmessage: null,
   console,
   WebAssembly: workerData.captureMemory ? observedWebAssembly : WebAssembly,

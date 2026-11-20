@@ -130,36 +130,6 @@
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.coach-desk .move-stamp {
-  position: absolute;
-  right: 2%;
-  top: 2%;
-  pointer-events: none;
-  z-index: 4;
-  display: grid;
-  place-items: center;
-  min-width: 34%;
-  height: 34%;
-  padding: 0 1px;
-  background: #467546;
-  color: #fff;
-  border: 1.5px solid white;
-  border-radius: 50%;
-  font: bold clamp(10px, 1.25vw, 19px) / 1 sans-serif;
-  box-shadow: 0 1px 3px #0007;
-}
-.move-stamp[data-label="Book"] {
-  background: #80582e;
-}
-.move-stamp:is([data-label="Brilliant"], [data-label="Great"]) {
-  background: #216f88;
-}
-.move-stamp:is([data-label="Inaccuracy"], [data-label="Mistake"]) {
-  background: #985410;
-}
-.move-stamp:is([data-label="Miss"], [data-label="Blunder"]) {
-  background: #a23945;
-}
 @media (max-width: 760px) {
   .coach-desk {
     display: flex;

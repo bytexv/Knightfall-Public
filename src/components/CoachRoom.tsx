@@ -1,3 +1,4 @@
+import { RatingLegend } from "./RatingLegend";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type Color } from "chess.js";
 import {
@@ -37,21 +38,8 @@ import { learningGoal } from "../data/guided-game";
 import "./CoachRoom.css";
 
 const storageKey = "coach-session";
-const symbols: Record<MoveClassification | "Unrated", string> = {
-  Brilliant: "!!",
-  Great: "!",
-  Best: "★",
-  Excellent: "✓",
-  Good: "✓",
-  Book: "▤",
-  Inaccuracy: "?!",
-  Mistake: "?",
-  Miss: "−",
-  Blunder: "??",
-  Unrated: "·",
-};
 interface Grade {
-  label: keyof typeof symbols;
+  label: MoveClassification | "Unrated";
   note: string;
   evidence?: string;
 }
@@ -158,7 +146,7 @@ export default function CoachRoom({ settings }: { settings: Settings }) {
       publish({
         label: review.label,
         note: review.reason,
-        evidence: `Stockfish · depth ${before.depth} → ${terminal ? "game over" : after.depth} · ${formatEvaluation(before)} → ${formatEvaluation(after)} (White)`,
+        evidence: `${before.engine} · depth ${before.depth} → ${terminal ? "game over" : after.depth} · ${formatEvaluation(before)} → ${formatEvaluation(after)} (White)`,
       });
     }
     void evaluateMove(game, record).catch(() =>
@@ -270,7 +258,6 @@ export default function CoachRoom({ settings }: { settings: Settings }) {
           square: played.to,
           san: played.san,
           label: rating.label,
-          symbol: symbols[rating.label],
         });
     }
   }
@@ -497,6 +484,7 @@ export default function CoachRoom({ settings }: { settings: Settings }) {
             )}
           </>
         )}
+        <RatingLegend />
       </div>
     </section>
   );

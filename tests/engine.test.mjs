@@ -110,7 +110,7 @@ test('bundled Stockfish starts, returns real analysis, and solves mate', { timeo
   const engine = new LocalEngine({ workerFactory: nativeWorker, onStatus: status => states.push(status) });
   try {
     const result = await engine.analyze(MATE_IN_ONE, { depth: 12, movetime: 200, multiPV: 3 });
-    assert.equal(result.engine, 'Stockfish 17.1 Lite');
+    assert.equal(result.engine, 'Stockfish 19 Lite');
     assert.ok(result.depth > 0);
     const game = new Chess(MATE_IN_ONE);
     game.move({ from: result.bestMove.slice(0, 2), to: result.bestMove.slice(2, 4), promotion: result.bestMove[4] });
@@ -150,7 +150,7 @@ test('cancel rejects active and queued work, then a fresh search succeeds', { ti
     for (const item of cancelled) { assert.equal(item.status, 'rejected'); assert.equal(item.reason.name, 'AbortError'); }
     const result = await engine.analyze(MATE_IN_ONE, { movetime: 100 });
     assert.equal(result.mate, 1);
-    assert.equal(result.engine, 'Stockfish 17.1 Lite');
+    assert.equal(result.engine, 'Stockfish 19 Lite');
   } finally { engine.destroy(); }
 });
 

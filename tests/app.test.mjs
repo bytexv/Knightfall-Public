@@ -688,7 +688,7 @@ test('Coach has a separate board, grades the destination and restores play after
   await finishCoachSearch('e2e4', 31);
   assert.equal(host.querySelector('.move-stamp'), null);
   await finishCoachSearch('e7e5', 27);
-  assert.equal(host.querySelector('[data-square="e4"] .move-stamp')?.dataset.label, 'Book');
+  assert.equal(host.querySelector('.move-stamp[data-rating-square="e4"]')?.dataset.label, 'Book');
   assert.match(host.querySelector('.coach-evidence').textContent, /depth 15 → 15 · \+0.31 → \+0.27/);
   const saved = JSON.parse(localStorage.getItem('knightfall:coach-session'));
   assert.equal(saved.moves[0].san, 'e4'); assert.equal(saved.rating, undefined);
@@ -718,8 +718,8 @@ test('Coach plays White when Black is selected and rates a non-book move using b
   await move('a7','a6');
   assert.equal(new Chess(nextCoachSearch().fen).turn(), 'w');
   await finishCoachSearch('d2d4');
-  assert.equal(host.querySelector('[data-square="a6"] .move-stamp')?.dataset.label,'Best');
-  assert.equal(host.querySelector('[data-square="e4"] .move-stamp')?.dataset.label,'Book');
+  assert.equal(host.querySelector('.move-stamp[data-rating-square="a6"]')?.dataset.label,'Best');
+  assert.equal(host.querySelector('.move-stamp[data-rating-square="e4"]')?.dataset.label,'Book');
   assert.match(host.querySelector('.coach-evidence').textContent,/Stockfish/);
 });
 

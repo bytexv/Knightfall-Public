@@ -1,7 +1,7 @@
 const { Chess } = require("chess.js");
 exports.verifyFullEngines = async (window) => {
   const results = await window.webContents.executeJavaScript(`(async () => {
-    const profiles = ['stockfish-17.1-single-a496a04.js', 'stockfish-17.1-8e4d048.js'];
+    const profiles = ['stockfish-19-single.js', 'stockfish-19.js'];
     if (!crossOriginIsolated || typeof SharedArrayBuffer === 'undefined') throw new Error('Native full-engine test requires cross-origin isolation');
     const results = [];
     for (const [index, filename] of profiles.entries()) {
@@ -15,7 +15,7 @@ exports.verifyFullEngines = async (window) => {
           worker.onmessage=event=>{
             for (const message of String(event.data).split(/\\r?\\n/)) {
               messages.push(message);
-              if(message==='uciok'){worker.postMessage('setoption name Hash value 32');worker.postMessage('setoption name Threads value '+(index ? 2 : 1));worker.postMessage('isready');}
+              if(message==='uciok'){if(!messages.includes('id name Stockfish 19 WASM'+(index ? ' Multithreaded' : ''))){clearTimeout(timer);reject(new Error('Unverified '+filename+' identity '+messages.filter(m=>m.startsWith('id ')).join(', ')));return;}worker.postMessage('setoption name Hash value 32');worker.postMessage('setoption name Threads value '+(index ? 2 : 1));worker.postMessage('isready');}
               if(message==='readyok'){worker.postMessage('position fen 7k/5K2/6Q1/8/8/8/8/8 w - - 0 1');worker.postMessage('go depth 12 movetime 1500');}
               if(message.startsWith('bestmove ')){clearTimeout(timer);resolve({filename,cores:index?2:1,move:message.split(' ')[1],elapsedMs:Math.round(performance.now()-start),info:messages.filter(m=>m.startsWith('info ')).slice(-12)});}
             }

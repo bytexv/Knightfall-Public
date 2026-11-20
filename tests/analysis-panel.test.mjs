@@ -174,7 +174,7 @@ test('a FEN change immediately removes the old evaluation and principal variatio
   await render(next);
   assert.ok(!host.textContent.includes('+1.20'));
   assert.equal(host.querySelectorAll('.engine-line').length, 0);
-  assert.equal(evaluations.at(-1), 0);
+  assert.equal(evaluations.at(-1), null);
   await waitLive();
   await settle(pending().at(-1), result(-80, { bestMove: 'e7e5', lines: [{ multipv: 1, score: -80, depth: 14, pv: ['e7e5'] }] }));
   assert.ok(host.textContent.includes('-0.80'));
@@ -192,7 +192,7 @@ test('a late live result cannot populate a different position after cancellation
   await settle(oldJob, result(1500, { lines: [{ multipv: 1, score: 1500, depth: 14, pv: ['e2e4'] }] }));
   assert.ok(!host.textContent.includes('+15.00'));
   assert.equal(host.querySelectorAll('.engine-line').length, 0);
-  assert.equal(evaluations.at(-1), 0);
+  assert.equal(evaluations.at(-1), null);
 });
 
 test('terminal mate zero is rendered as checkmate rather than an ordinary evaluation', async () => {
@@ -267,9 +267,12 @@ test('review alternatives use the position before the move and preserve the comp
   const game = guidedGame();
   await render(game, game.moves[0].fen, { activeIndex: 0 });
   await completeGuidedReview(game);
+  assert.match(host.querySelector('.review-consequence').textContent, /After Nf3.*Game reply · Nc6.*also led/);
+  await click('Explore reply');
+  assert.deepEqual(previews.at(-1), { beforeIndex: 0, line: ['b8c6'] });
   await click('Show best move');
   assert.deepEqual(arrows.at(-1), ['f1', 'c4']);
-  assert.deepEqual(previews.at(-1), { beforeIndex: -1, line: [] });
+  assert.deepEqual(previews.at(-1), { beforeIndex: -1, line: ['f1c4', 'g8f6', 'd2d3'] });
   assert.equal(selections.at(-1), 0, 'The original reviewed move remains selected while its alternative is previewed');
   await click('Explore line');
   assert.deepEqual(previews.at(-1), { beforeIndex: -1, line: ['f1c4', 'g8f6', 'd2d3'] });

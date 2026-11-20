@@ -546,7 +546,7 @@ async function runAcceptance({ window, app, outputDir }) {
       const unchanged = async () => check(JSON.stringify(await game()) === JSON.stringify(original),
         "Exploring a review line changed the recorded game");
       await evaluate("document.querySelectorAll('.eval-chart button')[5].click()");
-      await poll("document.querySelector('.review-nav > span')?.textContent==='Move 6 of 7'&&document.querySelector('.board-review-badge')?.getAttribute('aria-label').startsWith('Nf6:')",
+      await poll("document.querySelector('.review-nav > span')?.textContent==='Move 6 of 7'&&document.querySelector('.move-stamp[data-rating-square=f6]')?.dataset.label",
         "graph selection updates the board, review focus and move badge");
       await checkRenderedPosition(original.moves[5].fen, "Selected reviewed move");
       const bestSAN = await evaluate("document.querySelector('.review-alternative > div > strong').textContent");
@@ -1534,7 +1534,7 @@ async function runAcceptance({ window, app, outputDir }) {
       await poll(evidence, 'Stockfish grade for the opening move', 30000);
       const first = await evaluate(evidence);
       await boardMove('a7', 'a6');
-      const markedPawn = "document.querySelector('[data-square=a6] .move-stamp')";
+      const markedPawn = "document.querySelector('.move-stamp[data-rating-square=a6]')";
       await poll(markedPawn + " && " + evidence, 'computed grade on the black pawn', 30000);
       const second = await evaluate(evidence);
       const label = await evaluate(markedPawn + '.dataset.label');

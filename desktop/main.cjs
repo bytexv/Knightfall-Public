@@ -124,12 +124,14 @@ async function start() {
     return updates.install();
   });
 
+  const nativeEngine = app.isPackaged && process.platform === 'win32' && process.arch === 'x64';
   mainWindow = new BrowserWindow({
     width: smokeViewport?.width || 1440, height: smokeViewport?.height || 980, minWidth: Math.min(smokeViewport?.width || 880,880), minHeight: Math.min(smokeViewport?.height || 660,660),
     backgroundColor: '#24272b', title: 'Knightfall',
     icon: path.join(__dirname, '..', 'public', 'icons', 'icon-512.png'),
     show: false,
     webPreferences: {
+      additionalArguments: nativeEngine ? ['--knightfall-stockfish-native'] : [],
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true, nodeIntegration: false, sandbox: true,
       webSecurity: true, allowRunningInsecureContent: false,
@@ -137,6 +139,8 @@ async function start() {
     },
   });
   mainWindow.removeMenu();
+  const nativeSmokeLines = [];
+  if (nativeEngine) require('./native-engine.cjs').registerNativeEngine(ipcMain, mainWindow, trustedSender, path.join(process.resourcesPath, 'engine', 'stockfish.exe'), smokeTest ? line => { if (/^(id name |bestmove )/.test(line)) nativeSmokeLines.push(line); } : undefined);
   if (smokeTest) mainWindow.webContents.on('console-message', event => {
     if (event.level === 'error' || event.level === 3) console.error('RENDERER: ' + event.message);
   });
@@ -166,7 +170,7 @@ async function start() {
   }
   if (smokeTest) {
     if(process.argv.includes('--smoke-full-engine')) await require('./full-engine-smoke.cjs').verifyFullEngines(mainWindow);
-    const report = await require('./smoke.cjs').runSmoke(mainWindow);
+    const report = await require('./smoke.cjs').runSmoke(mainWindow, nativeSmokeLines);
     console.log('KNIGHTFALL_DESKTOP_SMOKE ' + JSON.stringify(report));
     if (acceptanceTest) {
       if (app.isPackaged) throw new Error('The detailed acceptance suite runs from the source checkout.');

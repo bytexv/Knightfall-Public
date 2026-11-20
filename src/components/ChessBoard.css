@@ -215,3 +215,16 @@
     height: 100%;
   }
 }
+
+.board-rating-layer { position:absolute; inset:0; display:grid; grid-template: repeat(8,1fr)/repeat(8,1fr); pointer-events:none; z-index:5; }
+.board-rating-cell { position:relative; container-type:inline-size; }
+.move-stamp { position:absolute; top:2%; right:2%; display:grid; place-items:center; width:36%; height:36%; border-radius:50%; color:white; border:1px solid white; box-sizing:border-box; box-shadow:0 1px 3px #0006; font:750 clamp(9px,23cqw,22px)/1 Arial,sans-serif; letter-spacing:-.045em; }
+.rating-legend { font-size:.88rem; padding: .8rem 0; border-top:1px solid var(--border); }
+.rating-legend summary { cursor:pointer; font-weight:650; }
+.rating-legend dl { margin:0; }
+.rating-legend dl > div { padding:.45rem 0; }
+.rating-legend dt { display:flex; align-items:center; gap:.5rem; font-weight:700; }
+.rating-legend dt b { color:white; display:grid; place-items:center; border-radius:50%; width:1.5rem; height:1.5rem; font:700 .85rem/1 Arial,sans-serif; }
+.rating-legend dd { margin:.22rem 0 0 2rem; line-height:1.45; }
+.review-consequence { border-inline-start:3px solid var(--border); padding-inline-start:.8rem; }
+.review-consequence p { margin:.35rem 0; }

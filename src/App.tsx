@@ -95,7 +95,7 @@ import { type Gambit } from "./data/gambits";
 import { puzzles } from "./data/puzzles";
 import { chooseBotMove, seededBotRandom } from "./lib/bot-policy";
 import { advanceClock, isTimedLocal } from "./lib/clock";
-import { LocalEngine } from "./lib/engine";
+import { nativeStockfish, LocalEngine } from "./lib/engine";
 import {
   applyMove,
   bots,
@@ -367,8 +367,8 @@ export default function App() {
   const hintEngine = useRef<LocalEngine | null>(null);
   const hintToken = useRef(0);
   const [hintBusy, setHintBusy] = useState(false);
-  const [arrows, setArrows] = useState<{ from: string; to: string }[]>([]);
-  const [evaluation, setEvaluation] = useState(0);
+  const [arrows, setArrows] = useState<{ from: string; to: string; fen?: string }[]>([]);
+  const [evaluation, setEvaluation] = useState<{score:number | null; display:string; fen:string} | null>(null);
   const [ratings, setRatings] = useState<RatingLedger>(() =>
     sanitizeRatingLedger(readStore("ratings", null)),
   );
@@ -470,6 +470,7 @@ export default function App() {
       ? exploration
       : null;
   const position = preview ? explorationFen(preview) : mainPosition;
+  const boardEvaluation = evaluation?.fen === position ? evaluation : null;
   const chess = new Chess(position);
   const atLatest = historyIndex === game.moves.length - 1;
   const currentBot = resolveBot(game.botId, game.customBotElo);
@@ -1936,14 +1937,14 @@ export default function App() {
                   {page === "analysis" && (
                     <div
                       className="eval-bar"
-                      aria-label={`Evaluation ${(evaluation / 100).toFixed(2)} pawns`}
+                      aria-label={boardEvaluation?.score == null ? "Evaluation pending" : `Evaluation for White ${boardEvaluation.display}`}
                     >
                       <div
                         style={{
-                          height: `${Math.min(95, Math.max(5, 50 + evaluation / 20))}%`,
+                          height: `${Math.min(95, Math.max(5, 50 + (boardEvaluation?.score ?? 0) / 20))}%`,
                         }}
                       />
-                      <span>{(Math.abs(evaluation) / 100).toFixed(1)}</span>
+                      <span>{boardEvaluation?.display ?? "—"}</span>
                     </div>
                   )}
                 {game.result &&
@@ -2016,6 +2017,7 @@ export default function App() {
                   )}
 
                   <ChessBoard
+                    qualityBadges={page === "analysis" && !preview && activeReview && activeReview.index === historyIndex && game.moves[historyIndex] ? [{square:game.moves[historyIndex].to, label:activeReview.label}] : undefined}
                     fen={canQueue && premove.length ? premovePreview(position, premove) : position}
                     alienTheme={
                       settings.alienEasterEgg &&
@@ -2043,41 +2045,11 @@ export default function App() {
                           ? game.moves[historyIndex]
                           : null
                     }
-                    arrows={arrows}
+                    arrows={arrows.filter(arrow => !arrow.fen || arrow.fen === position)}
                     showCoordinates={settings.coordinates}
                     showLegalMoves={settings.legalMoves}
                     theme={visualSettings.boardTheme}
                   />
-                  {page === "analysis" &&
-                    !preview &&
-                    activeReview &&
-                    activeReview.index === historyIndex &&
-                    game.moves[historyIndex] && (
-                      <span
-                        className={`board-review-badge review-${activeReview.label.toLowerCase()}`}
-                        role="img"
-                        aria-label={`${game.moves[historyIndex].san}: ${activeReview.label}`}
-                        style={{
-                          left: `${((orientation === "w" ? game.moves[historyIndex].to.charCodeAt(0) - 97 : 104 - game.moves[historyIndex].to.charCodeAt(0)) + 1) * 12.5}%`,
-                          top: `${(orientation === "w" ? 8 - Number(game.moves[historyIndex].to[1]) : Number(game.moves[historyIndex].to[1]) - 1) * 12.5}%`,
-                        }}
-                      >
-                        {
-                          {
-                            Brilliant: "!!",
-                            Great: "!",
-                            Best: "★",
-                            Excellent: "✓",
-                            Good: "✓",
-                            Book: "B",
-                            Inaccuracy: "?!",
-                            Mistake: "?",
-                            Miss: "−",
-                            Blunder: "??",
-                          }[activeReview.label]
-                        }
-                      </span>
-                    )}
                 </div>
                 {playerBar(bottomColor, true)}
                 {game.result && hiddenResult === game.id && page === "play" && <button className="button secondary" onClick={() => setHiddenResult(null)}>Show game result</button>}
@@ -2754,6 +2726,7 @@ export default function App() {
                       engineThreads={settings.engineThreads}
                       searchTime={settings.analysisTime}
                       fen={position}
+                      inVariation={!!preview}
                       game={game}
                       ratingContext={performanceContext(game, ratings)}
                       activeIndex={historyIndex}
@@ -2762,8 +2735,8 @@ export default function App() {
                       onActiveReview={setActiveReview}
                       onPreviewLine={previewLine}
                       onRetryMove={retryReviewMove}
-                      onEvaluation={setEvaluation}
-                      onArrow={(from, to) => setArrows([{ from, to }])}
+                      onEvaluation={(score, display, fen) => setEvaluation({score, display, fen})}
+                      onArrow={(from, to, fen) => setArrows([{ from, to, fen }])}
                       onImport={() => setModal("import")}
                       onReviewSelect={selectReviewMove}
                     />
@@ -3110,17 +3083,17 @@ export default function App() {
                       }
                     >
                       <option value="lite">
-                        Stockfish Lite · lighter on your device
+                        {nativeStockfish() ? "Stockfish 19 · standard search" : "Stockfish Lite · lighter on your device"}
                       </option>
                       <option value="full">
-                        Stockfish Full NNUE · stronger analysis
+                        {nativeStockfish() ? "Stockfish 19 · extended search" : "Stockfish Full NNUE · stronger analysis"}
                       </option>
                     </select>
                   </label>
                   <p>
-                    Full uses a larger neural network and more memory. On the
-                    web, the first use loads about 75 MB. Native apps include it
-                    for offline play. Keep Lite for lower battery use.
+                    {nativeStockfish()
+                      ? "Both settings use the official Windows engine. Extended search allows more thinking time and CPU cores."
+                      : "Lite runs offline after installation. Full loads about 95 MiB on the web and runs offline once cached. Mobile packages include both engines."}
                   </p>
                   <label>
                     CPU cores
@@ -3330,7 +3303,7 @@ export default function App() {
                   <div className="about-feature">
                     <Cpu size={18} />
                     <span>
-                      <strong>Local engine</strong>Stockfish 17.1 Lite or Full
+                      <strong>Local engine</strong>Stockfish 19 Lite or Full
                       NNUE, with a lightweight fallback.
                     </span>
                   </div>
@@ -3533,8 +3506,9 @@ export default function App() {
             <AtHomeSwitch enabled={home} onChange={enabled => setStudio(enabled ? "home" : "club")} />
           </div>
           <ul className="release-highlights">
-            <li>Your bot now has a portrait in the picker and at the board. A new opening screen appears while Knightfall loads.</li>
-            <li>In Tournament Hall, select a move on the scoresheet to replay it on a second board. Your live game and its clock stay on the main board.</li>
+            <li>Coach marks each graded piece with a distinct symbol. Open the move rating guide to see how it earned its grade.</li>
+            <li>Game Review shows the reply played and the engine’s best reply. Step through either engine line and return to your original game.</li>
+            <li>Stockfish 19 runs locally. Windows uses the official engine, and the web includes a small offline engine with an optional Full download.</li>
           </ul>
           <button className="button primary" onClick={closeModal}>Back to Knightfall</button>
         </Modal>

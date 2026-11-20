@@ -5,6 +5,11 @@ import { createHash } from 'node:crypto';
 
 const root = path.resolve(import.meta.dirname, '..');
 await access(path.join(root, 'dist', 'index.html')).catch(() => {throw new Error('Run npm run build before packaging Windows.');});
+await new Promise((resolve, reject) => {
+  const prepare = spawn(process.platform === 'win32' ? 'python' : 'python3', ['scripts/prepare-windows-engine.py'], {cwd: root, stdio: 'inherit'});
+  prepare.on('error', reject);
+  prepare.on('exit', code => code === 0 ? resolve() : reject(new Error('Failed to prepare official Stockfish 19.')));
+});
 const executable = path.join(root, 'node_modules', 'electron-builder', 'out', 'cli', 'cli.js');
 const args = [executable, '--config', 'desktop/electron-builder.yml', '--win', 'nsis', 'portable', '--x64', '--publish', 'never'];
 await new Promise((resolve, reject) => {

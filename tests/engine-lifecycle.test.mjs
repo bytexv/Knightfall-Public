@@ -6,7 +6,7 @@ import { Chess } from 'chess.js';
 const START = new Chess().fen();
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-function mockFactory({ searchDelay = 2, silent = false } = {}) {
+function mockFactory({ searchDelay = 2, identity = "Stockfish 19 Lite WASM", silent = false } = {}) {
   const workers = [];
   const factory = () => {
     const worker = { onmessage: null, onerror: null, terminated: false, commands: [], timer: null,
@@ -14,7 +14,7 @@ function mockFactory({ searchDelay = 2, silent = false } = {}) {
       postMessage(message) {
         this.commands.push(message);
         if (silent) return;
-        if (message === 'uci') queueMicrotask(() => this.emit('uciok'));
+        if (message === 'uci') queueMicrotask(() => { this.emit('id name ' + identity); this.emit('uciok'); });
         if (message === 'isready') queueMicrotask(() => this.emit('readyok'));
         if (message.startsWith('go ')) this.timer = setTimeout(() => { this.emit('info depth 8 score cp 21 pv e2e4 e7e5'); this.emit('bestmove e2e4'); }, searchDelay);
         if (message === 'stop') { clearTimeout(this.timer); queueMicrotask(() => this.emit('bestmove e2e4')); }
@@ -133,9 +133,9 @@ test('full engine uses single-thread NNUE without isolation and bounded multi-co
  try{
   for(const isolated of [false,true]){
    Object.defineProperty(globalThis,'crossOriginIsolated',{value:isolated,configurable:true});
-   const {factory,workers}=mockFactory();let url;
+   const {factory,workers}=mockFactory({identity:isolated ? "Stockfish 19 WASM Multithreaded" : "Stockfish 19 WASM"});let url;
    const engine=new LocalEngine({mode:'full',threads:100,workerFactory:u=>{url=u;return factory();}});
-   try{await engine.initialize();assert.match(url,isolated?/8e4d048/:/single-a496a04/);assert.ok(workers[0].commands.includes('setoption name Hash value 32'));
+   try{await engine.initialize();assert.match(url,isolated?/stockfish-19\.js/:/stockfish-19-single\.js/);assert.ok(workers[0].commands.includes('setoption name Hash value 32'));
     const threads=Number(workers[0].commands.find(s=>s.startsWith('setoption name Threads')).split(' ').at(-1));assert.ok(threads>=1&&threads<=4);if(!isolated)assert.equal(threads,1);
    }finally{engine.destroy();}
   }
@@ -159,4 +159,31 @@ test('bot Elo limits reset between jobs so analysis and maximum strength remain 
     await engine.analyze(START,{elo:100});
     assert.ok(workers[0].commands.includes('setoption name UCI_Elo value 1320'));
   } finally {engine.destroy();}
+});
+
+test('a worker claiming an older or unrecognized version falls back before search', async () => {
+  const {factory, workers} = mockFactory({identity:'Stockfish 17.1 Lite WASM'});
+  const engine = new LocalEngine({workerFactory:factory});
+  try {
+    await engine.initialize();
+    assert.equal(engine.status, 'fallback');
+    assert.equal(engine.engineName, 'Knightfall Lite');
+    assert.equal(workers[0].terminated, true);
+  } finally {engine.destroy()}
+});
+
+test('a missing optional Full model retries the original search with verified Lite', async () => {
+  const {factory} = mockFactory();
+  const urls = [];
+  const engine = new LocalEngine({mode:"full", workerFactory(url) {
+    urls.push(url);
+    if (url.includes('/full/')) throw new Error('Optional model unavailable offline');
+    return factory();
+  }});
+  try {
+    const result = await engine.analyze(START);
+    assert.deepEqual(urls.map(url => url.includes('/full/')), [true, false]);
+    assert.equal(result.engine, 'Stockfish 19 Lite');
+    assert.equal(result.bestMove, 'e2e4');
+  } finally { engine.destroy(); }
 });

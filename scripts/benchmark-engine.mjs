@@ -129,7 +129,7 @@ if (mode === 'all' || mode === 'matches') {
         const player = players[color === 'w' ? 0 : 1];
         const bot = bots.find(bot => bot.id === player);
         const analysis = await engine.analyze(game.fen(), profile === 'production' ? { depth: 20, movetime: bot.time, skill: bot.skill } : { depth: 8, movetime: 2000, skill: 20 });
-        if (analysis.engine !== 'Stockfish 17.1 Lite') throw new Error('Match unexpectedly used fallback engine');
+        if (analysis.engine !== 'Stockfish 19 Lite') throw new Error('Match unexpectedly used fallback engine');
         const uci = chooseBotMove(game.fen(), player, analysis, randoms[color === 'w' ? 0 : 1]);
         if (!uci) throw new Error(`Missing move in non-terminal position: ${game.fen()}`);
         const move = game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] });

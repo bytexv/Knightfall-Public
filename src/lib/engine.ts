@@ -96,10 +96,20 @@ export function parseUciInfo(message: string, fen: string): EngineLine | null {
  * rejects queued/active requests with AbortError and safely drains Stockfish's
  * stop response before another position is searched.
  */
+export function nativeStockfish() {
+  return (globalThis as typeof globalThis & {
+    knightfall?: {openStockfish?: (line: (s: string) => void, fail: () => void) => Pick<EngineWorker, "postMessage" | "terminate">}
+  }).knightfall?.openStockfish;
+}
+
 export class LocalEngine {
   private static workers = new Set<LocalEngine>();
   status: EngineStatus = "idle";
-  engineName = "Stockfish 17.1 Lite";
+  engineName = "Checking engine";
+  private profile: "native" | "lite" | "full";
+  private identityVerified = false;
+  private fullIdentity = "Stockfish 19 WASM";
+  private native = nativeStockfish();
   private settings: LocalEngineOptions;
   private worker: EngineWorker | null = null;
   private fallbackWorker: Worker | null = null;
@@ -114,10 +124,11 @@ export class LocalEngine {
   private serial = 0;
 
   constructor(settings: LocalEngineOptions = {}) {
+    this.profile = this.native && !settings.workerFactory ? "native" : settings.mode === "full" ? "full" : "lite";
     const threaded =
       settings.mode === "full" &&
-      globalThis.crossOriginIsolated === true &&
-      typeof SharedArrayBuffer !== "undefined";
+      (this.profile === "native" || (globalThis.crossOriginIsolated === true && typeof SharedArrayBuffer !== "undefined"));
+    if (threaded) this.fullIdentity = "Stockfish 19 WASM Multithreaded";
     const threads = threaded
       ? clamp(
           settings.threads,
@@ -128,8 +139,7 @@ export class LocalEngine {
       : 1;
     this.settings = { ...settings, threads };
     if (settings.mode === "full") {
-      this.engineName = `Stockfish 17.1 Full NNUE · ${threads} ${threads === 1 ? "core" : "cores"}`;
-      this.settings.workerUrl ??= `${import.meta.env?.BASE_URL ?? "./"}engine/full/${threaded ? "stockfish-17.1-8e4d048.js" : "stockfish-17.1-single-a496a04.js"}`;
+      this.settings.workerUrl ??= `${import.meta.env?.BASE_URL ?? "./"}engine/full/${threaded ? "stockfish-19.js" : "stockfish-19-single.js"}`;
       this.settings.hashMb ??= 32;
       this.settings.initializationTimeout ??= 60000;
     }
@@ -157,6 +167,8 @@ export class LocalEngine {
       if (LocalEngine.workers.size < 2) break;
       if (previous !== this) previous.releaseIdleResources();
     }
+    this.identityVerified = false;
+    this.engineName = "Checking engine";
     this.updateStatus("loading");
     const pending = new Promise<void>((resolve, reject) => {
       this.readyResolve = resolve;
@@ -185,9 +197,16 @@ export class LocalEngine {
         workerURL.hash = encodeURIComponent(wasmURL.href);
       }
       const url = workerURL.href;
-      const worker = this.settings.workerFactory
-        ? this.settings.workerFactory(url)
-        : new Worker(url);
+      let worker: EngineWorker;
+      if (this.profile === "native" && this.native) {
+        const transport = this.native(
+          line => worker.onmessage?.({data: line} as MessageEvent),
+          () => worker.onerror?.(new ErrorEvent("error")),
+        );
+        worker = {...transport, onmessage: null, onerror: null};
+      } else {
+        worker = this.settings.workerFactory ? this.settings.workerFactory(url) : new Worker(url);
+      }
       this.worker = worker;
       LocalEngine.workers.add(this);
       worker.onmessage = (event) => {
@@ -351,6 +370,17 @@ export class LocalEngine {
     clearTimeout(previous?.watchdog);
     this.active = null;
     if (previous && !previous.aborted) this.queue.unshift(previous);
+    if (previous) previous.lines.clear();
+    if (this.profile !== "lite") {
+      this.profile = "lite";
+      this.settings.workerUrl = undefined;
+      this.settings.threads = 1;
+      this.settings.initializationTimeout = 12000;
+      const resolve = this.readyResolve, reject = this.readyReject;
+      this.ready = null;
+      void this.initialize().then(() => resolve?.(), error => reject?.(error));
+      return;
+    }
     this.preferFallback = true;
     this.engineName = "Knightfall Lite";
     this.updateStatus("fallback");
@@ -362,7 +392,16 @@ export class LocalEngine {
 
   private onMessage(message: string): void {
     if (this.status === "destroyed" || this.status === "fallback") return;
-    if (message === "uciok") {
+    if (message.startsWith("id name ") && this.status === "loading") {
+      const expected = {native: "Stockfish 19", full: this.fullIdentity, lite: "Stockfish 19 Lite WASM"}[this.profile];
+      this.identityVerified = message.slice(8) === expected;
+      if (this.identityVerified) {
+        this.engineName = this.profile === "native" ? "Stockfish 19 Native" : this.profile === "lite" ? "Stockfish 19 Lite" : `Stockfish 19 Full NNUE · ${this.settings.threads} core(s)`;
+      }
+      return;
+    }
+    if (message === "uciok" && this.status === "loading") {
+      if (!this.identityVerified) { this.useFallback(); return; }
       this.worker?.postMessage(
         `setoption name Hash value ${clamp(this.settings.hashMb, 4, 64, 16)}`,
       );
@@ -373,6 +412,7 @@ export class LocalEngine {
       return;
     }
     if (message === "readyok" && this.status === "loading") {
+      if (!this.identityVerified) { this.useFallback(); return; }
       clearTimeout(this.initializationTimer);
       this.updateStatus("ready");
       this.readyResolve?.();
@@ -414,12 +454,13 @@ export class LocalEngine {
           (a, b) => a.multipv - b.multipv,
         );
         if (!bestMove && !new Chess(job.fen).isGameOver()) {
-          // Never send an illegal or missing engine move to the board.
+          // Retry this job on the next engine with fresh position evidence.
+          job.lines.clear();
           this.queue.unshift(job);
           this.useFallback();
           return;
         }
-        const first = lines[0];
+        const first = lines.find(line => line.pv[0] === bestMove);
         const start = new Chess(job.fen);
         const isMate = start.isCheckmate();
         job.resolve({

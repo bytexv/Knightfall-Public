@@ -30,7 +30,9 @@ for (const asset of assets) {
   hash.update(asset.relative);
   hash.update(await readFile(asset.absolute));
 }
+const requiredBytes = assets.reduce((sum, asset) => sum + asset.size, 0);
+if (requiredBytes > 64 * 1024 * 1024) throw new Error('Required offline download exceeds 64 MiB');
 const build = hash.digest('hex').slice(0, 16);
 const manifest = `self.__KNIGHTFALL_BUILD__ = ${JSON.stringify(build)};\nself.__KNIGHTFALL_ASSETS__ = ${JSON.stringify(assets.map(asset => './' + asset.relative), null, 2)};\n`;
 await writeFile(path.join(dist, 'sw-manifest.js'), manifest);
-console.log(`Offline manifest: ${assets.length} assets, ${(assets.reduce((sum, asset) => sum + asset.size, 0) / 1024 / 1024).toFixed(1)} MiB, build ${build}`);
+console.log(`Offline manifest: ${assets.length} assets, ${(requiredBytes / 1024 / 1024).toFixed(1)} MiB, build ${build}`);

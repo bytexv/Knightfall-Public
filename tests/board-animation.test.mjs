@@ -305,3 +305,26 @@ test('motion intensity changes timing and Off clears running visuals without cha
   document.documentElement.dataset.motion='expressive';await play('Nf3');assert.equal(animations.at(-1).options.duration,190*1.4);
   media.matches=true;await play('Nc6');assert.equal(animations.at(-1).options.duration,190*1.4);
 });
+
+test("each rating stays on its occupied square through rotation and removal", async () => {
+  const {ratings} = await import("../src/components/RatingLegend.tsx");
+  const pieces = new Chess().board().flat().filter(Boolean);
+  props.qualityBadges = Object.keys(ratings).map((label,i) => ({square:pieces[i].square,label}));
+  for (const orientation of ["w","b"]) {
+    props.orientation = orientation;
+    await render();
+    const cells = [...host.querySelectorAll(".chessboard [data-square]")];
+    for (const badge of props.qualityBadges) {
+      const index = cells.indexOf(square(badge.square));
+      const mark = host.querySelector(`[data-rating-square="${badge.square}"]`);
+      assert.equal(mark.dataset.label, badge.label);
+      assert.equal(mark.textContent, ratings[badge.label][0]);
+      assert.equal(Number(mark.parentElement.style.gridColumn), index % 8 + 1);
+      assert.equal(Number(mark.parentElement.style.gridRow), Math.floor(index / 8) + 1);
+      assert.ok(square(badge.square).getAttribute("aria-label").includes(badge.label));
+    }
+  }
+  props.qualityBadges = [];
+  await render();
+  assert.equal(host.querySelectorAll(".move-stamp").length, 0);
+});

@@ -1,24 +1,8 @@
-Stockfish.js 17.1.0
-
-Copyright (c) 2025 Chess.com, LLC and the Stockfish contributors.
-Distributed under GNU GPL version 3. See COPYING.txt and AUTHORS.txt.
-
-This application bundles the unmodified lite, single-threaded build from the
-stockfish@17.1.0 npm package. Its JavaScript and WASM files are
-renamed together to stockfish.js and stockfish.wasm; their contents are unchanged.
-Original files: stockfish-17.1-lite-single-03e3232.js, stockfish-17.1-lite-single-03e3232.wasm
-
-A corresponding-source bundle is included beside this notice as:
-stockfish-source.tgz
-It preserves the original source/build files and includes the lite NNUE network;
-only prebuilt JavaScript/WASM outputs are excluded.
-
-Complete upstream source and build instructions at the exact npm gitHead:
-https://github.com/nmrugg/stockfish.js/tree/602fd7e1a571a2be71f242942db90483731f2a1f
-https://github.com/nmrugg/stockfish.js/archive/602fd7e1a571a2be71f242942db90483731f2a1f.tar.gz
-
-Upstream Stockfish: https://github.com/official-stockfish/Stockfish
-NNUE network: https://tests.stockfishchess.org/api/nn/nn-9067e33176e8.nnue
-
-No connection to these services is needed to play or analyze games.
-Knightfall is an independent application; no endorsement is implied.
+Stockfish.js 19.0.1, based on official Stockfish 19.
+Copyright 2026 Chess.com, LLC and the Stockfish contributors. GPLv3.
+Port source: https://github.com/nmrugg/stockfish.js/tree/0d5dd7944f88c817c07a26bc4fb1905d5f9c46d6
+Official engine: https://github.com/official-stockfish/Stockfish/releases/tag/sf_19
+See COPYING.txt and AUTHORS.txt. The port's JS and WASM bytes are unchanged.
+Lite uses stockfish-19-lite-single.{js,wasm}, renamed together.
+Corresponding source, build scripts, and lite NNUE data are in stockfish-source.tgz.
+Lite NNUE SHA-256: 61e7af4bb97d51eeeb25d322916f86513b5cd3a827ce189c98c6e31946f99e5b

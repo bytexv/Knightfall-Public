@@ -20,6 +20,7 @@ const result = await run(installed, ['--smoke-test', '--smoke-game', '--smoke-fu
   { cwd: root, timeout: 180000, maxBuffer: 4 * 1024 * 1024, windowsHide: false });
 await writeFile(path.join(output, 'smoke.log'), result.stdout + '\n' + result.stderr);
 assert.match(result.stdout, /KNIGHTFALL_DESKTOP_SMOKE /, 'Native Windows renderer/engine check did not complete');
+assert.match(result.stdout, /"nativeStockfish":\s*\{[^}]*"name":\s*"Stockfish 19"/, 'Installed Windows engine handshake or mate test missing');
 const sentinel = path.join(installation, 'unrelated-user-file.txt');
 await writeFile(sentinel, 'preserve this');
 await run(path.join(installation, 'Uninstall Knightfall.exe'), ['/S'], {timeout: 90000});

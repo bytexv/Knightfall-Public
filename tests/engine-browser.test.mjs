@@ -22,7 +22,7 @@ test('browser Stockfish branch loads its relative WASM and delivers UCI analysis
   try {
     const start = performance.now();
     const result = await engine.analyze(new Chess().fen(), { depth: 8, movetime: 180, multiPV: 3 });
-    assert.equal(result.engine, 'Stockfish 17.1 Lite', 'the real browser branch must initialize, rather than silently falling back');
+    assert.equal(result.engine, 'Stockfish 19 Lite', 'the real browser branch must initialize, rather than silently falling back');
     assert.ok(result.bestMove);
     assert.ok(result.lines.length >= 2);
     assert.ok(result.depth >= 3);
@@ -43,7 +43,7 @@ test('browser worker cancellation drains an old search before analyzing the oppo
     await cancelled;
     const blackFen = '6k1/5ppp/8/8/8/8/5PPP/6K1 b - - 0 1';
     const result = await engine.analyze(blackFen, { depth: 9, movetime: 200 });
-    assert.equal(result.engine, 'Stockfish 17.1 Lite');
+    assert.equal(result.engine, 'Stockfish 19 Lite');
     const game = new Chess(blackFen);
     game.move({ from: result.bestMove.slice(0, 2), to: result.bestMove.slice(2, 4), promotion: result.bestMove[4] });
     assert.equal(game.turn(), 'w');
@@ -55,7 +55,7 @@ test('the engine resolves WASM under subdirectories and Capacitor custom origins
     const engine = new LocalEngine({ workerUrl, workerFactory: browserWorker });
     try {
       const result = await engine.analyze('7k/5K2/6Q1/8/8/8/8/8 w - - 0 1', { depth: 6, movetime: 100 });
-      assert.equal(result.engine, 'Stockfish 17.1 Lite', `failed to load assets for ${workerUrl}`);
+      assert.equal(result.engine, 'Stockfish 19 Lite', `failed to load assets for ${workerUrl}`);
       assert.equal(result.mate, 1);
     } finally { engine.destroy(); }
   }
@@ -69,7 +69,7 @@ test('all 30 production bot profiles reply legally through the real local Stockf
     for(const [index,bot] of bots.entries()) {
       const game=new Chess();if(index%2)game.move('e4');
       const result=await engine.analyze(game.fen(),botSearchOptions(bot));
-      assert.equal(result.engine,'Stockfish 17.1 Lite',`${bot.name} silently fell back`);
+      assert.equal(result.engine,'Stockfish 19 Lite',`${bot.name} silently fell back`);
       const move=chooseBotMove(game.fen(),bot.id,result,seededBotRandom(724+index));
       assert.ok(move,`${bot.name} did not reply`);
       assert.ok(game.move({from:move.slice(0,2),to:move.slice(2,4),promotion:move[4]}),`${bot.name} returned an illegal move`);

@@ -35,7 +35,7 @@ Difficulty labels are not calibrated Elo ratings. Two people playing on the same
 
 ## Local analysis and study
 
-- Stockfish 17.1 Lite JavaScript/WASM, single-threaded, running on the device.
+- Stockfish 19 Lite JavaScript/WASM, single-threaded, running on the device.
 - A separately named Knightfall Lite fallback if the Stockfish worker cannot initialize.
 - White-relative evaluation, mate scores and up to three suggested variations.
 - Depth limits with bounded search time; actual completed depth is displayed.

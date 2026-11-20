@@ -1,6 +1,6 @@
 {
   "name": "knightfall-chess",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "private": true,
   "type": "module",
   "description": "Local chess, analysis, and training.",
@@ -38,7 +38,7 @@
     "electron": "^45.3.0",
     "electron-builder": "^26.0.12",
     "jsdom": "^31.0.0",
-    "stockfish": "^17.1.0",
+    "stockfish": "19.0.1",
     "tsx": "^4.20.0",
     "typescript": "~5.8.3",
     "vite": "^6.3.5"

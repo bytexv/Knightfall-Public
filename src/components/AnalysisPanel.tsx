@@ -1,3 +1,4 @@
+import { ratings, RatingLegend } from "./RatingLegend";
 import ReviewRecommendation from "./ReviewRecommendation";
 import { readSavedReview, storeReview } from "../lib/review-store";
 import { saveGame } from "../lib/storage";
@@ -17,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LocalEngine, type EngineResult } from "../lib/engine";
 import { uciToSan, type GameSession } from "../lib/game";
 import {
-  evaluationSummary,
+  evaluationSummary, playedConsequence,
   estimatePerformanceElo,
   summarizeGamePhases,
   formatEvaluation,
@@ -43,8 +44,9 @@ export type AnalysisPanelProps = {
   ratingContext?: ReviewSummaryContext;
   /** Index of the last played main-line move; -1 is the starting position. */
   activeIndex?: number;
-  onEvaluation: (value: number) => void;
-  onArrow: (from: string, to: string) => void;
+  inVariation?: boolean;
+  onEvaluation: (value: number | null, display: string, fen: string) => void;
+  onArrow: (from: string, to: string, fen: string) => void;
   onImport: () => void;
   onReviewSelect: (index: number) => void;
   /** Explore UCI moves from the position AFTER beforeIndex without changing the game. */
@@ -69,18 +71,6 @@ const emptyReview = (key: string): ReviewState => ({
   depth: 16,
   error: "",
 });
-const qualityMarks: Record<string, string> = {
-  Brilliant: "!!",
-  Great: "!",
-  Best: "★",
-  Excellent: "✓",
-  Good: "✓",
-  Book: "B",
-  Inaccuracy: "?!",
-  Mistake: "?",
-  Miss: "–",
-  Blunder: "??",
-};
 const isMistake = (item: MoveReview) =>
   ["Inaccuracy", "Mistake", "Miss", "Blunder"].includes(item.label);
 const isKeyMove = (item: MoveReview) =>
@@ -107,7 +97,7 @@ function QualityBadge({
     <span
       className={`review-quality ${item.label.toLowerCase()} ${large ? "is-large" : ""}`}
     >
-      <b aria-hidden="true">{qualityMarks[item.label]}</b>
+      <b aria-hidden="true">{ratings[item.label][0]}</b>
       <span>{item.label}</span>
     </span>
   );
@@ -122,7 +112,7 @@ export default function AnalysisPanel({
   searchTime,
   fen,
   game,
-  activeIndex,
+  activeIndex, inVariation = false,
   onEvaluation,
   onArrow,
   onImport,
@@ -178,8 +168,9 @@ export default function AnalysisPanel({
     [game.id, game.startFen, game.moves],
   );
   const liveKey = `${engineMode}:${engineThreads}:${searchTime}:${depth}:${fen}`;
-  const latest = useRef({ fen, gameKey, liveKey, tab });
-  latest.current = { fen, gameKey, liveKey, tab };
+  const live = tab === "live" || inVariation;
+  const latest = useRef({ fen, gameKey, liveKey, live });
+  latest.current = { fen, gameKey, liveKey, live };
   function restoredReview(): ReviewState {
     const saved = readSavedReview(game);
     return saved
@@ -202,12 +193,12 @@ export default function AnalysisPanel({
   // Keyed output prevents a stale result flashing before effect cleanup runs.
   const result = analysis?.key === liveKey ? analysis.result : null;
   const busy =
-    pendingKey === liveKey && enabled && tab === "live" && !reviewing;
+    pendingKey === liveKey && enabled && live && !reviewing;
   const error = liveError?.key === liveKey ? liveError.message : "";
   const selectedIndex =
     activeIndex ?? game.moves.findIndex((move) => move.fen === fen);
   const selectedReview =
-    reviews.find((item) => item.index === selectedIndex) ?? null;
+    !live && game.moves[selectedIndex]?.fen === fen ? reviews.find(item => item.index === selectedIndex) ?? null : null;
   const selectedMove = selectedReview ? game.moves[selectedReview.index] : null;
   const phases = useMemo(
     () => summarizeGamePhases(reviews, game.moves),
@@ -271,18 +262,13 @@ export default function AnalysisPanel({
   }, [selectedReview]);
 
   useEffect(() => {
-    callbacks.current.onEvaluation(
-      tab === "review"
-        ? (selectedReview?.score ?? 0)
-        : enabled
-          ? (result?.score ?? 0)
-          : 0,
-    );
-  }, [fen, tab, selectedReview, result, enabled]);
+    const shown = live ? enabled ? result : null : selectedReview?.after;
+    callbacks.current.onEvaluation(shown?.score ?? null, shown ? formatEvaluation(shown, 1) : "—", fen);
+  }, [fen, live, selectedReview, result, enabled]);
 
   useEffect(() => {
     const engine = liveEngine.current;
-    if (!enabled || tab !== "live" || reviewing || !engine) {
+    if (!enabled || !live || reviewing || !engine) {
       setPendingKey(null);
       return;
     }
@@ -304,7 +290,7 @@ export default function AnalysisPanel({
           if (
             cancelled ||
             latest.current.liveKey !== key ||
-            latest.current.tab !== "live"
+            !latest.current.live
           )
             return;
           cacheResult(positionCache.current, `live:${key}`, next);
@@ -315,7 +301,7 @@ export default function AnalysisPanel({
           if (
             cancelled ||
             latest.current.liveKey !== key ||
-            latest.current.tab !== "live"
+            !latest.current.live
           )
             return;
           setPendingKey(null);
@@ -332,7 +318,7 @@ export default function AnalysisPanel({
       clearTimeout(timer);
       engine.cancel();
     };
-  }, [fen, liveKey, enabled, depth, reviewing, tab]);
+  }, [fen, liveKey, enabled, depth, reviewing, live]);
 
   async function review() {
     const engine = reviewEngine.current;
@@ -422,9 +408,9 @@ export default function AnalysisPanel({
   }
   function showBest() {
     if (!selectedReview?.best) return;
-    if (onPreviewLine) onPreviewLine(selectedReview.index - 1, []);
+    if (onPreviewLine) onPreviewLine(selectedReview.index - 1, bestLine);
     else select(selectedReview.index - 1);
-    onArrow(selectedReview.best.slice(0, 2), selectedReview.best.slice(2, 4));
+    onArrow(selectedReview.best.slice(0, 2), selectedReview.best.slice(2, 4), game.moves[selectedReview.index].before);
   }
   const filtered = filter === "all" ? reviews : reviews.filter(isMistake);
   const nextKey = reviews.find(
@@ -531,7 +517,7 @@ export default function AnalysisPanel({
                   <tr key={label}>
                     <th scope="row">
                       <span className={`review-quality ${label.toLowerCase()}`}>
-                        <b aria-hidden="true">{qualityMarks[label]}</b> {label}
+                        <b aria-hidden="true">{ratings[label][0]}</b> {label}
                       </span>
                     </th>
                     <td>{summary.w.counts[label]}</td>
@@ -678,13 +664,14 @@ export default function AnalysisPanel({
             <Cpu size={16} /> Live analysis
           </button>
         </div>
-        {tab === "review" ? (
+        {!live ? (
           <div
             id="analysis-review-panel"
             role="tabpanel"
             aria-labelledby="analysis-tab-review"
             className="review-workspace"
           >
+            <RatingLegend />
             {storageMessage && (
               <p role="status" className="review-estimate-note">
                 {storageMessage}
@@ -812,6 +799,12 @@ export default function AnalysisPanel({
                         selectedReview.note ||
                         "Compare this move with the engine’s preferred continuation."}
                     </p>
+                    <div className="review-consequence">
+                      <strong>After {selectedMove.san}</strong>
+                      {playedConsequence(selectedMove, selectedReview, game.moves[selectedReview.index+1]).map(fact => <p key={fact}>{fact}</p>)}
+                      <p>Evaluation for White · {formatEvaluation(selectedReview.before)} → {formatEvaluation(selectedReview.after)}</p>
+                      {!!selectedReview.replyPV?.length && onPreviewLine && <button className="text-button" onClick={() => onPreviewLine(selectedReview.index, selectedReview.replyPV!)}>Explore reply</button>}
+                    </div>
                     {selectedReview.best && (
                       <div className="review-alternative">
                         <div>
@@ -861,15 +854,7 @@ export default function AnalysisPanel({
                       </div>
                     )}
                     <small className="review-search-note">
-                      {selectedReview.confidence === "limited"
-                        ? "Limited search"
-                        : "Stockfish review"}{" "}
-                      · depth{" "}
-                      {Math.min(
-                        selectedReview.before.depth,
-                        selectedReview.after.depth,
-                      )}
-                      . Forcing lines may need a deeper search.
+                      {selectedReview.before.engine} · depth {selectedReview.before.depth} before, {selectedReview.after.depth} after{selectedReview.before.engine !== selectedReview.after.engine && ` (${selectedReview.after.engine})`}. {selectedReview.confidence === "limited" ? "Limited search." : ""}
                     </small>
                   </div>
                 ) : (
@@ -990,7 +975,7 @@ export default function AnalysisPanel({
                         <span
                           className={`review-quality ${label.toLowerCase()}`}
                         >
-                          <b aria-hidden="true">{qualityMarks[label]}</b>
+                          <b aria-hidden="true">{ratings[label][0]}</b>
                           {label}
                         </span>
                         <strong>{summary.b.counts[label]}</strong>
@@ -1063,15 +1048,15 @@ export default function AnalysisPanel({
           </div>
         ) : (
           <div
-            id="analysis-live-panel"
+            id={tab === "live" ? "analysis-live-panel" : "analysis-review-panel"}
             role="tabpanel"
-            aria-labelledby="analysis-tab-live"
+            aria-labelledby={tab === "live" ? "analysis-tab-live" : "analysis-tab-review"}
             className="live-workspace"
           >
             <div className="panel-heading">
               <div className="icon-label">
                 <Cpu size={17} />
-                <h2>Position analysis</h2>
+                <h2>{inVariation ? "Variation analysis" : "Position analysis"}</h2>
               </div>
               <button
                 className={`switch ${enabled ? "on" : ""}`}
@@ -1086,9 +1071,7 @@ export default function AnalysisPanel({
             <div className="engine-indicator">
               <span className={`status-dot ${busy ? "pulsing" : ""}`} />
               {result?.engine ||
-                (engineMode === "full"
-                  ? "Stockfish 17.1 Full NNUE"
-                  : "Stockfish 17.1 Lite")}
+                "Waiting for engine"}
               <span>LOCAL</span>
             </div>
             <div className="evaluation-summary">
@@ -1126,7 +1109,7 @@ export default function AnalysisPanel({
                     disabled={!line.pv[0]}
                     onClick={() => {
                       const move = line.pv[0];
-                      if (move) onArrow(move.slice(0, 2), move.slice(2, 4));
+                      if (move) onArrow(move.slice(0, 2), move.slice(2, 4), fen);
                     }}
                     title="Show suggested move"
                   >

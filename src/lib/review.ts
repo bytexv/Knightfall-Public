@@ -38,6 +38,8 @@ export interface MoveReview {
   /** Recommended continuation from the position BEFORE this move. */
   pv: string[];
   pvSAN: string[];
+  /** Legal reply from the position AFTER the played move, when retained by this review. */
+  replyPV?: string[];
   reason: string;
   note?: string;
   confidence: ReviewConfidence;
@@ -350,9 +352,11 @@ export function reviewMove(
   else if (preferred && rawLoss > 100 && !continuedMate)
     reason +=
       " The before/after searches disagree; the preferred move is not penalized for that search uncertainty.";
-  const line =
-    before.lines.find((line) => line.pv[0] === best)?.pv ||
-    (best ? [best] : []);
+  const principal = (result: EngineResult) =>
+    result.lines.find(line => line.pv[0] === result.bestMove)?.pv ??
+      (result.bestMove ? [result.bestMove] : []);
+  const line = principal(before);
+  const replyPV = terminal ? [] : legalLine(move.fen, principal(after)).pv;
   const { pv, san: pvSAN } = legalLine(move.before, line);
   const snapshot = (result: EngineResult): ReviewEvaluation => ({
     score: finiteScore(result.score),
@@ -375,6 +379,7 @@ export function reviewMove(
     after: snapshot(after),
     pv,
     pvSAN,
+    replyPV,
     reason,
     note: reason,
     confidence,
@@ -384,6 +389,34 @@ export function reviewMove(
     forced,
     ...(opening && label === "Book" ? { opening } : {}),
   };
+}
+
+const pieceNames = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king" };
+
+/** Describe one legal move on its own board, including checks and actual captures. */
+function moveFact(fen: string, uci: string) {
+  const board = new Chess(fen);
+  const move = board.move({from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4]});
+  const capturedSquare = move.isEnPassant() ? move.to[0] + move.from[1] : move.to;
+  const action = move.captured ? ` captures the ${pieceNames[move.captured]} on ${capturedSquare}` : "";
+  const check = board.isCheckmate() ? " delivers checkmate" : board.isCheck() ? " gives check" : "";
+  return move.san + action + (action && check ? " and" : "") + check;
+}
+export function playedConsequence(move: MoveRecord, review: MoveReview, next?: MoveRecord) {
+  const board = new Chess(move.fen);
+  if (board.isCheckmate()) return ["The move ended the game in checkmate."];
+  if (board.isStalemate()) return ["The move left the opponent without a legal move. The game ended in stalemate."];
+  if (board.isDraw()) return ["The resulting board position is a draw."];
+  const facts: string[] = [];
+  const played = moveFact(move.before, review.played);
+  if (played !== move.san) facts.push("Played · " + played);
+  const reply = next?.before === move.fen ? next.from + next.to + (next.promotion || "") : "";
+  if (reply) facts.push("Game reply · " + moveFact(move.fen, reply));
+  const engineReply = review.replyPV?.length ? legalLine(move.fen, review.replyPV).pv[0] : undefined;
+  if (engineReply && engineReply !== reply) facts.push("Best reply found · " + moveFact(move.fen, engineReply));
+  else if (engineReply) facts.push("The reply played also led the engine’s search.");
+  if (!facts.length) facts.push(evaluationSummary(review.after) + ".");
+  return facts;
 }
 
 /** Per-move bounded loss index; explicitly a training measure, not official accuracy. */

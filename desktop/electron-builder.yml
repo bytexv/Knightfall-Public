@@ -25,6 +25,7 @@ files:
   - desktop/preload.cjs
   - desktop/update.cjs
   - desktop/auto-update.cjs
+  - desktop/native-engine.cjs
   - desktop/smoke.cjs
   - desktop/full-engine-smoke.cjs
   - server/**/*
@@ -38,6 +39,9 @@ files:
   - '!**/node_modules/lucide-react/**/*'
   - '!**/node_modules/react/**/*'
   - '!**/node_modules/react-dom/**/*'
+extraResources:
+  - from: artifacts/native-engine
+    to: engine
 win:
   target:
     - target: nsis

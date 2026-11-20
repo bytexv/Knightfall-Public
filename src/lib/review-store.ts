@@ -115,6 +115,7 @@ function validList(list: unknown, game: GameSession): list is MoveReview[] {
       Array.isArray(m.pv) &&
       m.pv.length <= 16 &&
       m.pv.every(uci) &&
+      (m.replyPV === undefined || (Array.isArray(m.replyPV) && m.replyPV.length <= 16 && m.replyPV.every(uci))) &&
       Array.isArray(m.pvSAN) &&
       m.pvSAN.length === m.pv.length &&
       m.pvSAN.every((s) => typeof s === "string" && s.length <= 20) &&

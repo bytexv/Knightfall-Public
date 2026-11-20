@@ -8,7 +8,7 @@ Knightfall has its own branding and interface. It is not affiliated with Chess.c
 
 ## Downloads and updates
 
-**Newest Windows and web release** · [Knightfall 2.2.0 · Tournament Hall and At Home](https://github.com/bytexv/Knightfall-Public/releases/tag/v2.2.0). For the compatible Android APK, open [the latest stable release](https://github.com/bytexv/Knightfall-Public/releases/latest).
+**Newest Windows and web release** · [Knightfall 2.3.0 · Coach and Game Review](https://github.com/bytexv/Knightfall-Public/releases/tag/v2.3.0). For the compatible Android APK, open [the latest stable release](https://github.com/bytexv/Knightfall-Public/releases/latest).
 
 Choose **Windows-Setup.exe** for automatic background downloads and installation on exit, or **Windows-x64.exe** for portable use. Android checks for newer compatible APKs, downloads them in-app, and opens Android’s in-place update confirmation. Saved games and settings stay; GitHub needs the matching signed APK. The web app offers **Reload to update**. See [GitHub release setup](docs/GITHUB.md) for automation and Android signing requirements.
 
@@ -64,7 +64,7 @@ More details: [Same-Wi-Fi play](docs/LAN.md).
 - **Play:** 30 local bot opponents in 100-point steps, strength groups, name/Elo search and a Match my Elo shortcut, a shared-screen mode, clocks with increment, legal-move enforcement, promotion choice, takebacks in local play, hints, replay and results.
 - **Game Review:** all saved games in a searchable, filterable library with separate White/Black accuracy after local analysis. Completed reviews survive restarts; changed move sequences need a fresh review. Accuracy is a local training estimate, with unavailable scores shown as a dash.
 - **Chess Quiz:** 40 questions across rules, strategy, endgames and interactive checkmate positions. Quick-five and ten-question sessions, answer explanations, saved progress and missed-question retries.
-- **Analysis:** Stockfish 17.1 Lite or optional Full NNUE in local workers, up to three principal variations, configurable depth limits, an evaluation bar and cancelable guided review. Review includes ten move classifications, early/middle/late-game summaries, both-side performance Elo ranges, an interactive evaluation graph, suggested-line previews and move retries. A clearly labeled lightweight JavaScript engine is available if Stockfish cannot load.
+- **Analysis:** Stockfish 19 Lite or optional Full NNUE in local workers, up to three principal variations, configurable depth limits, an evaluation bar and cancelable guided review. Review includes ten move classifications, early/middle/late-game summaries, both-side performance Elo ranges, an interactive evaluation graph, suggested-line previews and move retries. A clearly labeled lightweight JavaScript engine is available if Stockfish cannot load.
 - **Local Elo:** a persistent practice rating, result history and trend graph for eligible completed games against local bots. It starts at 800 and stays provisional for the first 20 rated games. Games using hints, takebacks or live analysis while in progress are unrated, as are custom starting positions and fallback-engine play. Reviewing an already completed game does not change its recorded result. This device-local estimate is separate from online or official ratings and from a single game's review performance estimate.
 - **Learning:** 60 curated tactics from the Lichess CC0 puzzle database; Tactics Sprint with 3-minute, 5-minute and untimed Survival modes; 28 opening primers (including Wittythealien’s Alien Gambit); ten interactive beginner challenges, nine short lessons; and 15 endgame drills, including four draw-defense exercises.
 - **Study tools:** a position editor, custom-position bot/shared-screen play, PGN/FEN import, PGN export with plain-text position notes, a searchable local game archive with resume controls, and JSON backup/restore.
@@ -117,7 +117,7 @@ To inspect only the built frontend, use `npm run preview`. To open the desktop w
 | Command | Purpose |
 | --- | --- |
 | `npm ci` | Install the versions in `package-lock.json` |
-| `node scripts/prepare-engine.mjs` | Copy the matching Stockfish 17.1 Lite and Full workers/WASM and engine notices into `public/engine/` |
+| `node scripts/prepare-engine.mjs` | Copy the matching Stockfish 19 Lite and Full workers/WASM and engine notices into `public/engine/` |
 | `npm run dev` | Run the Vite development server |
 | `npm test` | Run the automated chess, engine, UI, storage, PWA and LAN checks |
 | `npm run build` | Type-check, build Vite output and generate the offline asset manifest |

@@ -2,7 +2,7 @@
 
 Knightfall application source is distributed under GNU GPL version 3 or later; see [LICENSE](../LICENSE). Native binaries include the local engine and Lite corresponding source; Full corresponding source is in the matching public source release. The delivery includes the complete Knightfall application source, native projects, tests and build scripts in a separate source archive.
 
-- **Stockfish 17.1 Lite and Full NNUE / Stockfish.js**: GPLv3; source, authors, license and the exact matching corresponding-source archive with required neural-network data are bundled under `public/engine` (Lite) and `vendor/stockfish-full-source.tgz` (Full, in the public source release). [Engine details](ENGINE.md).
+- **Stockfish 19 Lite and Full NNUE / Stockfish.js**: GPLv3; source, authors, license and the exact matching corresponding-source archive with required neural-network data are bundled under `public/engine` (Lite) and `vendor/stockfish-full-source.tgz` (Full, in the public source release). [Engine details](ENGINE.md).
 - **chess.js**: BSD-2-Clause. [Source](https://github.com/jhlywa/chess.js).
 - **React** and **React DOM**: MIT. [Source](https://github.com/facebook/react).
 - **Lucide icons**: ISC. [Source](https://github.com/lucide-icons/lucide).

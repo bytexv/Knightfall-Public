@@ -1,3 +1,4 @@
+import { ratings, type Rating } from "./RatingLegend";
 import { premoveTargets, type Premove } from "../lib/premove";
 import { ALIEN_PIECE_DIRECTORY } from "../lib/piece-assets";
 import { Chess, type Color, type Square } from "chess.js";
@@ -9,7 +10,7 @@ export const BoardThemeContext = createContext<import("../lib/storage").Settings
 
 export interface ChessBoardProps {
   fen: string;
-  qualityBadges?: { square: string; label: string; symbol: string }[];
+  qualityBadges?: { square: string; label: Rating }[];
   premoveColor?: Color;
   premove?: Premove | null;
   onPremove?: (move: Premove) => void;
@@ -404,9 +405,6 @@ export default function ChessBoard({
                   alt=""
                 />
               )}
-              {qualityBadge?.square === square && piece && (
-                <span className="move-stamp" data-label={qualityBadge.label} role="img" aria-label={qualityBadge.label}>{qualityBadge.symbol}</span>
-              )}
               {target && showLegalMoves && (
                 <span className={piece ? "legal-ring" : "legal-dot"} />
               )}
@@ -418,6 +416,15 @@ export default function ChessBoard({
           ref={pieceLayer}
           aria-hidden="true"
         />
+        <div className="board-rating-layer" aria-hidden="true">
+          {qualityBadges?.map(({square, label}) => game.get(square as Square) && (
+            <div key={square} className="board-rating-cell" style={{
+              gridColumn: files.indexOf(square[0]) + 1, gridRow: ranks.indexOf(square[1]) + 1
+            }}>
+              <span className="move-stamp" data-rating-square={square} data-label={label} style={{backgroundColor:ratings[label][1]}}>{ratings[label][0]}</span>
+            </div>
+          ))}
+        </div>
         <svg className="board-arrows" viewBox="0 0 100 100" aria-hidden="true">
           <defs>
             <marker

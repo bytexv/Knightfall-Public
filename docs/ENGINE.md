@@ -1,14 +1,10 @@
 # Local chess analysis
 
-Knightfall offers Stockfish.js 17.1 Lite (the default) and **Full NNUE** in Settings → Local engine. Every search runs on the player's device; positions are never sent to an analysis service.
+Windows x64 Setup and portable builds run the official Stockfish 19 executable on your device. The Light and Full settings adjust the search budget, hash and thread count on Windows. Each Windows build verifies the pinned upstream archive and executable SHA-256 before packaging.
 
-Lite uses the roughly 7 MB single-threaded build. Full uses the larger Stockfish neural networks and about 75 MB of model/WASM assets per architecture. The Windows and mobile packages include both full architectures; the web downloads the applicable one on first use and caches it when browser storage permits. Full assets are excluded from the required offline-shell download, so installing the PWA does not silently download 150 MB. Full needs considerably more memory; Lite is a useful choice on phones or for battery life.
+Browser and mobile builds use the Stockfish.js 19.0.1 port. Lite needs about 1.8 MB of WASM. Full downloads about 95 MiB on first use, in the single-thread or shared-memory variant supported by the device. The PWA excludes both Full variants from its required offline assets. A previously cached Full model can run offline. If it is unavailable, Knightfall tries bundled Lite, then its JavaScript engine.
 
-Full uses up to 1, 2, or 4 CPU cores where cross-origin isolation and SharedArrayBuffer are available, bounded by reported hardware concurrency. The desktop host supplies COOP/COEP headers. Browsers and mobile WebViews without isolation use the full single-thread build instead. This is still the full neural network. Analysis budgets range from 0.65 to 15 seconds per position; maximum-strength bot budgets range from 1.5 to 15 seconds. Longer searches do not guarantee perfect play.
-
-If the selected Stockfish build cannot start, Knightfall explicitly labels its lightweight JavaScript fallback. Native packages work without an engine download. Offline web use requires the relevant assets to have been cached successfully; an installed Lite shell does not guarantee that optional full models are cached.
-
-Both builds preserve upstream bytes and names. `public/engine/stockfish-source.tgz` contains Lite corresponding source. `vendor/stockfish-full-source.tgz` in the public repository and matching source release contains the original source, build scripts, Lite network, and both full networks. See `public/engine/FULL-SOURCE.txt` for the exact upstream commit and SHA-256 hashes.
+The client checks the UCI engine name on every startup. Analysis reports the engine that actually ran. Both signed scores and principal variations come from the position being viewed. Review stores separate continuations before and after the recorded move. Exploring either uses a separate board history. Earlier saved reviews retain their original engine and grade.
 
 ## Scores and suggested moves
 
@@ -151,8 +147,8 @@ repetition history; the game layer tracks repetition from the full move list.
 ## Licensing and reproducibility
 
 Stockfish.js and its Stockfish base are GPL-3.0. The unmodified JavaScript and WASM
-come from `stockfish@17.1.0`, npm git commit
-`602fd7e1a571a2be71f242942db90483731f2a1f`. They are renamed together to
+come from `stockfish@19.0.1`, npm git commit
+`0d5dd7944f88c817c07a26bc4fb1905d5f9c46d6`. They are renamed together to
 `stockfish.js` and `stockfish.wasm`; their bytes are unchanged.
 
 The app includes [the license](../public/engine/COPYING.txt),
@@ -163,7 +159,7 @@ archive preserves the source and build scripts, omits the precompiled outputs,
 and includes the lite NNUE network with its verified hash. The matching complete upstream
 source is available at:
 
-https://github.com/nmrugg/stockfish.js/archive/602fd7e1a571a2be71f242942db90483731f2a1f.tar.gz
+https://github.com/nmrugg/stockfish.js/archive/0d5dd7944f88c817c07a26bc4fb1905d5f9c46d6.tar.gz
 
 Run `node scripts/prepare-engine.mjs` after dependency installation to reproduce
 the runtime assets and notices. Tests cover real Stockfish UCI searches, both
@@ -171,3 +167,5 @@ color score directions, mate, queued requests, cancellation, terminal positions,
 and fallback behavior. A Node worker sandbox also exercises Stockfish's browser
 code path and relative WASM loading; this is not a substitute for visual browser
 or physical-device testing.
+
+The matching Windows engine source is in `vendor/stockfish-native-source.tgz`. The port source and NNUE networks are in `vendor/stockfish-full-source.tgz`. See the [official release](https://github.com/official-stockfish/Stockfish/releases/tag/sf_19).

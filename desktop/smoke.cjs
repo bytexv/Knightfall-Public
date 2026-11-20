@@ -4,7 +4,7 @@ const path = require('node:path');
 const { Chess } = require('chess.js');
 const wait = milliseconds => new Promise(resolve => setTimeout(resolve,milliseconds));
 
-async function runSmoke(window) {
+async function runSmoke(window, nativeSmokeLines = []) {
   const evaluate = async code => {
     try {return await window.webContents.executeJavaScript(code);}
     catch(error){throw new Error(`Native smoke evaluation failed (${code.slice(0,100)}): ${error.message}`);}
@@ -32,8 +32,31 @@ async function runSmoke(window) {
   if(!['idle','unconfigured'].includes(updateStatus.status) || typeof updateStatus.currentVersion!=='string') throw new Error('Desktop update status IPC check failed');
   report.updateStatus=updateStatus.status;
 
+  const native = process.platform === 'win32' && require('electron').app.isPackaged && process.arch === 'x64';
+  if (native) {
+    const result = await evaluate(`new Promise((resolve,reject) => {
+      let name;
+      const timer=setTimeout(()=>{connection.terminate();reject(new Error("Native engine timed out"));},20000);
+      const connection=window.knightfall.openStockfish(line=>{
+        if(line.startsWith('id name ')) name=line.slice(8);
+        if(line==='uciok') connection.postMessage('isready');
+        if(line==='readyok'){
+          connection.postMessage('position fen 7k/5K2/6Q1/8/8/8/8/8 w - - 0 1');
+          connection.postMessage('go depth 12 movetime 1000');
+        }
+        if(line.startsWith('bestmove ')){clearTimeout(timer);connection.terminate();resolve({name,move:line.split(' ')[1]});}
+      },()=>{clearTimeout(timer);reject(new Error("Native process failed"));});
+      connection.postMessage('uci');
+    })`);
+    const board = new Chess("7k/5K2/6Q1/8/8/8/8/8 w - - 0 1");
+    board.move({from:result.move.slice(0,2),to:result.move.slice(2,4)});
+    if(result.name!=='Stockfish 19' || !board.isCheckmate()) throw new Error('Official native engine verification failed');
+    report.nativeStockfish=result;
+  }
+
   if(process.argv.includes('--smoke-game')) {
-    // Observe the actual Stockfish worker while the normal app plays a game.
+    nativeSmokeLines.length = 0;
+    // Observe the chosen backend while the normal app plays a game.
     await evaluate(`(() => {
       const NativeWorker=window.Worker;
       window.__knightfallSmokeEngine=[];
@@ -64,8 +87,9 @@ async function runSmoke(window) {
     for(const move of game.moves)chess.move({from:move.from,to:move.to,promotion:move.promotion});
     if(chess.fen()!==game.fen)throw new Error('Native board state differs from legal move history');
     const engine=await evaluate('window.__knightfallSmokeEngine');
-    if(!engine.some(message=>message.startsWith('bestmove ')))throw new Error('Bot replied without a confirmed local Stockfish worker result');
-    report.nativeGame={moves:game.moves.map(move=>move.san),engine:'Stockfish WASM worker',fen:game.fen};
+    if(native && (!nativeSmokeLines.includes("id name Stockfish 19") || !nativeSmokeLines.some(line => line.startsWith("bestmove ")))) throw new Error("Bot game did not use verified native Stockfish 19");
+    if(!native && !engine.some(message=>message.startsWith('bestmove ')))throw new Error('Bot replied without a confirmed local Stockfish worker result');
+    report.nativeGame={moves:game.moves.map(move=>move.san),engine:native ? 'Stockfish 19 native bridge verified' : 'Stockfish WASM worker',fen:game.fen};
   }
 
   const galleryArg=process.argv.find(argument=>argument.startsWith('--smoke-gallery='));
