@@ -1,7 +1,11 @@
 import DeserterHub from "./components/DeserterHub";
 import CoachRoom from "./components/CoachRoom";
+import HallScoresheet from "./components/HallScoresheet";
+import AtHomeSwitch from "./components/AtHomeSwitch";
+import HallSwitch, { hallTableBackground } from "./components/HallSwitch";
 import { boardThemes } from "./lib/storage";
 import BotDialogue from "./components/BotDialogue";
+import BotPortrait from "./components/BotPortrait";
 import FinishReview from "./components/FinishReview";
 import { legalPremove, premoveTargets, premovePreview, type Premove } from "./lib/premove";
 import { Moon, Sun, Compass } from "lucide-react";
@@ -57,10 +61,10 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AnalysisPanel from "./components/AnalysisPanel";
 import BoardEditor from "./components/BoardEditor";
-import ChessBoard from "./components/ChessBoard";
+import ChessBoard, { BoardThemeContext } from "./components/ChessBoard";
 import { ImportDialog, Modal } from "./components/Dialogs";
 import EndgameSchool from "./components/EndgameSchool";
 import { GameActions, MoveList, NewGamePanel } from "./components/GameControls";
@@ -290,6 +294,17 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(() =>
     sanitizeSettings(readStore<unknown>("settings", {})),
   );
+  const hall = settings.studio === "hall";
+  const home = settings.studio === "home";
+  const hallMatch = hall && page === "play";
+  const visualSettings = useMemo(() => home
+    ? {...settings, appearance: settings.homeAppearance, boardTheme: settings.homeBoardTheme}
+    : settings, [home, settings]);
+  const setStudio = (studio: Settings["studio"]) => setSettings(current => ({...current, studio}));
+  const setAppearance = (appearance: Settings["appearance"]) =>
+    setSettings(current => current.studio === "home"
+      ? {...current, homeAppearance: appearance}
+      : {...current, appearance});
   const [mobileNav, setMobileNav] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [dark, setDark] = useState(false);
@@ -304,8 +319,8 @@ export default function App() {
     const media = window.matchMedia?.("(prefers-color-scheme: dark)");
     const sync = () => {
       const next =
-        settings.appearance === "dark" ||
-        (settings.appearance === "system" && !!media?.matches);
+        visualSettings.appearance === "dark" ||
+        (visualSettings.appearance === "system" && !!media?.matches);
       setDark(next);
       document.documentElement.dataset.appearance = next ? "dark" : "light";
       document.documentElement.style.colorScheme = next ? "dark" : "light";
@@ -317,7 +332,7 @@ export default function App() {
       if (media?.removeEventListener) media.removeEventListener("change", sync);
       else media?.removeListener?.(sync);
     };
-  }, [settings.appearance]);
+  }, [visualSettings.appearance]);
   useEffect(() => {
     document.documentElement.dataset.motion = settings.animationIntensity;
     window.dispatchEvent(new window.Event("knightfall:motion"));
@@ -1447,17 +1462,13 @@ export default function App() {
     const captures = capturedPieces(position, color === "w" ? "b" : "w");
     return (
       <div className={`player-bar ${bottom ? "bottom" : ""}`}>
-        <div
-          className={`player-avatar ${bot ? "bot" : ""}`}
-          data-bot={bot ? currentBot.id : undefined}
-          style={bot ? { backgroundColor: currentBot.color } : undefined}
-        >
-          {bot ? (
-            currentBot.name.slice(0, 2).toUpperCase()
-          ) : (
+        {bot ? (
+          <BotPortrait botId={currentBot.id} />
+        ) : (
+          <div className="player-avatar">
             <img src={`./pieces/${color}K.svg`} alt="" />
-          )}
-        </div>
+          </div>
+        )}
         <div className="player-details">
           <strong>
             {playerName(color)}
@@ -1536,7 +1547,9 @@ export default function App() {
         ? "You won!"
         : `${playerName(game.result?.winner === "w" ? "w" : "b")} wins`;
   return (
+    <BoardThemeContext.Provider value={home ? visualSettings.boardTheme : "sage"}>
     <div
+      data-studio={settings.studio}
       className={`app-shell ui-${settings.interfaceStyle} page-${page} board-size-${settings.boardSize} ${focusMode ? "focus-mode" : ""}`}
     >
       <a
@@ -1688,7 +1701,7 @@ export default function App() {
             <Menu size={22} />
           </button>
           <div className="breadcrumb">
-            <span>Clubhouse</span>
+            <span>{hall ? "Tournament Hall" : home ? "At Home" : "Clubhouse"}</span>
             <ChevronRight size={13} />
             <strong>
               {page === "settings"
@@ -1703,10 +1716,7 @@ export default function App() {
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
               title={dark ? "Switch to light mode" : "Switch to dark mode"}
               onClick={() =>
-                setSettings((s) => ({
-                  ...s,
-                  appearance: dark ? "light" : "dark",
-                }))
+                setAppearance(dark ? "light" : "dark")
               }
             >
               {dark ? <Sun size={18} /> : <Moon size={18} />}
@@ -1743,14 +1753,19 @@ export default function App() {
           </div>
         </header>
         <main ref={mainRef} aria-labelledby="page-title">
-          <div className="page-heading">
+          <div
+            className={hallMatch ? "page-heading hall-match-heading" : "page-heading"}
+            style={hallMatch ? {"--hall-table-image": hallTableBackground()} as CSSProperties : undefined}
+          >
             <div>
               <h1 id="page-title" tabIndex={-1}>
-                {page === "play" && settings.name !== "You"
+                {hallMatch ? "Tournament Hall" : page === "play" && settings.name !== "You"
                   ? `${settings.name}’s board`
                   : pageTitles[page].title}
               </h1>
-              <p>{pageTitles[page].subtitle}</p>
+              <p>{hallMatch && !showSetup
+                ? `${playerName("w")} vs ${playerName("b")}${game.result ? " · " + game.result.reason : ""}`
+                : pageTitles[page].subtitle}</p>
             </div>
             {(page === "play" || page === "analysis") && (
               <button
@@ -1995,7 +2010,7 @@ export default function App() {
                       <FinishReview
                         key={game.id}
                         game={game}
-                        settings={settings}
+                        settings={visualSettings}
                       />
                     </div></div>
                   )}
@@ -2031,7 +2046,7 @@ export default function App() {
                     arrows={arrows}
                     showCoordinates={settings.coordinates}
                     showLegalMoves={settings.legalMoves}
-                    theme={settings.boardTheme}
+                    theme={visualSettings.boardTheme}
                   />
                   {page === "analysis" &&
                     !preview &&
@@ -2624,11 +2639,11 @@ export default function App() {
                             </button>
                           )}
                       </section>
-                      <MoveList
-                        game={game}
-                        index={historyIndex}
-                        onSelect={selectReviewMove}
-                      />
+                      {hall ? (
+                        <HallScoresheet key={game.id} game={game} orientation={orientation} settings={visualSettings} onCopy={copy} />
+                      ) : (
+                        <MoveList game={game} index={historyIndex} onSelect={selectReviewMove} />
+                      )}
                       {!game.result && game.started && (
                         <GameActions
                           onNew={() => setModal("new")}
@@ -2941,7 +2956,7 @@ export default function App() {
             />
           )}
           {page === "endgames" && <EndgameSchool onPractice={startDrill} />}
-          {page === "coach" && <CoachRoom settings={settings}/>}
+          {page === "coach" && <CoachRoom settings={visualSettings}/>}
           {page === "openings" && (
             <LearnHub
               alienEnabled={settings.alienEasterEgg}
@@ -2954,7 +2969,7 @@ export default function App() {
           {page === "multiplayer" && <NetworkPanel onGame={onLanGame} />}
           {page === "deserter" && (
             <DeserterHub
-              settings={settings}
+              settings={visualSettings}
               onStart={(position, elo) =>
                 startGame({
                   mode: "bot",
@@ -3176,6 +3191,10 @@ export default function App() {
                 </fieldset>
                 <fieldset className="appearance-settings">
                   <legend>Appearance & board</legend>
+                  <div className="studio-looks">
+                    <HallSwitch enabled={hall} onChange={enabled => setStudio(enabled ? "hall" : "club")} />
+                    <AtHomeSwitch enabled={home} onChange={enabled => setStudio(enabled ? "home" : "club")} />
+                  </div>
                   <label>Interface
                     <select value={settings.interfaceStyle} onChange={e => setSettings(s => ({...s, interfaceStyle: e.target.value as Settings["interfaceStyle"]}))}>
                       <option value="modern">Modern</option><option value="legacy">Legacy</option>
@@ -3192,13 +3211,8 @@ export default function App() {
                     App theme
                     <select
                       aria-label="App appearance"
-                      value={settings.appearance}
-                      onChange={(e) =>
-                        setSettings((s) => ({
-                          ...s,
-                          appearance: e.target.value as Settings["appearance"],
-                        }))
-                      }
+                      value={visualSettings.appearance}
+                      onChange={e => setAppearance(e.target.value as Settings["appearance"])}
                     >
                       <option value="system">Follow device</option>
                       <option value="light">Light</option>
@@ -3228,9 +3242,9 @@ export default function App() {
                   {boardThemes.map((t) => (
                     <button
                       key={t}
-                      className={`theme-option ${settings.boardTheme === t ? "selected" : ""}`}
+                      className={`theme-option ${visualSettings.boardTheme === t ? "selected" : ""}`}
                       onClick={() =>
-                        setSettings((s) => ({ ...s, boardTheme: t }))
+                        setSettings(s => s.studio === "home" ? {...s, homeBoardTheme: t} : {...s, boardTheme: t})
                       }
                     >
                       <span className={`theme-preview ${t}`}>
@@ -3243,8 +3257,8 @@ export default function App() {
                           />
                         ))}
                       </span>
-                      <strong>{t[0].toUpperCase() + t.slice(1)}</strong>
-                      {settings.boardTheme === t && <Check size={15} />}
+                      <strong>{t === "homegreen" ? "Classic green" : t[0].toUpperCase() + t.slice(1)}</strong>
+                      {visualSettings.boardTheme === t && <Check size={15} />}
                     </button>
                   ))}
                 </div>
@@ -3514,10 +3528,13 @@ export default function App() {
       </nav>
       {modal === "updates" && (
         <Modal title={`What's new in Knightfall ${appVersion}`} onClose={closeModal}>
+          <div className="studio-looks">
+            <HallSwitch enabled={hall} onChange={enabled => setStudio(enabled ? "hall" : "club")} />
+            <AtHomeSwitch enabled={home} onChange={enabled => setStudio(enabled ? "home" : "club")} />
+          </div>
           <ul className="release-highlights">
-            <li>Open Coach to choose your side and play an unrated local bot at your preferred strength.</li>
-            <li>See Stockfish’s grade on each piece and compare the evaluations before and after your move.</li>
-            <li>Your practice board is saved when you leave the tab.</li>
+            <li>Your bot now has a portrait in the picker and at the board. A new opening screen appears while Knightfall loads.</li>
+            <li>In Tournament Hall, select a move on the scoresheet to replay it on a second board. Your live game and its clock stay on the main board.</li>
           </ul>
           <button className="button primary" onClick={closeModal}>Back to Knightfall</button>
         </Modal>
@@ -3740,5 +3757,6 @@ export default function App() {
         </Modal>
       )}
     </div>
+    </BoardThemeContext.Provider>
   );
 }

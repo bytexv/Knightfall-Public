@@ -20,8 +20,74 @@
     <link rel="icon" type="image/svg+xml" href="./icon.svg" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <title>Knightfall Chess Club</title>
+    <style>
+      #knightfall-launch {
+        --launch-paper: #f3f0e5;
+        --launch-ink: #183b37;
+        --launch-rule: #8da299;
+        --launch-accent: #267061;
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        padding: 20px;
+        background: var(--launch-paper);
+        color: var(--launch-ink);
+        text-align: center;
+        font: 500 15px/1.45 system-ui, sans-serif;
+      }
+      #knightfall-launch .launch-brand { display: flex; align-items: center; gap: 13px; }
+      #knightfall-launch img { width: clamp(38px, 10vw, 54px); height: auto; }
+      #knightfall-launch h1 { margin: 0; font: 500 clamp(38px, 11vw, 64px)/1.05 Georgia, serif; letter-spacing: -.055em; color: inherit; }
+      #knightfall-launch .launch-track {
+        width: min(246px, 65vw); margin: 23px 0 12px; height: 3px;
+        background: var(--launch-rule); overflow: hidden;
+      }
+      #knightfall-launch .launch-track::after {
+        display: block; content: ""; width: 32%; height: 100%;
+        background: var(--launch-accent); transform: translateX(106%);
+      }
+      #knightfall-launch p { margin: 0; color: inherit; }
+      #knightfall-launch .launch-retry {
+        position: absolute; top: calc(50% + 84px); visibility: hidden;
+        color: var(--launch-accent); padding: 8px 14px; text-underline-offset: 4px;
+        animation: launch-retry 0s 12s forwards;
+      }
+      #knightfall-launch[data-state="failed"] .launch-retry { animation: none; visibility: visible; }
+      #knightfall-launch[data-state="failed"] .launch-track::after { animation: none; }
+      @keyframes launch-retry { to { visibility: visible; } }
+      @keyframes launch-travel { from { transform: translateX(0); } to { transform: translateX(212%); } }
+      @media (prefers-reduced-motion: no-preference) {
+        #knightfall-launch .launch-track::after { animation: launch-travel 1.3s ease-in-out infinite alternate; }
+      }
+      @media (prefers-color-scheme: dark) {
+        #knightfall-launch {
+          --launch-paper: #122a28; --launch-ink: #fff6df;
+          --launch-rule: #4a635c; --launch-accent: #b5e3c4;
+        }
+      }
+    </style>
+    <script defer src="/startup-guard.js"></script>
   </head>
   <body>
+    <div id="knightfall-launch">
+      <div class="launch-brand">
+        <img src="./icon.svg" width="54" height="54" alt="" />
+        <h1>Knightfall</h1>
+      </div>
+      <div class="launch-track" aria-hidden="true"></div>
+      <p id="launch-status" role="status">Opening your board…</p>
+      <a class="launch-retry" href="">Reload Knightfall</a>
+      <noscript>
+        <style>
+          #knightfall-launch .launch-track, #knightfall-launch #launch-status, #knightfall-launch .launch-retry { display: none; }
+          #knightfall-launch noscript p { margin-top: 16px; }
+        </style>
+        <p>Enable JavaScript in your browser to open the board.</p>
+      </noscript>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

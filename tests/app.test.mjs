@@ -652,10 +652,17 @@ test('an illegal first premove discards every remaining move',async()=>{
 test('returning player sees the release log once, then can reopen it', async () => {
   localStorage.setItem('knightfall:settings', '{}');
   await render();
-  assert.match(host.querySelector('[role=dialog]').textContent, /Stockfish/);
+  const dialog = host.querySelector('[role=dialog]');
+  assert.match(dialog.textContent, /Tournament Hall/);
+  const toggle = dialog.querySelector('[role=switch][aria-label="Tournament Hall"]');
+  assert.equal(toggle.getAttribute('aria-checked'), 'false');
+  await act(async () => toggle.click());
+  assert.equal(host.querySelector('.app-shell').dataset.studio, 'hall');
   await clickText('Back to Knightfall');
   await remount(); await render();
   assert.equal(host.querySelector('[role=dialog]'), null);
+  assert.equal(host.querySelector('.app-shell').dataset.studio, 'hall');
+
 });
 
 function nextCoachSearch() {

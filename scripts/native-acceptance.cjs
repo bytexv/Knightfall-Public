@@ -151,7 +151,7 @@ async function runAcceptance({ window, app, outputDir }) {
     );
     return geometry;
   };
-  const captureResponsive = async (name) => {
+  const captureResponsive = async (name, focusSelector) => {
     window.setMinimumSize(320, 280);
     window.showInactive();
     await evaluate(
@@ -165,7 +165,11 @@ async function runAcceptance({ window, app, outputDir }) {
       window.setContentSize(width, height);
       await wait(250);
       await poll(`innerWidth===${width}`, `viewport width ${width}`, 4000);
-      await evaluate("window.scrollTo(0,0)");
+      if (focusSelector) {
+        await evaluate(`document.querySelector(${JSON.stringify(focusSelector)}).scrollIntoView({block:"center",behavior:"instant"})`);
+      } else {
+        await evaluate("window.scrollTo(0,0)");
+      }
       await wait(120);
       const geometry = await inspectLayout();
       const screenshot = path.join(outputDir, `${name}-${width}.png`);
@@ -265,6 +269,7 @@ async function runAcceptance({ window, app, outputDir }) {
     return { pgn, chess, path: download.path };
   };
   const step = async (name, action) => {
+    if (process.argv.includes("--hall-only") && !["tournament-hall-and-live-scoresheet", "offline-startup-and-bot-portraits", "at-home-board-and-theme-switching"].includes(name)) return;
     if (process.argv.includes("--updates-only") && name !== "native-update-notifications-and-controls") return;
     if (process.argv.includes("--learning-only") && !["guided-beginner-course", "guided-game-and-coach-practice", "opening-coach-both-sides-and-alien-eyes", "alien-gambit-pieces-audio-and-settings"].includes(name)) return;
     if (process.argv.includes("--bots-only") && name !== "expanded-bot-roster-and-real-replies") return;
@@ -1311,6 +1316,213 @@ async function runAcceptance({ window, app, outputDir }) {
       window.setContentSize(1440,980);
       await navigate("Play chess");
       return { reviewedPlies:4, persistedSummary:true, restoredDetails:true, quizQuestions:5, firstScore:4, missedQuestionRetried:true, backForward:true, narrowWidths:[390,320] };
+    });
+
+    await step("tournament-hall-and-live-scoresheet", async () => {
+      window.setContentSize(1440, 980);
+      await navigate("Settings");
+      const toggle = '[role="switch"][aria-label="Tournament Hall"]';
+      const hall = ".app-shell[data-studio=hall]";
+      const sheet = ".hall-scoresheet";
+      const appearance = '[aria-label="App appearance"]';
+      const originalAppearance = await evaluate(`document.querySelector(${JSON.stringify(appearance)}).value`);
+      await fill(appearance, "light");
+      const replay = sheet + " .hall-replay";
+      const has = (selector) => evaluate(`!!document.querySelector(${JSON.stringify(selector)})`);
+      check(!await has(hall), "Tournament Hall should be opt-in");
+      await click(toggle);
+      check(await has(hall) && await has(toggle + '[aria-checked="true"]'), "Switch did not turn on Tournament Hall");
+      await captureResponsive("hall-settings", toggle);
+      await navigate("Coach");
+      check(await has(hall + " .coach-desk"), "Coach did not keep the selected presentation");
+      await reloadLocalApp();
+      check(await has(hall + " .coach-desk"), "Tournament Hall or the Coach route was lost on reload");
+
+      await navigate("Play chess");
+      await clickText("New game", ".page-heading button");
+      await clickText("Pass & play", '[role="dialog"] button');
+      await evaluate("[...document.querySelectorAll('[role=dialog] .time-picker button')].find(b=>b.textContent.includes('∞')).click()");
+      await clickText("Start local game", '[role="dialog"] button');
+      for (const [from, to] of [["e2","e4"], ["c7","c5"], ["g1","f3"]]) await boardMove(from, to);
+      const live = await game();
+      check(live.moves.map(move => move.san).join(" ") === "e4 c5 Nf3", "Test game did not reach the live position");
+      const heroLoaded = await evaluate(`(async () => {
+        const hero = document.querySelector('.hall-match-heading');
+        const background = getComputedStyle(hero, '::before').backgroundImage;
+        const imageUrl = background.match(/url\\("([^"]*hall-table\\.webp)"\\)/)?.[1];
+        if (!imageUrl) return false;
+        const image = new Image();
+        image.src = imageUrl;
+        await image.decode();
+        return image.naturalWidth > 0;
+      })()`);
+      check(heroLoaded, "Tournament Hall banner did not load its table photograph");
+      await captureResponsive("hall-playing");
+      await click('[aria-label="Switch to dark mode"]');
+      check(await has('html[data-appearance="dark"] ' + hall), "Dark mode removed Tournament Hall");
+      await captureResponsive("hall-night");
+      await click(sheet + ' [data-ply="0"]');
+      await poll(`!!document.querySelector('${replay} .chessboard')`, "scoresheet replay");
+      check(await has(replay + ' [data-square="g1"] img.chess-piece'), "Replayed position should have a knight on g1");
+      check(await has('.board-column [data-square="f3"] img.chess-piece'), "Replaying the first move changed the playing board");
+      check((await game()).fen === live.fen, "Replaying changed the saved game");
+      await captureResponsive("hall-scoresheet", replay + " .chessboard");
+      await clickText("Close replay", sheet + " button");
+      check(!await has(replay), "Close replay kept the second board open");
+      await boardMove("d7", "d6");
+      const played = await game();
+      check(played.moves.length === 4 && played.moves[3].san === "d6", "Live play did not resume at the original position");
+
+      await navigate("Settings");
+      await fill(appearance, originalAppearance);
+      window.setContentSize(390, 844);
+      await poll("innerWidth === 390", "phone viewport");
+      const target = await poll(`(() => {
+        const toggle = document.querySelector(${JSON.stringify(toggle)});
+        toggle.scrollIntoView({block: "center", behavior: "instant"});
+        const rect = toggle.getBoundingClientRect();
+        const x = Math.round(rect.x + rect.width / 2);
+        const y = Math.round(rect.y + rect.height / 2);
+        return toggle.contains(document.elementFromPoint(x, y)) && {x, y};
+      })()`, "mobile switch exposed after the sidebar transition", 3000);
+      for (const type of ["mouseDown", "mouseUp"]) {
+        window.webContents.sendInputEvent({type, x: target.x, y: target.y, button: "left", clickCount: 1});
+      }
+      await poll(`!document.querySelector('${hall}')`, "mouse/touch-sized switch off");
+      check(!await has(hall) && await has(toggle + '[aria-checked="false"]'), "Switch did not restore the original presentation");
+      await reloadLocalApp();
+      await navigate("Play chess");
+      check(!await has(hall) && !await has(sheet), "Disabled mode was not preserved after reload");
+      check((await game()).fen === played.fen, "Switching modes altered the game");
+      window.setContentSize(1440, 980);
+      return {moves: played.moves.map(move => move.san), isolatedReplay: true, mobileSwitch: true, persistedOnAndOff: true};
+    });
+
+    await step("offline-startup-and-bot-portraits", async () => {
+      window.setContentSize(1440, 980);
+      await navigate("Play chess");
+      const debuggerSession = window.webContents.debugger;
+      debuggerSession.attach("1.3");
+      try {
+        await debuggerSession.sendCommand("Page.enable");
+        await debuggerSession.sendCommand("Page.addScriptToEvaluateOnNewDocument", {source: `
+          window.__launchObserved = false;
+          new MutationObserver((records, observer) => {
+            if (document.querySelector('#knightfall-launch')) {
+              window.__launchObserved = true;
+              observer.disconnect();
+            }
+          }).observe(document, {subtree:true, childList:true});
+        `});
+        await reloadLocalApp();
+        check(await evaluate("window.__launchObserved && !document.querySelector('#knightfall-launch') && !!document.querySelector('.chessboard')"),
+          "Startup screen did not hand off to the playable board");
+      } finally {
+        debuggerSession.detach();
+      }
+
+      await navigate("Settings");
+      const hallToggle = '[role="switch"][aria-label="Tournament Hall"]';
+      await click(hallToggle);
+      await navigate("Play chess");
+      await clickText("New game", ".page-heading button");
+      const dialog = '[role="dialog"] ';
+      const botSelector = '[data-bot-choice="flint"]';
+      const portrait = '.bot-portrait[data-bot="flint"]';
+      await fill(dialog + '[aria-label="Bot strength group"]', "all");
+      await poll(`document.querySelectorAll('${dialog}[data-bot-choice] .bot-portrait').length === 30`, "all opponent portraits");
+      const distinct = await evaluate(`(async () => {
+        const images = [...document.querySelectorAll('${dialog}[data-bot-choice] .bot-portrait')];
+        await Promise.all(images.map(async image => {
+          const asset = new Image();
+          asset.src = image.src;
+          await asset.decode();
+        }));
+        return new Set(images.map(img => img.src)).size;
+      })()`);
+      check(distinct === 30, "Opponent choices reused one another’s portraits");
+      await fill(dialog + '[aria-label="Search bots by name or Elo"]', "Flint");
+      await click(dialog + botSelector);
+      const visiblePortrait = async (selector) => {
+        await poll(`(() => {
+          const img = document.querySelector(${JSON.stringify(selector)});
+          if (!img || !img.complete || !img.naturalWidth) return false;
+          const box = img.getBoundingClientRect();
+          return box.width >= 16 && box.height >= 16 && getComputedStyle(img).visibility !== 'hidden';
+        })()`, "visible portrait " + selector);
+      };
+      await visiblePortrait(dialog + botSelector + " " + portrait);
+      await visiblePortrait(dialog + ".bot-description " + portrait);
+      await captureResponsive("bot-portrait-picker", dialog + botSelector);
+      await click(dialog + '[aria-label="Play white"]');
+      await clickText("Play with Flint", dialog + "button");
+      const playerPortrait = ".player-bar " + portrait;
+      await visiblePortrait(playerPortrait);
+      await captureResponsive("bot-portrait-board", playerPortrait);
+      window.setContentSize(390, 844);
+      await poll("innerWidth === 390", "portrait phone layout");
+      await visiblePortrait(playerPortrait);
+      check(await evaluate("document.querySelectorAll('.player-bar img.bot-portrait').length === 1"),
+        "Portrait belongs only on the bot’s player bar");
+      window.setContentSize(1440, 980);
+      await navigate("Settings");
+      await click(hallToggle);
+      await navigate("Play chess");
+      return {startupHandOff: true, uniqueOpponentPortraits: distinct, botOnBoard: "Flint"};
+    });
+
+    await step("at-home-board-and-theme-switching", async () => {
+      await navigate("Settings");
+      const hallToggle = '[role="switch"][aria-label="Tournament Hall"]';
+      const homeToggle = '[role="switch"][aria-label="At Home"]';
+      const appearance = '[aria-label="App appearance"]';
+      const previousAppearance = await evaluate(`document.querySelector('${appearance}').value`);
+      const previousBoard = await evaluate("document.querySelector('.theme-option.selected strong').textContent.trim()");
+      await fill(appearance, "light");
+      await clickText("Walnut", ".theme-option");
+      await click(hallToggle);
+      await click(homeToggle);
+      check(await evaluate(`document.querySelector('${homeToggle}').getAttribute('aria-checked') === 'true' &&
+        document.querySelector('${hallToggle}').getAttribute('aria-checked') === 'false' &&
+        !!document.querySelector('html[data-appearance="dark"] .app-shell[data-studio="home"]')`),
+        "At Home should replace Tournament Hall and open dark");
+      await navigate("Play chess");
+      await clickText("New game", ".page-heading button");
+      const dialog = '[role="dialog"] ';
+      await fill(dialog + '[aria-label="Bot strength group"]', "all");
+      await click(dialog + '[data-bot-choice="flint"]');
+      await click(dialog + '[aria-label="Play white"]');
+      await clickText("Play with Flint", dialog + "button");
+      await boardMove("e2", "e4");
+      await poll("JSON.parse(localStorage.getItem('knightfall:current')).moves.length >= 2", "At Home bot reply", 30000);
+      const saved = await game();
+      check(await evaluate("!!document.querySelector('.player-bar .bot-portrait[data-bot=flint]')"), "At Home lost the selected bot portrait");
+      const squares = await evaluate(`['light','dark'].map(color => {
+        const cell = document.querySelector('.board-column .theme-homegreen .square.' + color + ':not(.last-move):not(.in-check)');
+        return cell && getComputedStyle(cell).backgroundColor;
+      })`);
+      check(squares[0] === 'rgb(238, 238, 210)' && squares[1] === 'rgb(118, 150, 86)',
+        'Unexpected At Home board colors: ' + squares.join(', '));
+      await captureResponsive("at-home-playing");
+      await reloadLocalApp();
+      check(await evaluate("!!document.querySelector('html[data-appearance=dark] .app-shell[data-studio=home] .board-column .theme-homegreen')"),
+        "At Home appearance and board theme did not survive reload");
+      check((await game()).fen === saved.fen, "Reload changed the At Home game");
+      await navigate("Settings");
+      await click(hallToggle);
+      check(await evaluate(`document.querySelector('${hallToggle}').getAttribute('aria-checked') === 'true' &&
+        document.querySelector('${homeToggle}').getAttribute('aria-checked') === 'false'`), "Hall did not replace At Home");
+      await click(homeToggle);
+      await click(homeToggle);
+      await navigate("Play chess");
+      check(await evaluate("!!document.querySelector('html[data-appearance=light] .app-shell[data-studio=club] .board-column .theme-walnut')"),
+        "Turning off At Home did not restore the original light appearance and preferred board");
+      check((await game()).fen === saved.fen, "Switching presentation changed the game");
+      await navigate("Settings");
+      await fill(appearance, previousAppearance);
+      await clickText(previousBoard, ".theme-option");
+      await navigate("Play chess");
+      return {light: squares[0], dark: squares[1], bot: saved.botId, persistedAfterReload: true, restoredPreviousTheme: true};
     });
 
     await step("live-coach-engine-grades", async () => {

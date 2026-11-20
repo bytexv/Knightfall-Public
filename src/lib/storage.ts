@@ -13,9 +13,12 @@ import {
   type MoveRecord,
 } from "./game";
 
-export const boardThemes = ["sage", "walnut", "ocean", "orchid", "fjord", "terracotta"] as const;
+export const boardThemes = ["sage", "walnut", "ocean", "orchid", "fjord", "terracotta", "homegreen"] as const;
 
 export interface Settings {
+  studio: "club" | "hall" | "home";
+  homeAppearance: Settings["appearance"];
+  homeBoardTheme: Settings["boardTheme"];
   interfaceStyle: "modern" | "legacy";
   appearance: "light" | "dark" | "system";
   boardSize: "auto" | "large" | "compact";
@@ -36,6 +39,9 @@ export interface Settings {
   botTime: number;
 }
 export const defaultSettings: Settings = {
+  studio: "club",
+  homeAppearance: "dark",
+  homeBoardTheme: "homegreen",
   interfaceStyle: "modern",
   appearance: "system",
   boardSize: "auto",
@@ -80,6 +86,9 @@ const safeText = (value: unknown, fallback: string, max: number) =>
 export function sanitizeSettings(value: unknown): Settings {
   const raw = isRecord(value) ? value : {};
   return {
+    studio: raw.studio === "hall" || raw.studio === "home" ? raw.studio : "club",
+    homeAppearance: raw.homeAppearance === "light" || raw.homeAppearance === "system" ? raw.homeAppearance : "dark",
+    homeBoardTheme: boardThemes.find(theme => theme === raw.homeBoardTheme) ?? defaultSettings.homeBoardTheme,
     interfaceStyle: raw.interfaceStyle === "legacy" ? "legacy" : "modern",
     appearance:
       raw.appearance === "light" || raw.appearance === "dark"

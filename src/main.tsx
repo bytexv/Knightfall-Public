@@ -8,10 +8,21 @@ import "./club.css";
 import "./polish.css";
 import "./chess-club.css";
 import "./play-upgrade.css";
+import "./components/BotPortrait.css";
 import "./dark-theme.css";
+function Knightfall() {
+  React.useLayoutEffect(() => {
+    const launch = document.getElementById("knightfall-launch");
+    if (launch) {
+      launch.remove();
+      window.dispatchEvent(new Event("knightfall:mounted"));
+    }
+  }, []);
+  return <App />;
+}
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <Knightfall />
   </React.StrictMode>,
 );
 if (
@@ -66,3 +77,5 @@ if (
 }
 
 import "./studio.css";
+import "./tournament-hall.css";
+import "./at-home.css";

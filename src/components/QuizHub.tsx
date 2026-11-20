@@ -93,7 +93,6 @@ export default function QuizHub({ onPuzzles }: { onPuzzles: () => void }) {
           fen={boardFen}
           orientation={new Chess(q.fen).turn()}
           disabled
-          theme="sage"
           lastMove={
             showMove && q.move
               ? { from: q.move.slice(0, 2), to: q.move.slice(2, 4) }

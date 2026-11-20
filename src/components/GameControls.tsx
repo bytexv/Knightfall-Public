@@ -14,6 +14,7 @@ import {
   Users,
   Wifi,
 } from "lucide-react";
+import BotPortrait from "./BotPortrait";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { expectedScore, type RatingEntry } from "../lib/ratings";
 import { bots, timeControls, type GameSession } from "../lib/game";
@@ -98,7 +99,7 @@ export function NewGamePanel({
               aria-pressed={botId === "adaptive"}
               onClick={() => setBotId("adaptive")}
             >
-              <Cpu size={17} />
+              <BotPortrait botId="adaptive" />
               Dial · adjustable bot
             </button>
             {botId === "adaptive" && (
@@ -185,14 +186,7 @@ export function NewGamePanel({
                 aria-label={`${b.name}, approximately ${b.elo} Elo, ${b.rating}`}
                 aria-pressed={botId === b.id}
               >
-                <span
-                  className="bot-avatar"
-                  aria-hidden="true"
-                  data-bot={b.id}
-                  style={{ backgroundColor: b.color }}
-                >
-                  {b.name.slice(0, 2).toUpperCase()}
-                </span>
+                <BotPortrait botId={b.id} />
                 <strong>{b.name}</strong>
                 <small>≈ {b.elo}</small>
                 {botId === b.id && (
@@ -221,14 +215,7 @@ export function NewGamePanel({
             </div>
           )}
           <div className="bot-description" aria-live="polite">
-            <div
-              className="bot-avatar"
-              aria-hidden="true"
-              data-bot={bot.id}
-              style={{ backgroundColor: bot.color }}
-            >
-              {bot.name.slice(0, 2).toUpperCase()}
-            </div>
+            <BotPortrait botId={bot.id} />
             <div>
               <strong>
                 {bot.name}{" "}
@@ -350,9 +337,11 @@ export function MoveList({
   game,
   index,
   onSelect,
+  title = "Move history",
   children,
 }: {
   game: GameSession;
+  title?: string;
   index: number;
   onSelect: (n: number) => void;
   children?: React.ReactNode;
@@ -394,14 +383,14 @@ export function MoveList({
   return (
     <section className="card moves-card">
       <div className="panel-heading">
-        <h2>Move history</h2>
+        <h2>{title}</h2>
         <span className="muted">{game.moves.length} plies</span>
       </div>
       <div
         ref={listRef}
         className="move-list"
         role={rows.length ? "list" : undefined}
-        aria-label={rows.length ? "Move history" : undefined}
+        aria-label={rows.length ? title : undefined}
       >
         {rows.length ? (
           rows.map((row, rowIndex) => (

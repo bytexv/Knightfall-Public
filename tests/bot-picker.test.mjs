@@ -19,6 +19,12 @@ test('bot picker filters all levels, keeps explicit selection, recommends by Elo
   await act(async()=>root.render(React.createElement(NewGamePanel,{playerRating:1680,initialBot:'scout',onStart:s=>selected=s,onWifi:()=>{}})));
   assert.equal(document.querySelectorAll('.bot-choice').length,6);
   assert.equal(document.querySelector('.bot-choice.selected').dataset.botChoice,'scout');
+  assert.equal(document.querySelector('.bot-description img.bot-portrait').getAttribute('src'), './images/bots/scout.webp');
+  for (const choice of document.querySelectorAll('.bot-choice')) {
+    const portrait = choice.querySelector('img.bot-portrait');
+    assert.equal(portrait.getAttribute('src'), './images/bots/' + choice.dataset.botChoice + '.webp');
+    assert.equal(portrait.alt, '');
+  }
   await fill('[aria-label="Bot strength group"]','master');
   assert.equal(document.querySelectorAll('.bot-choice').length,6);assert.ok(document.querySelector('[data-bot-choice="stockfish"]'));
   await click('[data-bot-choice="nemesis"]');await click('.start-game');assert.equal(selected.botId,'nemesis');
@@ -31,7 +37,9 @@ test('bot picker filters all levels, keeps explicit selection, recommends by Elo
   assert.equal(document.querySelector('[aria-label="Bot strength group"]').value,'club');
   await click('[aria-label="Play black"]');await click('.start-game');assert.equal(selected.botId,'iris');assert.equal(selected.color,'b');
   await click('.custom-bot-picker>.button');await fill('[aria-label="Custom bot Elo"]','1750');await click('.start-game');assert.equal(selected.botId,'adaptive');assert.equal(selected.customBotElo,1750);
+  assert.equal(document.querySelector('.bot-description img.bot-portrait').getAttribute('src'), './images/bots/adaptive.webp');
   await click('.mode-tabs button:nth-child(2)');assert.equal(document.querySelector('.bot-picker'),null);
+  assert.equal(document.querySelector('.bot-portrait'), null);
   await click('.start-game');assert.equal(selected.mode,'local');
  } finally {await act(async()=>root.unmount());dom.window.close();}
 });

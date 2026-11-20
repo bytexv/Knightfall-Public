@@ -1,0 +1,350 @@
+/* At Home pairs the existing Knightfall pieces and portraits with a compact
+   playing layout. Board colors, move marks and severity colors stay independent. */
+.app-shell[data-studio="home"] {
+  --bg: #e9e8e3;
+  --panel: #faf9f5;
+  --text: #302e2b;
+  --muted: #625f59;
+  --border: #cdcbc3;
+  --accent: #42691f;
+  --green: var(--accent);
+  --club-teal: var(--accent);
+  --club-copper: var(--accent);
+  --home-lift: #f1f0eb;
+  --home-input: #fffefa;
+  --home-hover: #e5e8dc;
+  --home-selected: #e5eed1;
+  --home-rail: #252422;
+  --home-rail-active: #3d4035;
+  --home-olive: #a2c95e;
+  --home-action: #9bc453;
+  --home-action-ink: #1c2a0c;
+  --home-action-shadow: #5c7b31;
+  --serif: var(--sans);
+  --ink-272a2d: var(--text);
+  --ink-665f57: var(--muted);
+  --ink-655e56: var(--muted);
+  --ink-934526: var(--accent);
+  --edge-d6cec0: var(--border);
+  --surface-eeefeb: var(--bg);
+  --surface-ffffff: var(--panel);
+  --surface-faf8f4: var(--panel);
+  --surface-f0ebe2: var(--home-lift);
+  color: var(--text);
+  background-color: var(--bg);
+}
+:root[data-appearance="dark"] .app-shell[data-studio="home"] {
+  --bg: #302e2b;
+  --panel: #252421;
+  --text: #f4f3ee;
+  --muted: #c3bfb6;
+  --border: #4a4842;
+  --accent: #b1d678;
+  --home-lift: #35332f;
+  --home-input: #403e39;
+  --home-hover: #454540;
+  --home-selected: #3d4932;
+  --home-rail: #21201e;
+  --home-rail-active: #393a32;
+}
+
+.app-shell[data-studio="home"] .main-shell { background: var(--bg); }
+.app-shell[data-studio="home"] .sidebar {
+  background: var(--home-rail);
+  box-shadow: none;
+  scrollbar-color: #55524d var(--home-rail);
+}
+.app-shell[data-studio="home"] .sidebar .brand {
+  color: #fff;
+  font-family: var(--sans);
+  font-weight: 700;
+  letter-spacing: -.9px;
+}
+.app-shell[data-studio="home"] .brand > img { filter: none; }
+.app-shell[data-studio="home"] .brand small,
+.app-shell[data-studio="home"] .sidebar .sidebar-caption {
+  color: #b9bcaf;
+  letter-spacing: .1em;
+}
+.app-shell[data-studio="home"] .sidebar .nav-item {
+  min-height: 39px;
+  padding: 8px 10px;
+  gap: 9px;
+  border-radius: 5px;
+  font-weight: 600;
+  color: #e9e6e0;
+}
+.app-shell[data-studio="home"] .sidebar .nav-item svg { color: #b5b2a9; }
+.app-shell[data-studio="home"] .sidebar .nav-item:hover { background: #34332f; }
+.app-shell[data-studio="home"] .sidebar .nav-item.active {
+  background: var(--home-rail-active);
+  color: #fff;
+  box-shadow: inset 3px 0 var(--home-olive);
+}
+.app-shell[data-studio="home"] .sidebar .nav-item.active svg { color: var(--home-olive); }
+.app-shell[data-studio="home"] .sidebar :is(.sidebar-recent,.sidebar-footer,.local-badge) { border-color: #46453f; }
+.app-shell[data-studio="home"] .sidebar :is(.recent-game small,.sidebar-recent p,.local-badge small,.sidebar-footer) {
+  color: #c0bcb3;
+}
+.app-shell[data-studio="home"] .topbar {
+  min-height: 51px;
+  background: var(--panel);
+  border-color: var(--border);
+}
+.app-shell[data-studio="home"] :is(.icon-button,.breadcrumb) { color: var(--muted); }
+.app-shell[data-studio="home"] .breadcrumb strong,
+.app-shell[data-studio="home"] .page-heading h1 { color: var(--text); }
+.app-shell[data-studio="home"] :is(.header-rating,.profile-avatar) {
+  background: var(--home-lift);
+  border-color: var(--border);
+  color: var(--accent);
+}
+.app-shell[data-studio="home"] .page-heading {
+  margin-bottom: 17px;
+  align-items: center;
+}
+.app-shell[data-studio="home"] .page-heading h1 {
+  margin: 0;
+  font: 700 clamp(27px, 2.6vw, 38px)/1.1 var(--sans);
+  letter-spacing: -.055em;
+  overflow-wrap: anywhere;
+}
+.app-shell[data-studio="home"] .page-heading p {
+  margin-top: 5px;
+  color: var(--muted);
+}
+.app-shell[data-studio="home"] :is(.card,.modal,.coach-notebook,.analysis-workbench) {
+  background-color: var(--panel);
+  border-color: var(--border);
+  border-radius: 9px;
+  box-shadow: none;
+}
+.app-shell[data-studio="home"] :is(.panel-heading,.modal-heading,.review-hero,.coach-notebook) :is(h2,h3) {
+  font-family: var(--sans);
+  font-weight: 700;
+  letter-spacing: -.035em;
+}
+.app-shell[data-studio="home"] .field-label,
+.app-shell[data-studio="home"] .section-kicker { color: var(--muted); }
+.app-shell[data-studio="home"] .button {
+  border-radius: 7px;
+  font-weight: 700;
+}
+:root .app-shell[data-studio="home"] .button.primary {
+  border-color: transparent;
+  background: var(--home-action);
+  color: var(--home-action-ink);
+  box-shadow: 0 3px 0 var(--home-action-shadow);
+}
+:root .app-shell[data-studio="home"] .button.primary:enabled:hover {
+  background: #b0d766;
+  color: var(--home-action-ink);
+  box-shadow: 0 3px 0 var(--home-action-shadow);
+}
+:root .app-shell[data-studio="home"] .button.primary:disabled { box-shadow: none; }
+.app-shell[data-studio="home"] .mobile-quick-start > .primary small { color: var(--home-action-ink); }
+.app-shell[data-studio="home"] .button:is(.secondary,.subtle),
+.app-shell[data-studio="home"] :is(.bot-filters,.board-size-controls,.review-library-toolbar,.coach-notebook) :is(input,select) {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--home-input);
+}
+.app-shell[data-studio="home"] :is(.button.secondary,.button.subtle,.icon-button):enabled:hover {
+  color: var(--text);
+  background: var(--home-hover);
+}
+.app-shell[data-studio="home"] :is(.text-button,.wifi-link,.update-release-link) { color: var(--accent); }
+.app-shell[data-studio="home"] :is(a,button,input,textarea,select,summary):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.app-shell[data-studio="home"] :is(.sidebar,.mobile-bottom-nav) :focus-visible { outline-color: #cce99e; }
+
+.app-shell[data-studio="home"] .board-size-controls { margin-bottom: 5px; }
+.app-shell[data-studio="home"] .board-meta {
+  height: auto;
+  min-height: 22px;
+  padding-bottom: 2px;
+}
+.app-shell[data-studio="home"] :is(.board-mode,.casual-pill,.player-details > small) { color: var(--muted); }
+.app-shell[data-studio="home"] .board-mode .status-dot { background: var(--accent); }
+.app-shell[data-studio="home"] .player-bar {
+  min-height: 43px;
+  padding: 3px 0 5px;
+}
+.app-shell[data-studio="home"] .player-bar.bottom { padding: 5px 0 3px; }
+.app-shell[data-studio="home"] .player-details > strong {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 14px;
+}
+.app-shell[data-studio="home"] :is(.you-tag,.soft-badge) {
+  background: var(--home-selected);
+  color: var(--accent);
+}
+.app-shell[data-studio="home"] .clock:not(.low) {
+  height: 36px;
+  min-width: 97px;
+  background: var(--home-lift);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  border-radius: 5px;
+  color: var(--muted);
+  font: 700 24px/1 var(--sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.025em;
+}
+.app-shell[data-studio="home"] .clock.active:not(.low) {
+  color: #20211d;
+  background: #ebece1;
+  border-color: #7f8972;
+  box-shadow: inset 3px 0 #719944;
+}
+.app-shell[data-studio="home"] .chessboard-shell {
+  border-width: 1px;
+  border-color: #24251f;
+  border-radius: 3px;
+  box-shadow: 0 2px 5px #0002;
+}
+.app-shell[data-studio="home"] .board-tools { border-color: var(--border); }
+.app-shell[data-studio="home"] :is(.mode-tabs,.analysis-tabs,.coach-playbar,.bot-description) {
+  background: var(--home-lift);
+  border-color: var(--border);
+}
+.app-shell[data-studio="home"] :is(.bot-choice,.time-picker button) {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--home-input);
+}
+.app-shell[data-studio="home"] :is(.bot-choice strong,.bot-choice small,.bot-description > div > strong) { color: var(--text); }
+.app-shell[data-studio="home"] :is(.bot-description p,.elo-explainer,.bot-match-row > span,.bot-filters label > span,.mode-tabs button) { color: var(--muted); }
+.app-shell[data-studio="home"] :is(.bot-choice.selected,.time-picker button.selected,.coach-sides button[aria-pressed="true"]) {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--home-selected);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.app-shell[data-studio="home"] .mode-tabs button.active {
+  background: var(--home-input);
+  color: var(--text);
+}
+.app-shell[data-studio="home"] .analysis-studio {
+  --review-paper: var(--panel);
+  --review-accent: var(--accent);
+  --review-line: var(--border);
+}
+.app-shell[data-studio="home"] :is(.review-hero-icon,.quiz-mode-icon) {
+  color: var(--accent);
+  background: var(--home-selected);
+}
+.app-shell[data-studio="home"] :is(.review-stat-grid article > span,.review-stat-grid article > small,.review-hero p) {
+  color: var(--muted);
+}
+.app-shell[data-studio="home"] .review-stat-grid strong {
+  color: var(--text);
+  font-family: var(--sans);
+}
+.app-shell[data-studio="home"] .review-games-table thead { background: var(--home-lift); }
+.app-shell[data-studio="home"] .review-library-toolbar { border-bottom-color: var(--border); }
+.app-shell[data-studio="home"] .review-library-toolbar .search-field {
+  background: var(--home-input);
+  border-color: var(--border);
+}
+.app-shell[data-studio="home"] .review-library-toolbar .search-field input { background: transparent; }
+
+.app-shell[data-studio="home"] .coach-caption {
+  padding: 0 0 8px;
+  align-items: flex-end;
+  gap: 12px;
+}
+.app-shell[data-studio="home"] .coach-seal {
+  width: 43px;
+  height: 43px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent);
+  background: var(--home-selected);
+}
+.app-shell[data-studio="home"] .coach-seal .bot-portrait {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+}
+.app-shell[data-studio="home"] .coach-caption > div {
+  position: relative;
+  min-width: 0;
+  padding: 9px 13px;
+  border-radius: 11px 11px 11px 3px;
+  background: #faf9f4;
+  border: 1px solid #d4d2c6;
+  color: #272922;
+}
+.app-shell[data-studio="home"] .coach-caption > div::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  bottom: 5px;
+  width: 8px;
+  height: 9px;
+  background: #faf9f4;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+.app-shell[data-studio="home"] .coach-caption p { color: #4c5145; }
+.app-shell[data-studio="home"] .coach-notebook {
+  margin-top: 0;
+  border: 1px solid var(--border);
+}
+.app-shell[data-studio="home"] .coach-playbar {
+  margin: 5px 0 0;
+  padding: 4px 7px;
+  border-radius: 6px;
+}
+.app-shell[data-studio="home"] .coach-playbar button {
+  color: var(--text);
+  background: transparent;
+  border-color: transparent;
+}
+.app-shell[data-studio="home"] .coach-turn-pair span { background: var(--home-lift); }
+
+@media (min-width: 901px) {
+  .app-shell[data-studio="home"] .sidebar { width: 204px; padding-inline: 11px; }
+  .app-shell[data-studio="home"] .main-shell { margin-left: 204px; }
+  .app-shell[data-studio="home"].focus-mode .main-shell { margin-left: 0; }
+  .app-shell[data-studio="home"] .main-shell main { padding-top: 19px; }
+  .app-shell[data-studio="home"].board-size-auto:not(.focus-mode) .play-layout {
+    grid-template-columns: minmax(300px, min(845px, calc(100dvh - 310px))) minmax(265px, 335px);
+    gap: clamp(16px, 2.2vw, 32px);
+  }
+}
+@media (max-width: 900px) {
+  .app-shell[data-studio="home"] .sidebar .nav-item { min-height: 44px; }
+  .app-shell[data-studio="home"] .mobile-bottom-nav {
+    background: var(--home-rail);
+    border-color: #42413c;
+  }
+  .app-shell[data-studio="home"] .mobile-bottom-nav button {
+    color: #c7c2b8;
+    border-radius: 6px;
+  }
+  .app-shell[data-studio="home"] .mobile-bottom-nav button.active {
+    color: #cae7a0;
+    background: #373b31;
+    box-shadow: none;
+  }
+}
+@media (max-width: 620px) {
+  body:has(> #root > .app-shell[data-studio="home"]) { min-width: 0; }
+  .app-shell[data-studio="home"]:is(.page-play,.page-coach,.page-analysis,.page-puzzles) .main-shell main {
+    padding-inline: 7px;
+    padding-top: 13px;
+  }
+  .app-shell[data-studio="home"] .page-heading {
+    margin-bottom: 11px;
+    gap: 7px;
+  }
+  .app-shell[data-studio="home"] .page-heading h1 { font-size: 26px; }
+  .app-shell[data-studio="home"] .coach-caption { padding-inline: 2px; }
+  .app-shell[data-studio="home"] .coach-desk { gap: 7px; }
+  .app-shell[data-studio="home"] .coach-playbar { justify-content: space-between; }
+}

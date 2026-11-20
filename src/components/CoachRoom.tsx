@@ -9,6 +9,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import ChessBoard from "./ChessBoard";
+import BotPortrait from "./BotPortrait";
 import PositionCoach from "./PositionCoach";
 import { LocalEngine, type EngineResult } from "../lib/engine";
 import {
@@ -293,7 +294,7 @@ export default function CoachRoom({ settings }: { settings: Settings }) {
       <div className="coach-table">
         <div className="coach-caption" role="status">
           <span className="coach-seal">
-            <GraduationCap size={24} />
+            {settings.studio === "home" ? <BotPortrait botId={selected.id} /> : <GraduationCap size={24} />}
           </span>
           <div>
             <strong>{setup ? "At the practice board" : status}</strong>
@@ -366,7 +367,10 @@ export default function CoachRoom({ settings }: { settings: Settings }) {
                 </option>
               ))}
             </select>
-            <p>{selected.description}</p>
+            <div className="coach-partner">
+              <BotPortrait botId={selected.id} />
+              <p>{selected.description}</p>
+            </div>
             <fieldset>
               <legend>Your pieces</legend>
               <div className="coach-sides">
@@ -397,11 +401,14 @@ export default function CoachRoom({ settings }: { settings: Settings }) {
         ) : (
           <>
             <div className="coach-note-heading">
-              <div>
-                <small>Practice partner</small>
-                <h2>
-                  {selected.name} <span>≈ {selected.elo}</span>
-                </h2>
+              <div className="coach-partner">
+                <BotPortrait botId={selected.id} />
+                <div>
+                  <small>Practice partner</small>
+                  <h2>
+                    {selected.name} <span>≈ {selected.elo}</span>
+                  </h2>
+                </div>
               </div>
               <button
                 aria-label="Coach game setup"

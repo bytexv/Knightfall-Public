@@ -1,3 +1,13 @@
+# Knightfall 2.2.0 · Tournament Hall and At Home
+
+Turn on **Tournament Hall** in the update window or **Settings → Appearance & board**. The new view pairs a photographed tournament table with printed-style player nameplates, clocks, and navigation in light and dark themes.
+
+Choose **At Home** for a charcoal interface, bold controls and a classic green-and-cream board. At Home opens in dark mode and remembers its own appearance and board colors. Switch either look off to return to Clubhouse.
+
+During a game, select a move in the **Scoresheet** to open a second, read-only board. Step through the game or copy the notation up to the move you picked. The live board stays playable and timed games keep counting. Your device remembers your choice of interface.
+
+The bot lineup now has individual character portraits in the opponent picker and during games. A lightweight opening screen shows while Knightfall starts, including when you play offline.
+
 # Knightfall 2.1.0
 
 Coach now has its own practice board in the sidebar and mobile navigation. Choose White, Black or Random and one of 30 local bots. Stockfish checks both sides of every move, including book moves, before marking the destination square. The notebook shows the search depths and the change in evaluation. Weak or unavailable searches leave the move unrated. In Coach, every bot reply comes from its strength-limited search. Position lessons use legal candidates from Stockfish’s calculated lines. Replay either side’s moves, ask for a position lesson, or take back a turn. The coach session resumes separately from rated play and Game Review.

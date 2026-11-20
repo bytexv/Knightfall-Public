@@ -1,3 +1,7 @@
+.chessboard-shell.theme-homegreen,.theme-preview.homegreen {--square-light:#eeeed2;--square-dark:#769656}
+.theme-preview.homegreen i {background:var(--square-light)}
+.theme-preview.homegreen .dark {background:var(--square-dark)}
+.studio-looks {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(185px,100%),1fr));gap:10px}
 .chessboard-shell.theme-orchid,.theme-preview.orchid {--square-light:#eee3f3;--square-dark:#94769f}
 .chessboard-shell.theme-fjord,.theme-preview.fjord {--square-light:#dcf0e9;--square-dark:#558a85}
 .chessboard-shell.theme-terracotta,.theme-preview.terracotta {--square-light:#ffe6c8;--square-dark:#b5755e}

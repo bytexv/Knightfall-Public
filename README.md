@@ -8,7 +8,9 @@ Knightfall has its own branding and interface. It is not affiliated with Chess.c
 
 ## Downloads and updates
 
-Get the latest apps from [GitHub Releases](https://github.com/bytexv/Knightfall-Public/releases/latest). Choose **Windows-Setup.exe** for automatic background downloads and installation on exit, or **Windows-x64.exe** for portable use. Android checks for newer compatible APKs, downloads them in-app, and opens Android’s in-place update confirmation. Saved games and settings stay; GitHub needs the matching signed APK. The web app offers **Reload to update**. See [GitHub release setup](docs/GITHUB.md) for automation and Android signing requirements.
+**Newest Windows and web release** · [Knightfall 2.2.0 · Tournament Hall and At Home](https://github.com/bytexv/Knightfall-Public/releases/tag/v2.2.0). For the compatible Android APK, open [the latest stable release](https://github.com/bytexv/Knightfall-Public/releases/latest).
+
+Choose **Windows-Setup.exe** for automatic background downloads and installation on exit, or **Windows-x64.exe** for portable use. Android checks for newer compatible APKs, downloads them in-app, and opens Android’s in-place update confirmation. Saved games and settings stay; GitHub needs the matching signed APK. The web app offers **Reload to update**. See [GitHub release setup](docs/GITHUB.md) for automation and Android signing requirements.
 
 ## Start playing
 
@@ -17,6 +19,8 @@ Get the latest apps from [GitHub Releases](https://github.com/bytexv/Knightfall-
 3. Open **Analysis** for a guided game review, move classifications, an evaluation graph and per-side summaries. Switch to **Live analysis** for current engine suggestions. Explore a suggested line or retry a move without changing the original game. **Set up** opens the board editor; **Save game** keeps an imported or edited study, and **Play position** starts practice from the current board.
 4. Explore **Puzzles**, **Tactics Sprint**, **Learn chess**, and **Endgame school** for guided practice. **Deserter practice** generates random legal positions with an advantage to convert against a bot.
 5. Use **Settings → Download a backup** and PGN exports to keep copies of your games.
+
+Enable **Tournament Hall** from **Settings → Appearance & board** or the first-launch update window. Its light and dark layouts include an interactive scoresheet during play. Select a move to open a separate replay board and copy the notation through that move. The live board stays available while you browse. Choose **At Home** for a charcoal interface and classic green-and-cream board. At Home saves its own board color and light/dark preferences. Switch either look off to return to Clubhouse.
 
 Open **Coach** for an untimed practice game. Choose a side and opponent, then follow the quality badges on the pieces. Local Stockfish checks the position before and after each move, including opening moves. The coach displays both search depths and evaluations from White’s perspective. A shallow or unavailable search leaves the move unrated. The practice opponent plays the move returned by its strength-limited engine. Coaching grades use a separate full-strength search. Opponent Elo labels are training estimates. Use the arrows under the board to revisit a move. Your device saves the practice board separately from your regular game.
 
@@ -29,8 +33,8 @@ For installation details, see [Install Knightfall](docs/INSTALL.md). For a full 
 | Format | What it contains | Delivery/build output |
 | --- | --- | --- |
 | Web / installable PWA | Responsive app, local engine, learning content, offline cache | `dist/` after `npm run build` |
-| Windows x64 | Electron 45 Setup installer with automatic updates, plus portable edition and Wi-Fi host | `artifacts/windows/Knightfall-1.8.0-Windows-Setup.exe` and `Windows-x64.exe` |
-| Android | Capacitor 7 app with bundled assets and direct LAN joining | `artifacts/Knightfall-1.8.0-android-debug.apk` |
+| Windows x64 | Electron 45 Setup installer with automatic updates, plus portable edition and Wi-Fi host | `artifacts/windows/Knightfall-<version>-Windows-Setup.exe` and `Windows-x64.exe` |
+| Android | Capacitor 7 app with bundled assets and direct LAN joining | `artifacts/Knightfall-<version>-Android.apk` |
 | iPhone / iPad | Native Capacitor project; the web app can also be added to the Home Screen | `ios/`; no signed IPA is included |
 
 The Windows executable is unsigned. The Android APK is a development build signed with a debug key. They are not app-store releases. Native iOS builds require macOS, Xcode and Apple signing. See [Packaging](docs/PACKAGING.md) and [Mobile](docs/MOBILE.md).

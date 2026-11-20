@@ -38,6 +38,20 @@ afterEach(() => {
 });
 const sample = (id = 'saved-game') => applyMove(newSession({ id, mode: 'local', title: 'A local game' }), 'e2', 'e4');
 
+test('studio looks are opt-in and restore independent theme choices from backups', () => {
+  for (const value of [undefined, 'true', 1, false]) {
+    assert.equal(sanitizeSettings({studio: value}).studio, 'club');
+  }
+  const settings = sanitizeSettings({studio: 'home', boardTheme: 'walnut', interfaceStyle: 'legacy', appearance: 'light'});
+  assert.deepEqual(sanitizeSettings(JSON.parse(JSON.stringify(settings))), settings);
+  assert.equal(settings.studio, 'home');
+  assert.equal(settings.homeAppearance, 'dark');
+  assert.equal(settings.homeBoardTheme, 'homegreen');
+  assert.equal(settings.boardTheme, 'walnut');
+  assert.equal(settings.appearance, 'light');
+  assert.equal(sanitizeSettings({studio:'hall'}).studio, 'hall');
+});
+
 test('settings only retain valid known runtime values', () => {
   for (const invalid of [null, undefined, 5, 'settings', [], true]) assert.deepEqual(sanitizeSettings(invalid), defaultSettings);
   assert.deepEqual(sanitizeSettings({ name: null, boardTheme: 'unknown', sound: 'false', coordinates: 0, legalMoves: {}, extra: true }), defaultSettings);

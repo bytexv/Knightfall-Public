@@ -2,9 +2,11 @@ import { premoveTargets, type Premove } from "../lib/premove";
 import { ALIEN_PIECE_DIRECTORY } from "../lib/piece-assets";
 import { Chess, type Color, type Square } from "chess.js";
 import { X } from "lucide-react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { BoardAnimator } from "../lib/board-animator";
 import "./ChessBoard.css";
+export const BoardThemeContext = createContext<import("../lib/storage").Settings["boardTheme"]>("sage");
+
 export interface ChessBoardProps {
   fen: string;
   qualityBadges?: { square: string; label: string; symbol: string }[];
@@ -45,8 +47,9 @@ export default function ChessBoard({
   arrows = [],
   showCoordinates = true,
   showLegalMoves = true,
-  theme = "sage",
+  theme,
 }: ChessBoardProps) {
+  const defaultTheme = useContext(BoardThemeContext);
   const game = useMemo(() => {
     try {
       return new Chess(fen);
@@ -175,7 +178,7 @@ export default function ChessBoard({
     y: (ranks.indexOf(s[1]) * 100) / 8 + 6.25,
   });
   return (
-    <div className={`chessboard-shell theme-${theme}`}>
+    <div className={`chessboard-shell theme-${theme ?? defaultTheme}`}>
       <div
         className="chessboard"
         role="group"
