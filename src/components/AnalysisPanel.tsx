@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LocalEngine, type EngineResult } from "../lib/engine";
 import { uciToSan, type GameSession } from "../lib/game";
 import {
-  evaluationSummary, playedConsequence,
+  evaluationSummary, playedConsequence, explainGrade,
   estimatePerformanceElo,
   summarizeGamePhases,
   formatEvaluation,
@@ -474,7 +474,7 @@ export default function AnalysisPanel({
                       <p className="recap-elo">
                         <b>
                           {estimate
-                            ? `${estimate.range[0]}–${estimate.range[1]}`
+                            ? estimate.estimate
                             : summary[color].evaluatedMoves < 12
                               ? "Not enough evidence"
                               : "Rating unavailable"}
@@ -588,7 +588,7 @@ export default function AnalysisPanel({
             </section>
             <p className="review-estimate-note">
               Performance Elo uses the finished result and both pre-game
-              ratings, with a broad uncertainty range. It is a local practice
+              ratings. A single game gives only a rough estimate. It is a local practice
               estimate, not an official rating or a conversion of move quality
               to Elo. It requires a complete review and at least 12 reliable
               decisions per side. Unrated, assisted, timed-out, and
@@ -794,11 +794,11 @@ export default function AnalysisPanel({
                     {isMistake(selectedReview) && selectedReview.best && (
                       <ReviewRecommendation fen={selectedMove.before} review={selectedReview}/>
                     )}
-                    <p>
-                      {selectedReview.reason ||
-                        selectedReview.note ||
-                        "Compare this move with the engine’s preferred continuation."}
-                    </p>
+                    <div className="review-grade-detail">
+                      <strong>Why {selectedMove.san} earned {selectedReview.label}</strong>
+                      <p>{selectedReview.reason || selectedReview.note || "Compare the move with the continuation below."}</p>
+                      {explainGrade(selectedMove, selectedReview).map(detail => <p key={detail}>{detail}</p>)}
+                    </div>
                     <div className="review-consequence">
                       <strong>After {selectedMove.san}</strong>
                       {playedConsequence(selectedMove, selectedReview, game.moves[selectedReview.index+1]).map(fact => <p key={fact}>{fact}</p>)}
@@ -932,9 +932,9 @@ export default function AnalysisPanel({
                         {estimate ? (
                           <p>
                             <b>
-                              {estimate.range[0]}–{estimate.range[1]}
+                              {estimate.estimate}
                             </b>
-                            <span>training Elo range</span>
+                            <span>estimated performance Elo</span>
                           </p>
                         ) : side.performance ? (
                           <p>
@@ -1038,7 +1038,7 @@ export default function AnalysisPanel({
                     Brilliant and Great require stronger evidence; short
                     searches can miss tactics. Book moves are excluded from
                     quality estimates. Training Elo, when shown, is an
-                    uncalibrated range using pre-game ratings and the finished
+                    uncalibrated estimate using pre-game ratings and the finished
                     result, gated by sufficient reliable decisions. It is not a
                     rated-game result or a Chess.com rating.
                   </p>

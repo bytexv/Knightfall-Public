@@ -499,3 +499,25 @@
 
 :root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after { animation-duration: 0s !important; transition-duration: 0s !important; scroll-behavior: auto !important; }
 .premove-notice { overflow-wrap: anywhere; }
+
+.settings-layout > *, .settings-card fieldset, .settings-card .studio-looks {
+  min-inline-size: 0;
+}
+@media (max-width: 620px) {
+  .settings-layout .appearance-settings,
+  .settings-layout .engine-preferences {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 12px;
+  }
+  .settings-layout fieldset label {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+    gap: 6px;
+  }
+  .settings-layout fieldset select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}

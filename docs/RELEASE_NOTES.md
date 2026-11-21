@@ -1,3 +1,7 @@
+# Knightfall 2.4.1
+
+Analyze a coached game directly from the board. Each reviewed move has a rating explanation, concrete engine continuation when available, and the actual reply when played. Settings controls fit narrow phone screens. Eligible reviews show one estimated performance Elo for each side.
+
 # Knightfall 2.4.0
 
 Open **Saved games** from the navigation or **View all saved games** under recent games. Browse all matches on this device, switch between pages and a single list, or filter unfinished games to continue playing. Existing saves and review scores carry over on the same installation.

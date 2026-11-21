@@ -48,7 +48,7 @@ function restoreSession() {
   return saved?.mode === "bot" && !saved.rating ? saved : null;
 }
 
-export default function CoachRoom({ settings }: { settings: Settings }) {
+export default function CoachRoom({ settings, onReview }: { settings: Settings; onReview: (game: GameSession) => void }) {
   const [game, setGame] = useState<GameSession | null>(restoreSession);
   const [setup, setSetup] = useState(!game);
   const [side, setSide] = useState<Color | "random">(game?.playerColor ?? "w");
@@ -213,6 +213,7 @@ export default function CoachRoom({ settings }: { settings: Settings }) {
     setError("");
   }
   function start() {
+    if (game?.moves.length) saveGame(game);
     clearTools();
     setCursor(null);
     setGrades({});
@@ -437,6 +438,7 @@ export default function CoachRoom({ settings }: { settings: Settings }) {
                 Retry reply
               </button>
             )}
+            {!!game?.moves.length && <button className="button secondary" onClick={() => { saveGame(game); onReview(game); }}>Analyze this coached game</button>}
             {result && (
               <button
                 className="button primary"

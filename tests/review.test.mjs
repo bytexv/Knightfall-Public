@@ -6,6 +6,7 @@ import {
   bookOpeningFor,
   evaluationSummary,
   formatEvaluation,
+  explainGrade,
   moveClassifications,
   moveReference,
   reviewMove,
@@ -557,4 +558,12 @@ test('phase summaries handle early imported endgames and never count a move twic
  assert.equal(phases.reduce((n,p)=>n+p.summary.w.moves+p.summary.b.moves,0),4);
  const imported=summarizeGamePhases(sample(1),[{before:'7k/8/8/8/8/8/P7/7K w - - 0 1'}]);
  assert.deepEqual(imported.map(p=>p.summary.reviewedPlies),[0,0,1]);
+});
+
+test("rating explanations replay the preferred line on its original board and use the mover's loss", () => {
+  const before = evaluation(30, { lines: [{pv: ["d2d4","g8f6"]}] });
+  const review = reviewMove(0, played, before, evaluation(-20));
+  const explanation = explainGrade(played, review).join(" ");
+  assert.match(explanation, /0.50 pawn units for White/);
+  assert.match(explanation, /d4 moves the pawn from d2 to d4, then Nf6 moves the knight from g8 to f6/);
 });

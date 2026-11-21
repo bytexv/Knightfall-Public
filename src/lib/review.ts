@@ -402,6 +402,25 @@ function moveFact(fen: string, uci: string) {
   const check = board.isCheckmate() ? " delivers checkmate" : board.isCheck() ? " gives check" : "";
   return move.san + action + (action && check ? " and" : "") + check;
 }
+export function explainGrade(move: MoveRecord, review: MoveReview): string[] {
+  const details: string[] = [];
+  const side = move.color === "w" ? "White" : "Black";
+  if (review.before.mate === undefined && review.after.mate === undefined && review.played !== review.best && !review.forced && review.label !== "Book") {
+    details.push(`Knightfall measured a loss of ${(review.loss / 100).toFixed(2)} pawn units for ${side}. This measures the change in the position, including threats and piece activity.`);
+  }
+  const line = legalLine(move.before, review.pv ?? []).pv.slice(0, 3);
+  if (line.length && line[0] === review.best) {
+    const board = new Chess(move.before);
+    const steps = line.map(uci => {
+      const fact = moveFact(board.fen(), uci);
+      const m = board.move({from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4]});
+      return fact === m.san ? `${m.san} moves the ${pieceNames[m.piece]} from ${m.from} to ${m.to}` : fact;
+    });
+    details.push(`One continuation from the original position starts with ${steps.join(", then ")}.`);
+  }
+  return details;
+}
+
 export function playedConsequence(move: MoveRecord, review: MoveReview, next?: MoveRecord) {
   const board = new Chess(move.fen);
   if (board.isCheckmate()) return ["The move ended the game in checkmate."];

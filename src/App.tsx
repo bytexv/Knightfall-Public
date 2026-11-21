@@ -1430,6 +1430,10 @@ export default function App() {
       notify("This game could not be exported. Please try again.");
     }
   }
+  function openGameReview(record: GameSession) {
+    setReviewRequest(record.id);
+    imported({ ...record, mode: "analysis", started: true, time: { base: 0, increment: 0 } });
+  }
   function imported(next: GameSession, confirmed = false) {
     if (!confirmed && confirmLeave(() => imported(next, true))) return;
     leaveLan();
@@ -2930,7 +2934,7 @@ export default function App() {
             />
           )}
           {page === "endgames" && <EndgameSchool onPractice={startDrill} />}
-          {page === "coach" && <CoachRoom settings={visualSettings}/>}
+          {page === "coach" && <CoachRoom settings={visualSettings} onReview={openGameReview}/>}
           {page === "openings" && (
             <LearnHub
               alienEnabled={settings.alienEasterEgg}
@@ -2961,15 +2965,7 @@ export default function App() {
           {page === "games" && (
             <ReviewLibrary
               games={archive}
-              onReview={(record) => {
-                setReviewRequest(record.id);
-                imported({
-                  ...record,
-                  mode: "analysis",
-                  started: true,
-                  time: { base: 0, increment: 0 },
-                });
-              }}
+              onReview={openGameReview}
               onResume={resumeGame}
               onImport={() => setModal("import")}
               onExport={exportPgn}
@@ -3507,6 +3503,7 @@ export default function App() {
             <AtHomeSwitch enabled={home} onChange={enabled => setStudio(enabled ? "home" : "club")} />
           </div>
           <ul className="release-highlights">
+            <li>Analyze coached games directly from the Coach board. Each reviewed move explains its rating and the line the engine found.</li>
             <li>Open Saved games to see your full library. Filter unfinished games or show every match on one page.</li>
             <li>Coach marks each graded piece with a distinct symbol. Open the move rating guide to see how it earned its grade.</li>
             <li>Game Review shows the reply played and the engine’s best reply. Step through either engine line and return to your original game.</li>
