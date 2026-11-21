@@ -1,0 +1,57 @@
+name: Publish tested Windows and web preview
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tested version tag
+        required: true
+      run:
+        description: Build and publish release run ID
+        required: true
+permissions:
+  actions: read
+  contents: write
+concurrency: preview-${{ inputs.tag }}
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag }}
+      BUILD: ${{ inputs.run }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      - name: Verify tagged source and Windows passed the release workflow
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ && "$BUILD" =~ ^[0-9]+$ ]]
+          test "$TAG" = "v$(jq -r .version package.json)"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD" | jq -e --arg tag "$TAG" --arg sha "$(git rev-parse HEAD)" '.head_branch==$tag and .head_sha==$sha and .path==".github/workflows/build-release.yml" and .status=="completed"'
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD/jobs" | jq -e '[.jobs[] | select(.conclusion=="success").name] | contains(["source","windows"])'
+      - uses: actions/download-artifact@v4
+        with:
+          name: Knightfall-web-source
+          path: assets
+          run-id: ${{ inputs.run }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: Knightfall-Windows-x64
+          path: assets
+          run-id: ${{ inputs.run }}
+          github-token: ${{ github.token }}
+      - name: Publish a prerelease with checksums
+        run: |
+          cd assets
+          v=${TAG#v}
+          for suffix in source.zip web.zip Windows-Setup.exe Windows-Setup.exe.blockmap Windows-x64.exe Readme.md; do test -s "Knightfall-$v-$suffix"; done
+          test -s latest.yml
+          test "$(find . -type f | wc -l)" = 7
+          sha256sum * > SHA256SUMS.txt
+          cd ..
+          awk '/^# / && NR>1 {exit} {print}' docs/RELEASE_NOTES.md > preview.md
+          echo >> preview.md
+          echo '[Install the current Android web app](https://bytexv.github.io/Knightfall-Public/install/). Windows and web preview. Windows executables are unsigned. Native Android requires the original signing identity.' >> preview.md
+          gh release create "$TAG" --verify-tag --prerelease --title "Knightfall $v Preview — Windows and web" --notes-file preview.md assets/*
