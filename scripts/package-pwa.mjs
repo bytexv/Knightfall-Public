@@ -4,6 +4,9 @@ import { createHash } from 'node:crypto';
 
 const root = path.resolve(import.meta.dirname, '..');
 const dist = path.join(root, 'dist');
+const {version} = JSON.parse(await readFile(path.join(root,'package.json'),'utf8'));
+await mkdir(path.join(dist,'install'),{recursive:true});
+await writeFile(path.join(dist,'install','version.json'), JSON.stringify({version})+'\n');
 // Make the application license and attribution readable in every web/native build.
 await mkdir(path.join(dist,'licenses'),{recursive:true});
 await copyFile(path.join(root,'LICENSE'),path.join(dist,'licenses','KNIGHTFALL-GPL-3.0.txt'));

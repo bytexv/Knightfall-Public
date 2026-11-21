@@ -4,6 +4,8 @@ Knightfall uses the same local React chess application in a Capacitor native she
 
 ## Install Android
 
+[Install the current Android web app](https://bytexv.github.io/Knightfall-Public/install/) in Chrome. Launch the board once online to cache offline play. The home-screen web app and a native APK use separate storage.
+
 [Download the stable signed APK](https://github.com/bytexv/Knightfall-Public/releases/latest/download/Knightfall-Android.apk) on Android 6.0 or newer. Open the file on your phone, allow installation from your browser or files app if Android asks, then choose **Install** or **Update**. Updating your existing installation preserves local games and settings. No Google account, server login or subscription is required for local play. PGN and text exports use Android’s system Save dialog, so you can choose a destination without granting broad storage permissions.
 
 For same-Wi-Fi multiplayer, start **Host a room** on the Windows app or run `npm run lan` on a computer. Connect the phone to the same Wi-Fi, enter the displayed host URL in Knightfall's Wi-Fi page, and join the room code. The Android app permits cleartext HTTP/WebSocket traffic for this local feature. The host computer must stay awake and permit the app through its private-network firewall. Guest/public Wi-Fi may isolate devices from each other.

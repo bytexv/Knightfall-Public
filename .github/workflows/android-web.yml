@@ -1,0 +1,29 @@
+name: Publish the latest Android web download
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+  # GitHub suppresses new workflow events from releases created by GITHUB_TOKEN.
+  schedule:
+    - cron: '17 */6 * * *'
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: knightfall-android-web
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Publish the checksum-verified released web build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'Knightfall Builder'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          python3 scripts/publish-android-web.py

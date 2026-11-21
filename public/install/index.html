@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#24272b">
+  <link rel="icon" href="../icons/icon-192.png">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <title>Install Knightfall on Android</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;padding:1.25rem;min-height:100svh;display:grid;place-items:center;background:#edefe8;color:#222822;font:1rem/1.55 system-ui,sans-serif}
+    main{width:min(100%,29rem);padding:clamp(1.5rem,5vw,2.75rem);background:#fffef8;border:1px solid #ccd0c3;border-radius:1.4rem}img{border-radius:1rem;width:68px;height:68px}
+    h1{margin:.85rem 0 .45rem;font-size:clamp(2.1rem,9vw,2.9rem);line-height:1.05;letter-spacing:-.045em}p{margin:.8rem 0 1.25rem}.version{font-size:1rem;letter-spacing:normal;white-space:nowrap;color:#52624d;font-weight:600}
+    button,a{display:block;width:100%;padding:.8rem 1.1rem;border-radius:.65rem;font:inherit;font-weight:650;text-align:center;cursor:pointer}button{background:#365735;color:white;border:0}a{color:#365735;text-decoration:underline;text-underline-offset:3px}button:focus-visible,a:focus-visible{outline:3px solid #ac662f;outline-offset:3px}
+    #help{font-size:.95rem;border-top:1px solid #d9ddcf;padding-top:1rem;margin-bottom:0} [hidden]{display:none}
+  </style>
+  <script src="./install.js" defer></script>
+</head>
+<body>
+  <main>
+    <img src="../icons/icon-192.png" alt="">
+    <h1>Knightfall <span id="version" class="version"></span></h1>
+    <p>Install the chess web app on your Android home screen. After the first download, the board, bots and game review work offline.</p>
+    <button id="install" type="button" hidden>Install Knightfall</button>
+    <a href="../">Open the chessboard</a>
+    <p id="help" role="status">In Chrome on Android, open the ⋮ menu and choose <strong>Add to Home screen</strong> or <strong>Install app</strong>.</p>
+  </main>
+</body>
+</html>

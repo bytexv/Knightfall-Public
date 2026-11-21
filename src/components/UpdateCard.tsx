@@ -92,6 +92,11 @@ export default function UpdateCard() {
       </small>
       {!state.web && <small>Update checks use stable releases. Preview builds are available on the releases page.</small>}
       {(state.android || (state.web && /Android/i.test(globalThis.navigator?.userAgent ?? ""))) && (
+        <a className="update-release-link" href="https://bytexv.github.io/Knightfall-Public/install/" target="_blank" rel="noopener noreferrer">
+          Install the current Android web app ↗
+        </a>
+      )}
+      {state.android && (
         <a className="update-release-link" href={stableAndroidDownload} target="_blank" rel="noopener noreferrer">
           Download the stable Android APK ↗
         </a>
