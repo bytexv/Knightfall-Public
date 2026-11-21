@@ -1,7 +1,7 @@
-self.__KNIGHTFALL_BUILD__ = "ac23947b336549c3";
+self.__KNIGHTFALL_BUILD__ = "8623ed18b1602acb";
 self.__KNIGHTFALL_ASSETS__ = [
   "./assets/engine-fallback.worker-DFyi49s1.js",
-  "./assets/index-CKY9IMll.js",
+  "./assets/index-CFnpdyZs.js",
   "./assets/index-CMNEWdXv.css",
   "./audio/alien-gambit.mp3",
   "./audio/SOURCE.txt",
@@ -56,6 +56,9 @@ self.__KNIGHTFALL_ASSETS__ = [
   "./images/bots/zenith.webp",
   "./images/hall-table.webp",
   "./index.html",
+  "./install/index.html",
+  "./install/install.js",
+  "./install/version.json",
   "./licenses/ANDROID-NOTICES.txt",
   "./licenses/DM-Sans-OFL.txt",
   "./licenses/ELECTRON-UPDATER.txt",
