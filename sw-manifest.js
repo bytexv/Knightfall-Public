@@ -1,8 +1,8 @@
-self.__KNIGHTFALL_BUILD__ = "8623ed18b1602acb";
+self.__KNIGHTFALL_BUILD__ = "5e7b5d6762df3393";
 self.__KNIGHTFALL_ASSETS__ = [
   "./assets/engine-fallback.worker-DFyi49s1.js",
-  "./assets/index-CFnpdyZs.js",
-  "./assets/index-CMNEWdXv.css",
+  "./assets/index-Cih_aNnM.css",
+  "./assets/index-CpTM9NVW.js",
   "./audio/alien-gambit.mp3",
   "./audio/SOURCE.txt",
   "./engine/AUTHORS.txt",
