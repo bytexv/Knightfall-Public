@@ -1,0 +1,80 @@
+name: Repair and verify the stable Android download
+on:
+  push:
+    branches: [repair-android-download-20261121]
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+      - name: Compile the Android release and run native tests
+        working-directory: android
+        run: bash gradlew --no-daemon --max-workers=2 testDebugUnitTest compileReleaseJavaWithJavac
+  restore-download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify and attach the existing signed APK under its permanent filename
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,re,subprocess,urllib.request
+          repo='bytexv/Knightfall-Public'
+          assert os.environ['GITHUB_REPOSITORY']==repo
+          def api(endpoint):
+              return json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/'+endpoint]))
+          release=api('releases/latest')
+          manifest=json.loads(pathlib.Path('release/android-candidate.json').read_text())
+          assert release['id']==443268975 and release['tag_name']=='v1.8.0' and manifest['version']=='1.8.0'
+          assert not release['prerelease'] and not release['draft']
+          filename='Knightfall-1.8.0-Android.apk'
+          asset,=[a for a in release['assets'] if a['name']==filename]
+          assert asset['state']=='uploaded' and asset['digest']=='sha256:'+manifest['sha256']
+          base=f'https://github.com/{repo}/releases'
+          assert asset['browser_download_url']==base+'/download/v1.8.0/'+filename
+          alias=pathlib.Path('Knightfall-Android.apk')
+          def download(url):
+              subprocess.run(['curl','--proto','=https','--proto-redir','=https','-fsSL','--retry','2',url,'-o',str(alias)],check=True)
+              with alias.open('rb') as f: assert hashlib.file_digest(f,'sha256').hexdigest()==manifest['sha256']
+              assert alias.stat().st_size==asset['size']
+          download(asset['browser_download_url'])
+          tools=pathlib.Path(os.environ['ANDROID_HOME'])/'build-tools/35.0.0'
+          sig=subprocess.check_output([tools/'apksigner','verify','--print-certs',alias],text=True)
+          assert re.findall(r'^Signer #\d+ certificate SHA-256 digest: ([a-f0-9]{64})$',sig,re.M)==[manifest['certificateSha256']]
+          info=subprocess.check_output([tools/'aapt','dump','badging',alias],text=True)
+          assert "package: name='studio.knightfall.chess' versionCode='14' versionName='1.8.0'" in info
+          assert api('releases/latest')['id']==release['id']
+          if not any(a['name']==alias.name for a in release['assets']):
+              subprocess.run(['gh','release','upload','v1.8.0',str(alias)+'#Android APK (stable)','--repo',repo],check=True)
+          published,=[a for a in api('releases/tags/v1.8.0')['assets'] if a['name']==alias.name]
+          assert published['digest']==asset['digest'] and published['state']=='uploaded'
+          download(base+'/latest/download/'+alias.name)
+          print('Permanent Android URL serves the original signed 1.8.0 APK; package, version, certificate and checksum match.')
+          PY
