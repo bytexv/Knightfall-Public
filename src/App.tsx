@@ -139,7 +139,7 @@ const pages = [
   { id: "coach", label: "Coach", icon: GraduationCap, group: "Improve" },
   { id: "play", label: "Play chess", icon: Play, group: "Play" },
   { id: "multiplayer", label: "Play with friends", icon: Wifi, group: "Play" },
-  { id: "games", label: "Game Review", icon: Activity, group: "Improve" },
+  { id: "games", label: "Saved games", icon: Activity, group: "Improve" },
   { id: "analysis", label: "Analysis", icon: Cpu, group: "Improve" },
   { id: "puzzles", label: "Puzzles", icon: Puzzle, group: "Improve" },
   { id: "quiz", label: "Chess Quiz", icon: CircleHelp, group: "Improve" },
@@ -205,9 +205,9 @@ const pageTitles: Record<Page, { title: string; subtitle: string }> = {
       "Learn the basics, practice useful habits, and explore famous openings.",
   },
   games: {
-    title: "Game Review",
+    title: "Saved games",
     subtitle:
-      "Your game history, accuracy and next lessons — all in one place.",
+      "Resume a game or revisit the moves from a finished match.",
   },
   multiplayer: {
     title: "Play with friends",
@@ -1649,6 +1649,7 @@ export default function App() {
               Start with a quick 10-minute game.
             </p>
           )}
+          <button className="button subtle" onClick={() => navigate("games")}>View all saved games ({archive.length})</button>
         </section>
         <div className="sidebar-bottom">
           <div className="local-badge">
@@ -3475,7 +3476,7 @@ export default function App() {
         {(
           [
             { id: "play", label: "Play", icon: Play },
-            { id: "games", label: "Review", icon: Activity },
+            { id: "games", label: "Saved", icon: Activity },
             { id: "puzzles", label: "Puzzles", icon: Puzzle },
             { id: "coach", label: "Coach", icon: GraduationCap },
           ] as const
@@ -3506,6 +3507,7 @@ export default function App() {
             <AtHomeSwitch enabled={home} onChange={enabled => setStudio(enabled ? "home" : "club")} />
           </div>
           <ul className="release-highlights">
+            <li>Open Saved games to see your full library. Filter unfinished games or show every match on one page.</li>
             <li>Coach marks each graded piece with a distinct symbol. Open the move rating guide to see how it earned its grade.</li>
             <li>Game Review shows the reply played and the engine’s best reply. Step through either engine line and return to your original game.</li>
             <li>Stockfish 19 runs locally. Windows uses the official engine, and the web includes a small offline engine with an optional Full download.</li>

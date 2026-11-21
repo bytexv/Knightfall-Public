@@ -1,3 +1,7 @@
+# Knightfall 2.4.0
+
+Open **Saved games** from the navigation or **View all saved games** under recent games. Browse all matches on this device, switch between pages and a single list, or filter unfinished games to continue playing. Existing saves and review scores carry over on the same installation.
+
 # Knightfall 2.3.0 · Coach and Game Review
 
 - Coach and Game Review share eleven distinct rating marks and a plain-English guide. The marks stay above moving pieces on either side of the board.

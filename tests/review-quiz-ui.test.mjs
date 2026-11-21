@@ -38,6 +38,11 @@ test('the review library exposes every saved game, separate side accuracy, searc
   assert.equal(host.querySelector('[data-review-game="game-22"] .accuracy-white').textContent, '86%');
   assert.equal(host.querySelector('[data-review-game="game-22"] .accuracy-black').textContent, '—');
   assert.equal(host.querySelector('[data-review-game="game-21"] .accuracy-pair'), null);
+  await textClick('Show all 23 games');
+  assert.equal(host.querySelectorAll('[data-review-game]').length, 23);
+  await textClick('Show 20 per page');
+  await fill('[aria-label="Filter games"]', 'unfinished');
+  assert.equal(host.querySelectorAll('[data-review-game]').length, 20);
   await click('[aria-label="Next games page"]');
   assert.equal(host.querySelectorAll('[data-review-game]').length, 3);
   assert.ok(host.querySelector('[data-review-game="game-0"]'));

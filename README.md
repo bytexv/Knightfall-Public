@@ -8,7 +8,7 @@ Knightfall has its own branding and interface. It is not affiliated with Chess.c
 
 ## Downloads and updates
 
-**Newest Windows and web release** · [Knightfall 2.3.0 · Coach and Game Review](https://github.com/bytexv/Knightfall-Public/releases/tag/v2.3.0).
+**Newest Windows and web release** · [Knightfall 2.4.0 · Saved games](https://github.com/bytexv/Knightfall-Public/releases/tag/v2.4.0).
 
 **Android** · [Install the current web app on your phone](https://bytexv.github.io/Knightfall-Public/install/). Open in Chrome and tap **Install Knightfall**, or use **⋮ → Add to Home screen**. This edition supports offline play. Keep any existing native installation for its local saves. The [signed native APK](https://github.com/bytexv/Knightfall-Public/releases/latest/download/Knightfall-Android.apk) is on its own stable channel.
 

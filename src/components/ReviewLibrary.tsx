@@ -36,6 +36,7 @@ export default function ReviewLibrary({
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("recent");
+  const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState(0);
   useEffect(() => {
     const refresh = () => setSummaries(readReviewSummaries());
@@ -89,7 +90,7 @@ export default function ReviewLibrary({
           ? !!row.summary
           : filter === "unreviewed"
             ? !row.summary
-            : !!row.game.result)),
+            : filter === "unfinished" ? !row.game.result : !!row.game.result)),
   );
   filtered.sort((a, b) =>
     sort === "accuracy"
@@ -101,7 +102,7 @@ export default function ReviewLibrary({
         ? a.game.createdAt - b.game.createdAt
         : b.game.createdAt - a.game.createdAt,
   );
-  const pages = Math.max(1, Math.ceil(filtered.length / 20)),
+  const pages = Math.max(1, showAll ? 1 : Math.ceil(filtered.length / 20)),
     activePage = Math.min(page, pages - 1);
   return (
     <div className="review-library">
@@ -110,11 +111,9 @@ export default function ReviewLibrary({
           <Activity size={30} />
         </div>
         <div>
-          <span className="section-kicker">YOUR CHESS, EXPLAINED</span>
-          <h2>Every game has something to teach you.</h2>
+          <h2>Your game library</h2>
           <p>
-            Find the turning points. Learn from the misses. Bring one good idea
-            to your next game.
+            Search by player or game name. Open a review to explore the moves.
           </p>
         </div>
         <button className="button primary" onClick={onImport}>
@@ -170,6 +169,7 @@ export default function ReviewLibrary({
               <option value="all">All games</option>
               <option value="reviewed">Reviewed</option>
               <option value="unreviewed">Not reviewed</option>
+              <option value="unfinished">Unfinished</option>
               <option value="finished">Finished</option>
             </select>
           </label>
@@ -186,6 +186,9 @@ export default function ReviewLibrary({
             </select>
           </label>
         </div>
+        {filtered.length > 20 && <button className="button secondary" aria-pressed={showAll} onClick={() => { setPage(0); setShowAll(!showAll); }}>
+          {showAll ? "Show 20 per page" : `Show all ${filtered.length} games`}
+        </button>}
         <div className="review-table-scroll">
           <table className="review-games-table">
             <caption>All saved games and local analysis accuracy</caption>
@@ -204,7 +207,7 @@ export default function ReviewLibrary({
             </thead>
             <tbody>
               {filtered
-                .slice(activePage * 20, activePage * 20 + 20)
+                .slice(activePage * 20, showAll ? filtered.length : activePage * 20 + 20)
                 .map(({ game, summary, white, black }) => (
                   <tr key={game.id} data-review-game={game.id}>
                     <td>

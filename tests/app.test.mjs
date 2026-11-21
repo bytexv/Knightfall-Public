@@ -435,7 +435,7 @@ const beforeMate = ["e2e4", "e7e5", "f1c4", "b8c6", "d1h5", "g8f6"];
 test("grouped navigation supports review and quiz routes, browser history and mobile dismissal", async () => {
   await render();
   assert.equal(host.querySelectorAll('.nav-group').length, 3);
-  await clickLabel('Game Review');
+  await clickLabel('Saved games');
   assert.equal(window.location.hash, '#games');
   assert.ok(host.querySelector('.review-library'));
   await clickLabel('Chess Quiz');
@@ -550,7 +550,7 @@ test("hint and analysis assistance survive saving and resuming, so the eventual 
       ).find((game) => game.id === fixture.game.id);
       assert.deepEqual(archived.rating.assistance, ["analysis"]);
       assert.equal(archived.mode, "bot");
-      await clickText("Game Review");
+      await clickText("Saved games");
       await clickLabel(`Resume ${fixture.game.title}`);
     }
     assert.deepEqual(
@@ -695,7 +695,7 @@ test('Coach has a separate board, grades the destination and restores play after
   await clickLabel('Previous coach move');
   assert.equal(host.querySelector('.move-stamp'),null);
   await clickLabel('Next coach move');
-  await clickLabel('Game Review'); await clickLabel('Coach');
+  await clickLabel('Saved games'); await clickLabel('Coach');
   await finishCoachSearch('e2e4'); await finishCoachSearch('e7e5');
   assert.equal(host.querySelector('.move-stamp')?.dataset.label,'Book');
   await clickText('Take back');
