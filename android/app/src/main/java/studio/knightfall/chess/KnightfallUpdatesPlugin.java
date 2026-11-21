@@ -6,7 +6,9 @@ import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.net.Uri;
 import android.os.Build;
+import android.os.SystemClock;
 import android.provider.Settings;
+import android.system.Os;
 import androidx.core.content.FileProvider;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -80,8 +82,9 @@ public class KnightfallUpdatesPlugin extends Plugin {
         publish("downloading", "Downloading the Android update. Keep Knightfall open; your game stays available.");
         call.resolve(snapshot());
         execute(() -> {
-            File partial = new File(getContext().getCacheDir(), "knightfall-update.part");
+            File partial = new File(getContext().getCacheDir(), "knightfall-pending.apk");
             HttpURLConnection connection = null;
+            boolean complete = false;
             try {
                 String next = url;
                 for (int hop = 0; hop < 6; hop++) {
@@ -89,6 +92,7 @@ public class KnightfallUpdatesPlugin extends Plugin {
                     connection = (HttpURLConnection) new URL(next).openConnection();
                     connection.setInstanceFollowRedirects(false); connection.setConnectTimeout(15000); connection.setReadTimeout(30000);
                     connection.setRequestProperty("User-Agent", "Knightfall-Android-Updater");
+                    connection.setRequestProperty("Accept-Encoding", "identity");
                     int code = connection.getResponseCode();
                     if (code >= 300 && code < 400) {
                         String location = connection.getHeaderField("Location");
@@ -99,14 +103,14 @@ public class KnightfallUpdatesPlugin extends Plugin {
                     break;
                 }
                 if (connection == null) throw new IOException("Too many download redirects.");
-                long expected = connection.getContentLengthLong(), total = 0, limit = 512L * 1024 * 1024;
-                if (expected > limit) throw new IOException("Update is too large.");
-                long deadline = System.currentTimeMillis() + 20 * 60 * 1000;
+                // getContentLengthLong() requires Android 7. Knightfall also supports Android 6.
+                long expected = UpdatePolicy.downloadLength(connection.getHeaderField("Content-Length")), total = 0;
+                long deadline = SystemClock.elapsedRealtime() + 20 * 60 * 1000;
                 try (InputStream input = connection.getInputStream(); OutputStream output = new FileOutputStream(partial)) {
                     byte[] buffer = new byte[65536]; int count;
                     while ((count = input.read(buffer)) != -1) {
                         total += count;
-                        if (total > limit || System.currentTimeMillis() > deadline) throw new IOException("Update exceeded the download limit.");
+                        if (total > UpdatePolicy.MAX_APK_BYTES || SystemClock.elapsedRealtime() > deadline) throw new IOException("Update exceeded the download limit.");
                         output.write(buffer, 0, count);
                         int percent = expected > 0 ? (int)Math.min(99, total * 100 / expected) : 0;
                         if (percent != progress) { progress = percent; notifyListeners("status", snapshot()); }
@@ -114,14 +118,16 @@ public class KnightfallUpdatesPlugin extends Plugin {
                 }
                 if (total == 0 || (expected > 0 && total != expected)) throw new IOException("Incomplete update download.");
                 verify(partial, version);
-                if (apk().exists() && !apk().delete()) throw new IOException("Cannot replace cached update.");
-                if (!partial.renameTo(apk())) throw new IOException("Cannot save update.");
+                // Both files live in the same private cache. Retain any previous verified
+                // APK until the replacement has passed all verification and can be committed.
+                Os.rename(partial.getAbsolutePath(), apk().getAbsolutePath());
                 prefs().edit().putString("version", version).apply(); progress = 100;
-                publish("ready", "Update ready. Android will ask you to approve it; saved games and settings stay in place.");
+                complete = true;
             } catch (Exception error) {
                 partial.delete();
-                publish("unavailable", "Could not download or verify this update. Check your connection and retry. No app data was changed.");
             } finally { if (connection != null) connection.disconnect(); busy.set(false); }
+            if (complete) publish("ready", "Update ready. Android will ask you to approve it; saved games and settings stay in place.");
+            else publish("unavailable", "The APK download or verification failed. Tap Download to retry or use the stable Android APK link.");
         });
     }
     @PluginMethod

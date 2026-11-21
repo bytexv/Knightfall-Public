@@ -142,7 +142,7 @@ export async function fetchAndroidRelease(
         function inspect(release: any): UpdateStatus | null {
           const tag = release.tag_name;
           const latest =
-            typeof tag === "string" && tag.startsWith("v") ? tag.slice(1) : tag;
+            typeof tag === "string" && tag.startsWith("v") ? tag.slice(1) : null;
           if (
             typeof latest !== "string" ||
             !parts(latest) ||
@@ -161,12 +161,6 @@ export async function fetchAndroidRelease(
             releaseUrl,
             checkedAt: new Date().toISOString(),
           };
-          if (!newerVersion(latest, current))
-            return {
-              ...base,
-              status: "up-to-date",
-              message: `No newer stable Android release is available. GitHub lists ${latest} as stable.`,
-            };
           const filename = `Knightfall-${latest}-Android.apk`;
           const matches = release.assets.filter(
             (asset: { name?: string }) => asset?.name === filename,
@@ -182,6 +176,12 @@ export async function fetchAndroidRelease(
               `${releaseUrl}/download/${encodeURIComponent(tag)}/${filename}`
           )
             throw new Error("Android download unavailable");
+          if (!newerVersion(latest, current))
+            return {
+              ...base,
+              status: "up-to-date",
+              message: `You have ${current}. The latest signed Android download is ${latest}.`,
+            };
           return {
             ...base,
             status: "available",
@@ -201,7 +201,7 @@ export async function fetchAndroidRelease(
           if (candidate?.draft || candidate?.prerelease) continue;
           const result = inspect(candidate);
           if (
-            result?.status === "available" &&
+            result &&
             (!best || newerVersion(result.latestVersion!, best.latestVersion!))
           )
             best = result;
@@ -226,6 +226,7 @@ export async function fetchAndroidRelease(
 }
 
 const releasePage = "https://github.com/bytexv/Knightfall-Public/releases";
+export const stableAndroidDownload = `${releasePage}/latest/download/Knightfall-Android.apk`;
 let state: UpdateStatus = {
   status: "idle",
   currentVersion: version,
@@ -332,11 +333,16 @@ async function initialize() {
     nativeUpdater = Capacitor.isPluginAvailable("KnightfallUpdates");
     if (nativeUpdater) {
       try {
-        await androidUpdates.addListener("status", (value) =>
-          publish({ ...state, ...value, android: true }),
-        );
+        await androidUpdates.addListener("status", (value) => {
+          // Keep the already validated release URL so a transfer can be retried
+          // even if the metadata API is temporarily unavailable.
+          const retry = value.status === "unavailable" && !!state.downloadUrl &&
+            value.latestVersion === state.latestVersion;
+          publish({ ...state, ...value, status: retry ? "available" : value.status, android: true });
+        });
+        const before = revision;
         const cached = await androidUpdates.getStatus();
-        if (["ready", "downloading"].includes(cached.status))
+        if (revision === before && ["ready", "downloading"].includes(cached.status))
           publish({ ...state, ...cached, android: true });
       } catch {
         nativeUpdater = false;
@@ -433,6 +439,7 @@ export async function checkAppUpdates(manual = true) {
   return inFlight;
 }
 export async function openAppUpdate() {
+  if (native && state.status !== "available") return;
   if (nativeUpdater && state.downloadUrl && state.latestVersion) {
     const url = state.downloadUrl,
       latest = state.latestVersion;

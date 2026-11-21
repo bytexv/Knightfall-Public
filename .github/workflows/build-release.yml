@@ -259,12 +259,15 @@ jobs:
           expected.add(f'Knightfall-{version}-Android.apk')
           actual = {path.name for path in root.iterdir() if path.is_file()}
           if actual != expected: raise SystemExit('Release artifact inventory is incomplete or contains unexpected files.')
+          # Give the verified, versioned APK a permanent public download name.
+          os.link(root / f'Knightfall-{version}-Android.apk', root / 'Knightfall-Android.apk')
+          expected.add('Knightfall-Android.apk')
           lines = []
           for name in sorted(expected):
               with (root / name).open('rb') as stream:
                   lines.append(f"{hashlib.file_digest(stream, 'sha256').hexdigest()}  {name}\n")
           (root / 'SHA256SUMS.txt').write_text(''.join(lines))
-          pathlib.Path('release-notes.md').write_text(f'Knightfall {version}\n\nUse Windows-Setup.exe for automatic background updates, or Windows-x64.exe for portable use. The Windows app is unsigned. The Android APK uses the existing signing identity and updates installed Knightfall copies in place. On versions before 1.5, download the APK and approve the Android update; do not uninstall first.\n\nSource, web assets, licenses and build instructions are included. Verify downloaded files against SHA256SUMS.txt. The installed Windows app validates and downloads stable updates automatically, then installs on normal exit or a confirmed restart. Portable updates require a new download. Android 1.5+ can download a compatible signed APK in-app and asks for system approval to update in place.\n')
+          pathlib.Path('release-notes.md').write_text(f'Knightfall {version}\n\n[Download the stable Android APK](https://github.com/bytexv/Knightfall-Public/releases/latest/download/Knightfall-Android.apk)\n\nUse Windows-Setup.exe for automatic background updates, or Windows-x64.exe for portable use. The Windows app is unsigned. The Android APK uses the existing signing identity and updates installed Knightfall copies in place. On versions before 1.5, download the APK and approve the Android update; do not uninstall first.\n\nSource, web assets, licenses and build instructions are included. Verify downloaded files against SHA256SUMS.txt. The installed Windows app validates and downloads stable updates automatically, then installs on normal exit or a confirmed restart. Portable updates require a new download. Android 1.5+ can download a compatible signed APK in-app and asks for system approval to update in place.\n')
           PY
       - name: Publish the stable release
         run: |

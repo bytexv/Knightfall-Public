@@ -31,7 +31,8 @@ test('verified update offers restart through the narrow native bridge',async()=>
   assert.match(document.querySelector('.update-card small').textContent,/installs on exit/);
 });
 test('manual APK update offers download rather than automatic installation',async()=>{
-  await publish({status:'available',latestVersion:'1.4.0',message:'APK available.'});
+  await publish({status:'available',latestVersion:'1.4.0',android:true,message:'APK available.'});
+  assert.equal(document.querySelector('.update-card a').href,'https://github.com/bytexv/Knightfall-Public/releases/latest/download/Knightfall-Android.apk');
   const button=document.querySelector('.update-card button');assert.match(button.textContent,/Download 1.4.0/);
   await act(async()=>button.click());assert.equal(downloads,1);assert.equal(installs,1);
   await act(async()=>root.unmount());dom.window.close();

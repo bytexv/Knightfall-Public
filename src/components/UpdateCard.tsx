@@ -6,6 +6,7 @@ import {
   checkAppUpdates,
   openAppUpdate,
   applyAppUpdate,
+  stableAndroidDownload,
 } from "../lib/app-updates";
 
 export function UpdateIndicator({ onOpen }: { onOpen: () => void }) {
@@ -21,7 +22,7 @@ export function UpdateIndicator({ onOpen }: { onOpen: () => void }) {
     >
       <Download size={16} />
       <span>
-        {state.status === "downloading" ? "Updating…" : "Update ready"}
+        {state.status === "downloading" ? "Updating…" : state.status === "ready" ? "Update ready" : "Update available"}
       </span>
     </button>
   );
@@ -90,6 +91,11 @@ export default function UpdateCard() {
               : "Use the Windows Setup edition for automatic updates. Portable downloads open on GitHub."}
       </small>
       {!state.web && <small>Update checks use stable releases. Preview builds are available on the releases page.</small>}
+      {(state.android || (state.web && /Android/i.test(globalThis.navigator?.userAgent ?? ""))) && (
+        <a className="update-release-link" href={stableAndroidDownload} target="_blank" rel="noopener noreferrer">
+          Download the stable Android APK ↗
+        </a>
+      )}
       {state.releaseUrl && (
         <a
           className="update-release-link"

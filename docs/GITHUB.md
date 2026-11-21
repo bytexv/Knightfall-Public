@@ -78,7 +78,7 @@ git tag v1.3.1
 git push github v1.3.1
 ```
 
-Alternatively, choose **Actions → Build and publish release → Run workflow** and enter an existing stable tag. The workflow checks out `refs/tags/<tag>` and pins both native jobs to the commit that passed the source checks. A failed Windows/source build or failed configured Android signing does not publish a release. An unconfigured Android signing identity omits only the APK. Existing releases are retained without replacing their files. Use a new version for changed binaries.
+Alternatively, choose **Actions → Build and publish release → Run workflow** and enter an existing stable tag. The workflow checks out `refs/tags/<tag>` and pins both native jobs to the commit that passed the source checks. A failed Windows/source build or failed configured Android signing does not publish a release. The stable release requires a verified APK from the configured signing identity or the matching signed candidate. Existing releases are retained without replacing their files. Use a new version for changed binaries.
 
 The Windows Setup edition checks this repository's `releases/latest/download/latest.yml` at startup and every four hours. It accepts only a newer stable version, the exact versioned Setup filename, a bounded installer size and a SHA-512 digest. electron-updater verifies the downloaded installer before it can install. The app downloads in the background and installs on normal exit; **Restart and update** asks for confirmation first. The unsigned build relies on HTTPS, repository ownership and SHA-512 integrity, not a verified Windows publisher certificate. Protect repository write/release access.
 
@@ -89,3 +89,5 @@ Web updates use the existing service worker. New assets download in the backgrou
 Offline connections, missing releases and rate limits do not prevent local chess. Windows code signing and physical-device acceptance remain separate release work.
 
 A source push runs CI. Publish a matching stable version tag to deliver an app update; ordinary commits are not automatically installed on users' devices. Windows `Restart and update` now runs the verified installer silently after confirmation, so it no longer opens the setup wizard. Portable users must use Setup once to enable future background updates.
+
+The stable publish job also places the verified versioned APK under the filename `Knightfall-Android.apk` and records both names in the checksum manifest. The permanent Android link follows GitHub’s latest stable release. Versioned links continue to serve existing native updaters. [Android download](https://github.com/bytexv/Knightfall-Public/releases/latest/download/Knightfall-Android.apk)

@@ -8,7 +8,9 @@ Knightfall has its own branding and interface. It is not affiliated with Chess.c
 
 ## Downloads and updates
 
-**Newest Windows and web release** · [Knightfall 2.3.0 · Coach and Game Review](https://github.com/bytexv/Knightfall-Public/releases/tag/v2.3.0). For the compatible Android APK, open [the latest stable release](https://github.com/bytexv/Knightfall-Public/releases/latest).
+**Newest Windows and web release** · [Knightfall 2.3.0 · Coach and Game Review](https://github.com/bytexv/Knightfall-Public/releases/tag/v2.3.0).
+
+**Android** · [Download the stable signed APK](https://github.com/bytexv/Knightfall-Public/releases/latest/download/Knightfall-Android.apk). Open the downloaded file and choose **Update** to keep your existing games. Windows and web previews have their own version numbers.
 
 Choose **Windows-Setup.exe** for automatic background downloads and installation on exit, or **Windows-x64.exe** for portable use. Android checks for newer compatible APKs, downloads them in-app, and opens Android’s in-place update confirmation. Saved games and settings stay; GitHub needs the matching signed APK. The web app offers **Reload to update**. See [GitHub release setup](docs/GITHUB.md) for automation and Android signing requirements.
 

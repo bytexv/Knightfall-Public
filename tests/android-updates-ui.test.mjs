@@ -41,6 +41,13 @@ test('Android downloads through the native bridge, retains progress, and confirm
   assert.equal(api.getAppUpdateStatus().status,'available');
   dom.window.open=()=>{throw new Error('Download must stay inside app');};
   await api.openAppUpdate();assert.equal(downloaded.version,'99.0.0');assert.equal(api.getAppUpdateStatus().progress,42);
+  listener({status:'unavailable',latestVersion:'99.0.0',message:'Download interrupted'});
+  assert.equal(api.getAppUpdateStatus().status,'available');
+  const interrupted=downloaded;
+  globalThis.fetch=()=>{throw Error('Retry must reuse the validated APK URL')};
+  downloaded=null;
+  await api.openAppUpdate();assert.deepEqual(downloaded,interrupted);
+  globalThis.fetch=onlineFetch;
   listener({status:'ready',latestVersion:'99.0.0',progress:100,message:'Ready'});
   dom.window.confirm=()=>confirm;
   await api.applyAppUpdate();assert.equal(installs,0);

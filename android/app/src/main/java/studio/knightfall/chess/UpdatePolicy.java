@@ -5,7 +5,14 @@ import java.util.Arrays;
 
 /** Pure validation shared by the native downloader and unit tests. */
 public final class UpdatePolicy {
+    static final long MAX_APK_BYTES = 512L * 1024 * 1024;
     private UpdatePolicy() {}
+    static long downloadLength(String header) {
+        if (header == null) return -1; // Chunked transfer; enforce the cap while reading.
+        long bytes = Long.parseLong(header.trim());
+        if (bytes < 1 || bytes > MAX_APK_BYTES) throw new IllegalArgumentException("Invalid APK length");
+        return bytes;
+    }
     public static boolean validSource(String url, String version) {
         return version != null && version.matches("(0|[1-9][0-9]{0,8})\\.(0|[1-9][0-9]{0,8})\\.(0|[1-9][0-9]{0,8})") &&
             ("https://github.com/bytexv/Knightfall-Public/releases/download/v" + version + "/Knightfall-" + version + "-Android.apk").equals(url);

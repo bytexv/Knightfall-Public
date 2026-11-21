@@ -2,6 +2,13 @@ package studio.knightfall.chess;
 import org.junit.Test;
 import static org.junit.Assert.*;
 public class UpdatePolicyTest {
+    @Test public void supportsChunkedTransfersAndRejectsOutOfBoundsApkLengths() {
+        assertEquals(-1, UpdatePolicy.downloadLength(null));
+        assertEquals(148152034L, UpdatePolicy.downloadLength("148152034"));
+        assertEquals(UpdatePolicy.MAX_APK_BYTES, UpdatePolicy.downloadLength("536870912"));
+        for (String header : new String[]{"0", "-1", "536870913", "4294967296", "invalid"})
+            assertThrows(IllegalArgumentException.class, () -> UpdatePolicy.downloadLength(header));
+    }
     @Test public void validatesExactStableReleaseAndRedirectHosts() {
         assertTrue(UpdatePolicy.validSource("https://github.com/bytexv/Knightfall-Public/releases/download/v1.5.0/Knightfall-1.5.0-Android.apk", "1.5.0"));
         assertFalse(UpdatePolicy.validSource("https://evil.test/app.apk", "1.5.0"));

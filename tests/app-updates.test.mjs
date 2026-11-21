@@ -43,8 +43,17 @@ test('a newer Windows-only release does not hide the latest compatible Android A
   assert.equal(urls.length, 2); assert.ok(urls[1].endsWith('?per_page=30'));
 });
 test('missing Android publication has an actionable message and no unsafe download', async () => {
-  const result = await fetchAndroidRelease(config, '1.3.1', async url => response(url.endsWith('/latest') ? {...release('1.5.2'), assets: []} : [{...release('1.5.2'), assets: []}, release('1.2.0')]));
+  const result = await fetchAndroidRelease(config, '1.3.1', async url => response(url.endsWith('/latest') ? {...release('1.5.2'), assets: []} : [{...release('1.5.2'), assets: []}]));
   assert.equal(result.status, 'unavailable'); assert.match(result.message, /does not include an Android update/); assert.equal(result.downloadUrl, undefined);
+});
+test('Android reports the compatible release even when it is already installed or older', async () => {
+  const desktop = {...release('2.3.0'), assets:[]};
+  for (const installed of ['1.8.0','2.3.0']) {
+    const result = await fetchAndroidRelease(config, installed, async url => response(url.endsWith('/latest') ? desktop : [desktop,release('1.8.0')]));
+    assert.equal(result.status,'up-to-date');
+    assert.equal(result.latestVersion,'1.8.0');
+    assert.equal(result.downloadUrl,undefined);
+  }
 });
 test('fallback rejects a tampered Android download and bounds the release list', async () => {
   const malicious = release('1.5.2'); malicious.assets[0].browser_download_url='https://evil.test/update.apk';
