@@ -41,15 +41,15 @@ def main():
         name = f"Knightfall-{version}-web.zip"
         for asset in release["assets"]:
             if asset["name"] == name and asset["state"] == "uploaded":
-                candidates.append((tuple(map(int, version.split("."))), version, asset))
+                candidates.append((tuple(map(int, version.split("."))), version, asset, release["prerelease"]))
     if not candidates:
         raise SystemExit("No released Knightfall web ZIP found.")
-    _, version, asset = max(candidates, key=lambda item: item[0])
+    _, version, asset, preview = max(candidates, key=lambda item: item[0])
     url = f"https://github.com/{repo}/releases/download/v{version}/{asset['name']}"
     if asset["browser_download_url"] != url or not re.fullmatch(r"sha256:[a-f0-9]{64}", asset["digest"] or ""):
         raise SystemExit("Unverified web release asset.")
     install = root / "public/install"
-    metadata = {"version": version, "webSha256": asset["digest"][7:],
+    metadata = {"version": version, "preview": preview, "webSha256": asset["digest"][7:],
                 "installerTree": git("rev-parse", "HEAD:public/install")}
     git("fetch", "--no-tags", "origin", "refs/heads/gh-pages")
     parent = git("rev-parse", "FETCH_HEAD")
